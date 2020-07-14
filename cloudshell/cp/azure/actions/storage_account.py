@@ -11,7 +11,9 @@ class StorageAccountActions:
         self._azure_client = azure_client
         self._logger = logger
 
-    def create_storage_account(self, storage_account_name, resource_group_name, region, tags):
+    def create_storage_account(
+        self, storage_account_name, resource_group_name, region, tags
+    ):
         """
 
         :param str storage_account_name:
@@ -21,11 +23,13 @@ class StorageAccountActions:
         :return:
         """
         self._logger.info(f"Creating storage account {storage_account_name}")
-        self._azure_client.create_storage_account(resource_group_name=resource_group_name,
-                                                  region=region,
-                                                  storage_account_name=storage_account_name,
-                                                  tags=tags,
-                                                  wait_for_result=True)
+        self._azure_client.create_storage_account(
+            resource_group_name=resource_group_name,
+            region=region,
+            storage_account_name=storage_account_name,
+            tags=tags,
+            wait_for_result=True,
+        )
 
     def delete_storage_account(self, storage_account_name, resource_group_name):
         """
@@ -35,8 +39,10 @@ class StorageAccountActions:
         :return:
         """
         self._logger.info(f"Deleting storage account {storage_account_name}")
-        self._azure_client.delete_storage_account(resource_group_name=resource_group_name,
-                                                  storage_account_name=storage_account_name)
+        self._azure_client.delete_storage_account(
+            resource_group_name=resource_group_name,
+            storage_account_name=storage_account_name,
+        )
 
     def _parse_blob_url(self, blob_url):
         """Parses Blob URL into AzureBlobUrlModel
@@ -45,10 +51,10 @@ class StorageAccountActions:
         :rtype: tuple[str, str, str]
         """
         parsed_blob_url = urlparse(blob_url)
-        splitted_path = parsed_blob_url.path.split('/')
+        splitted_path = parsed_blob_url.path.split("/")
         blob_name = splitted_path[-1]
         container_name = splitted_path[-2]
-        storage_account_name = parsed_blob_url.netloc.split('.', 1)[0]
+        storage_account_name = parsed_blob_url.netloc.split(".", 1)[0]
 
         return blob_name, container_name, storage_account_name
 
@@ -60,11 +66,15 @@ class StorageAccountActions:
         :return:
         """
         self._logger.info(f"Deleting VHD Disk {vhd_url}")
-        blob_name, container_name, storage_account_name = self._parse_blob_url(blob_url=vhd_url)
-        self._azure_client.delete_blob(blob_name=blob_name,
-                                       container_name=container_name,
-                                       resource_group_name=resource_group_name,
-                                       storage_account_name=storage_account_name)
+        blob_name, container_name, storage_account_name = self._parse_blob_url(
+            blob_url=vhd_url
+        )
+        self._azure_client.delete_blob(
+            blob_name=blob_name,
+            container_name=container_name,
+            resource_group_name=resource_group_name,
+            storage_account_name=storage_account_name,
+        )
 
     def delete_managed_disk(self, disk_name, resource_group_name):
         """
@@ -74,4 +84,6 @@ class StorageAccountActions:
         :return:
         """
         self._logger.info(f"Deleting Managed Disk {disk_name}")
-        self._azure_client.delete_managed_disk(disk_name=disk_name, resource_group_name=resource_group_name)
+        self._azure_client.delete_managed_disk(
+            disk_name=disk_name, resource_group_name=resource_group_name
+        )

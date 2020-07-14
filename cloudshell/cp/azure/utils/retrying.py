@@ -2,6 +2,7 @@ import traceback
 
 from msrest.exceptions import ClientRequestError
 from msrestazure.azure_exceptions import CloudError
+
 # todo: check if this should be replaced to requests.exceptions.ConnectionError
 from requests.packages.urllib3.exceptions import ConnectionError
 
@@ -15,9 +16,13 @@ def retry_on_connection_error(exception):
 
     :param exception:
     """
-    return any([isinstance(exception, ClientRequestError),
-                isinstance(exception, ConnectionError),
-                _is_pool_closed_error()])
+    return any(
+        [
+            isinstance(exception, ClientRequestError),
+            isinstance(exception, ConnectionError),
+            _is_pool_closed_error(),
+        ]
+    )
 
 
 def _is_pool_closed_error():
@@ -29,4 +34,7 @@ def retry_on_retryable_error(exception):
 
     :param exceptions.Exception exception:
     """
-    return isinstance(exception, CloudError) and RETRYABLE_ERROR_STRING in exception.message.lower()
+    return (
+        isinstance(exception, CloudError)
+        and RETRYABLE_ERROR_STRING in exception.message.lower()
+    )

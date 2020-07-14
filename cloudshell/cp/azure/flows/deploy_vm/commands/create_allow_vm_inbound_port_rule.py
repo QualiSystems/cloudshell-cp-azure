@@ -5,11 +5,21 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
     """Open traffic to VM on inbound ports (an attribute on the App) on the VM NSG"""
+
     NSG_RULE_PRIORITY = 1000
     NSG_RULE_NAME_TPL = "{vm_name}_inbound_port:{port_range}:{protocol}"
 
-    def __init__(self, rollback_manager, cancellation_manager, nsg_actions, nsg_name, vm_name, inbound_port,
-                 resource_group_name, rules_priority_generator):
+    def __init__(
+        self,
+        rollback_manager,
+        cancellation_manager,
+        nsg_actions,
+        nsg_name,
+        vm_name,
+        inbound_port,
+        resource_group_name,
+        rules_priority_generator,
+    ):
         """
 
         :param rollback_manager:
@@ -21,7 +31,9 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
         :param resource_group_name:
         :param rules_priority_generator:
         """
-        super().__init__(rollback_manager=rollback_manager, cancellation_manager=cancellation_manager)
+        super().__init__(
+            rollback_manager=rollback_manager, cancellation_manager=cancellation_manager
+        )
         self._nsg_actions = nsg_actions
         self._nsg_name = nsg_name
         self._vm_name = vm_name
@@ -33,24 +45,32 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
     def _execute(self):
         # dst_address = RouteNextHopType.internet
         self._nsg_actions.create_nsg_allow_rule(
-            rule_name=self.NSG_RULE_NAME_TPL.format(vm_name=self._vm_name,
-                                                    port_range=self._port_range,
-                                                    protocol=self._protocol),
+            rule_name=self.NSG_RULE_NAME_TPL.format(
+                vm_name=self._vm_name,
+                port_range=self._port_range,
+                protocol=self._protocol,
+            ),
             resource_group_name=self._resource_group_name,
             nsg_name=self._nsg_name,
             dst_port_range=self._port_range,
             protocol=self._protocol,
-            rule_priority=self._rules_priority_generator.get_priority(start_from=self.NSG_RULE_PRIORITY))
+            rule_priority=self._rules_priority_generator.get_priority(
+                start_from=self.NSG_RULE_PRIORITY
+            ),
+        )
 
     def _parse_port_range(self, port_data):
         # todo: refactor this method !!!
-        from_port = 'from_port'
-        to_port = 'to_port'
-        protocol = 'protocol'
-        tcp = 'tcp'
+        from_port = "from_port"
+        to_port = "to_port"
+        protocol = "protocol"
+        tcp = "tcp"
 
-        from_to_protocol_match = re.match(r"^((?P<from_port>\d+)-(?P<to_port>\d+):(?P<protocol>(udp|tcp)))$",
-                                          port_data, flags=re.IGNORECASE)
+        from_to_protocol_match = re.match(
+            r"^((?P<from_port>\d+)-(?P<to_port>\d+):(?P<protocol>(udp|tcp)))$",
+            port_data,
+            flags=re.IGNORECASE,
+        )
 
         # 80-50000:udp
         if from_to_protocol_match:
@@ -60,8 +80,11 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
 
             return f"{from_port}-{to_port}", protocol
 
-        from_protocol_match = re.match(r"^((?P<from_port>\d+):(?P<protocol>(udp|tcp)))$", port_data,
-                                       flags=re.IGNORECASE)
+        from_protocol_match = re.match(
+            r"^((?P<from_port>\d+):(?P<protocol>(udp|tcp)))$",
+            port_data,
+            flags=re.IGNORECASE,
+        )
 
         # 80:udp
         if from_protocol_match:
@@ -91,8 +114,11 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
 
     def rollback(self):
         self._nsg_actions.delete_nsg_rule(
-            rule_name=self.NSG_RULE_NAME_TPL.format(vm_name=self._vm_name,
-                                                    port_range=self._port_range,
-                                                    protocol=self._protocol),
+            rule_name=self.NSG_RULE_NAME_TPL.format(
+                vm_name=self._vm_name,
+                port_range=self._port_range,
+                protocol=self._protocol,
+            ),
             resource_group_name=self._resource_group_name,
-            nsg_name=self._nsg_name)
+            nsg_name=self._nsg_name,
+        )

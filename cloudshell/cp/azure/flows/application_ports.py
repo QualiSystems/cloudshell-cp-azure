@@ -1,4 +1,6 @@
-from cloudshell.cp.azure.actions.network_security_group import NetworkSecurityGroupActions
+from cloudshell.cp.azure.actions.network_security_group import (
+    NetworkSecurityGroupActions,
+)
 
 
 class AzureGetApplicationPortsFlow:
@@ -23,17 +25,24 @@ class AzureGetApplicationPortsFlow:
         """
         resource_group_name = self._reservation_info.get_resource_group_name()
 
-        nsg_actions = NetworkSecurityGroupActions(azure_client=self._azure_client, logger=self._logger)
+        nsg_actions = NetworkSecurityGroupActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
 
-        vm_nsg = nsg_actions.get_vm_network_security_group(vm_name=deployed_app.name,
-                                                           resource_group_name=resource_group_name)
+        vm_nsg = nsg_actions.get_vm_network_security_group(
+            vm_name=deployed_app.name, resource_group_name=resource_group_name
+        )
 
-        result = [f"App Name: {deployed_app.name}",
-                  f"Allow Sandbox Traffic: {deployed_app.allow_all_sandbox_traffic}"]
+        result = [
+            f"App Name: {deployed_app.name}",
+            f"Allow Sandbox Traffic: {deployed_app.allow_all_sandbox_traffic}",
+        ]
 
         for rule in vm_nsg.security_rules:
-            result.append(f"Port(s): {rule.destination_port_range}, "
-                          f"Protocol: {rule.protocol}, "
-                          f"Destination: {rule.destination_address_prefix}")
+            result.append(
+                f"Port(s): {rule.destination_port_range}, "
+                f"Protocol: {rule.protocol}, "
+                f"Destination: {rule.destination_address_prefix}"
+            )
 
         return "\n".join(result)

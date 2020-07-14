@@ -35,13 +35,9 @@ class AdditionalMgmtNetworksAttrRO(ResourceAttrRO):
 
 
 class AzureResourceConfig(GenericResourceConfig):
-    region = RegionResourceAttrRO(
-        "Region", RegionResourceAttrRO.NAMESPACE.SHELL_NAME
-    )
+    region = RegionResourceAttrRO("Region", RegionResourceAttrRO.NAMESPACE.SHELL_NAME)
 
-    vm_size = ResourceAttrRO(
-        "VM Size", ResourceAttrRO.NAMESPACE.SHELL_NAME
-    )
+    vm_size = ResourceAttrRO("VM Size", ResourceAttrRO.NAMESPACE.SHELL_NAME)
 
     networks_in_use = ResourceAttrRO(
         "Networks in use", ResourceAttrRO.NAMESPACE.SHELL_NAME

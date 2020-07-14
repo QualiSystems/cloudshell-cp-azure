@@ -30,13 +30,17 @@ class CSIPPoolManager:
             "ownerId": self._get_pool_item_owner(owner),
             "isolation": "Exclusive",
             "subnetRange": subnet_cidr,
-            "reservedIps": self._get_reserved_ips(subnet_cidr)
+            "reservedIps": self._get_reserved_ips(subnet_cidr),
         }
 
         # if there is no free IP api will throw an error: CloudShell API error 100: Error: Could not find available IP
-        result = self._cs_api.CheckoutFromPool(selectionCriteriaJson=json.dumps(request))
+        result = self._cs_api.CheckoutFromPool(
+            selectionCriteriaJson=json.dumps(request)
+        )
         available_ip = result.Items[0]
-        self._logger.info(f"Retrieved available IP '{available_ip}' from the subnet '{subnet_cidr}'")
+        self._logger.info(
+            f"Retrieved available IP '{available_ip}' from the subnet '{subnet_cidr}'"
+        )
 
         return available_ip
 
@@ -73,9 +77,11 @@ class CSIPPoolManager:
         :param list[str] ips:
         :return:
         """
-        self._cs_api.ReleaseFromPool(values=ips,
-                                     poolId=self._get_pool_id(reservation_id),
-                                     reservationId=reservation_id,
-                                     ownerId=self._get_pool_item_owner(owner))
+        self._cs_api.ReleaseFromPool(
+            values=ips,
+            poolId=self._get_pool_id(reservation_id),
+            reservationId=reservation_id,
+            ownerId=self._get_pool_item_owner(owner),
+        )
 
         self._logger.info(f"Released IPs from the pool: {ips}")

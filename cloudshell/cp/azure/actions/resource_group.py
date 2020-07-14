@@ -17,9 +17,9 @@ class ResourceGroupActions:
         :return:
         """
         self._logger.info(f"Creating resource group: {resource_group_name}")
-        self._azure_client.create_resource_group(group_name=resource_group_name,
-                                                 region=region,
-                                                 tags=tags)
+        self._azure_client.create_resource_group(
+            group_name=resource_group_name, region=region, tags=tags
+        )
 
     def delete_resource_group(self, resource_group_name):
         """

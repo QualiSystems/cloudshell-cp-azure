@@ -17,11 +17,12 @@ class VMImageActions:
         :param sku:
         :return:
         """
-        self._logger.info(f"Getting Marketplace Image OS for Publisher: {publisher_name}, Offer: {offer}, SKU: {sku}")
-        image = self._azure_client.get_latest_virtual_machine_image(region=region,
-                                                                    publisher_name=publisher_name,
-                                                                    offer=offer,
-                                                                    sku=sku)
+        self._logger.info(
+            f"Getting Marketplace Image OS for Publisher: {publisher_name}, Offer: {offer}, SKU: {sku}"
+        )
+        image = self._azure_client.get_latest_virtual_machine_image(
+            region=region, publisher_name=publisher_name, offer=offer, sku=sku
+        )
         return image.os_disk_image.operating_system
 
     def get_custom_image_os(self, image_resource_group_name, image_name):
@@ -32,8 +33,9 @@ class VMImageActions:
         :return:
         """
         self._logger.info(f"Getting Custom Image OS for Image: {image_name}")
-        image = self._azure_client.get_custom_virtual_machine_image(image_name=image_name,
-                                                                    resource_group_name=image_resource_group_name)
+        image = self._azure_client.get_custom_virtual_machine_image(
+            image_name=image_name, resource_group_name=image_resource_group_name
+        )
         return image.storage_profile.os_disk.os_type
 
     def get_custom_image_id(self, image_resource_group_name, image_name):
@@ -44,6 +46,7 @@ class VMImageActions:
         :return:
         """
         self._logger.info(f"Getting Custom Image ID for Image: {image_name}")
-        image = self._azure_client.get_custom_virtual_machine_image(image_name=image_name,
-                                                                    resource_group_name=image_resource_group_name)
+        image = self._azure_client.get_custom_virtual_machine_image(
+            image_name=image_name, resource_group_name=image_resource_group_name
+        )
         return image.id

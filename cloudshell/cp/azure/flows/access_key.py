@@ -23,7 +23,11 @@ class AzureGetAccessKeyFlow:
         resource_group_name = self._reservation_info.get_resource_group_name()
         storage_account_name = self._reservation_info.get_storage_account_name()
 
-        ssh_keypair_actions = SSHKeyPairActions(azure_client=self._azure_client, logger=self._logger)
+        ssh_keypair_actions = SSHKeyPairActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
 
-        return ssh_keypair_actions.get_ssh_private_key(resource_group_name=resource_group_name,
-                                                       storage_account_name=storage_account_name)
+        return ssh_keypair_actions.get_ssh_private_key(
+            resource_group_name=resource_group_name,
+            storage_account_name=storage_account_name,
+        )

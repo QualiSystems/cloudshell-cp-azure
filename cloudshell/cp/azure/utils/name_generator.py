@@ -1,5 +1,5 @@
-import uuid
 import re
+import uuid
 
 
 def generate_name(name, postfix=None, max_length=24):
@@ -18,7 +18,7 @@ def generate_name(name, postfix=None, max_length=24):
     if postfix is None:
         postfix = generate_short_unique_string()
 
-    name = name[:max_length-len(postfix)-1]
+    name = name[: max_length - len(postfix) - 1]
     name.rstrip("-")
 
     return f"{name}-{postfix}"
@@ -35,4 +35,4 @@ def generate_short_unique_string():
 
 
 def format_subnet_name(resource_group_name, subnet_cidr):
-    return (resource_group_name + '_' + subnet_cidr).replace(' ', '').replace('/', '-')
+    return (resource_group_name + "_" + subnet_cidr).replace(" ", "").replace("/", "-")

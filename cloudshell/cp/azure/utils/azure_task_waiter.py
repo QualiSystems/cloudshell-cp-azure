@@ -30,10 +30,14 @@ class AzureTaskWaiter:
 
         while not operation_poller.done():
             with self._cancellation_manager:
-                self._logger.info(f"Waiting for operation to complete, current status is {operation_poller.status()}")
+                self._logger.info(
+                    f"Waiting for operation to complete, current status is {operation_poller.status()}"
+                )
                 time.sleep(wait_time)
 
             if datetime.now() > timeout_time:
-                raise AzureTaskTimeoutException(f"Unable to perform operation within {timeout / 60} minute(s)")
+                raise AzureTaskTimeoutException(
+                    f"Unable to perform operation within {timeout / 60} minute(s)"
+                )
 
         return operation_poller.result()

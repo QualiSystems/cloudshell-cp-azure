@@ -3,11 +3,21 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 class CreateDenyAccessToPrivateSubnetRuleCommand(RollbackCommand):
     """Block access from the Internet to private subnet"""
+
     NSG_RULE_PRIORITY = 2000
     NSG_RULE_NAME_TPL = "Deny_Internet_Traffic_To_Private_Subnet_{subnet_cidr}"
 
-    def __init__(self, rollback_manager, cancellation_manager, nsg_actions, nsg_name, resource_group_name,
-                 sandbox_cidr, subnet_cidr, rules_priority_generator):
+    def __init__(
+        self,
+        rollback_manager,
+        cancellation_manager,
+        nsg_actions,
+        nsg_name,
+        resource_group_name,
+        sandbox_cidr,
+        subnet_cidr,
+        rules_priority_generator,
+    ):
         """
 
         :param rollback_manager:
@@ -19,7 +29,9 @@ class CreateDenyAccessToPrivateSubnetRuleCommand(RollbackCommand):
         :param subnet_cidr:
         :param rules_priority_generator:
         """
-        super().__init__(rollback_manager=rollback_manager, cancellation_manager=cancellation_manager)
+        super().__init__(
+            rollback_manager=rollback_manager, cancellation_manager=cancellation_manager
+        )
         self._nsg_actions = nsg_actions
         self._nsg_name = nsg_name
         self._resource_group_name = resource_group_name
@@ -29,15 +41,23 @@ class CreateDenyAccessToPrivateSubnetRuleCommand(RollbackCommand):
 
     def _execute(self):
         self._nsg_actions.create_nsg_deny_rule(
-            rule_name=self.NSG_RULE_NAME_TPL.format(subnet_cidr=self._subnet_cidr).replace('/', '-'),
+            rule_name=self.NSG_RULE_NAME_TPL.format(
+                subnet_cidr=self._subnet_cidr
+            ).replace("/", "-"),
             resource_group_name=self._resource_group_name,
             nsg_name=self._nsg_name,
             src_address=self._sandbox_cidr,
             dst_address=self._subnet_cidr,
-            rule_priority=self._rules_priority_generator.get_priority(start_from=self.NSG_RULE_PRIORITY))
+            rule_priority=self._rules_priority_generator.get_priority(
+                start_from=self.NSG_RULE_PRIORITY
+            ),
+        )
 
     def rollback(self):
         self._nsg_actions.delete_nsg_rule(
-            rule_name=self.NSG_RULE_NAME_TPL.format(subnet_cidr=self._subnet_cidr).replace('/', '-'),
+            rule_name=self.NSG_RULE_NAME_TPL.format(
+                subnet_cidr=self._subnet_cidr
+            ).replace("/", "-"),
             resource_group_name=self._resource_group_name,
-            nsg_name=self._nsg_name)
+            nsg_name=self._nsg_name,
+        )

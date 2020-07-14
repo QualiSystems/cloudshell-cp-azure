@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass, field
 
-from cloudshell.cp.azure.models.route_table import RouteTable, Route
+from cloudshell.cp.azure.models.route_table import Route, RouteTable
 
 
 @dataclass
@@ -22,11 +22,16 @@ class CreateRouteTablesRequestActions:
             route_table = RouteTable(
                 name=route_table_data["name"],
                 subnets=route_table_data["subnets"],
-                routes=[Route(
-                    name=route_data["name"],
-                    address_prefix=route_data["address_prefix"],
-                    next_hop_type=route_data["next_hop_type"],
-                    next_hop_address=route_data["next_hop_address"]) for route_data in route_table_data["routes"]])
+                routes=[
+                    Route(
+                        name=route_data["name"],
+                        address_prefix=route_data["address_prefix"],
+                        next_hop_type=route_data["next_hop_type"],
+                        next_hop_address=route_data["next_hop_address"],
+                    )
+                    for route_data in route_table_data["routes"]
+                ],
+            )
 
             route_tables.append(route_table)
 

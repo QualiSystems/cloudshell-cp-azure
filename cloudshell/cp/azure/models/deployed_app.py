@@ -1,6 +1,6 @@
-from cloudshell.cp.core.request_actions import models
-
 from cloudshell.cp.azure import constants
+
+from cloudshell.cp.core.request_actions import models
 
 
 class BaseAzureVMDeployedApp(models.DeployedApp):

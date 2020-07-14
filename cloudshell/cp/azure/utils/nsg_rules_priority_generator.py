@@ -2,7 +2,13 @@ class NSGRulesPriorityGenerator:
     RULE_DEFAULT_PRIORITY = 1000
     RULE_PRIORITY_INCREASE_STEP = 5
 
-    def __init__(self, nsg_name, resource_group_name, include_existing_rules=False, nsg_actions=None):
+    def __init__(
+        self,
+        nsg_name,
+        resource_group_name,
+        include_existing_rules=False,
+        nsg_actions=None,
+    ):
         """
 
         :param str nsg_name:
@@ -25,13 +31,20 @@ class NSGRulesPriorityGenerator:
 
         :return:
         """
-        self._existing_priorities = [rule.priority for rule in self._nsg_actions.get_nsg_rules(
-            resource_group_name=self._resource_group_name,
-            nsg_name=self._nsg_name)]
+        self._existing_priorities = [
+            rule.priority
+            for rule in self._nsg_actions.get_nsg_rules(
+                resource_group_name=self._resource_group_name, nsg_name=self._nsg_name
+            )
+        ]
 
         self._existing_priorities.sort()
 
-    def get_priority(self, start_from=RULE_DEFAULT_PRIORITY, increase_step=RULE_PRIORITY_INCREASE_STEP):
+    def get_priority(
+        self,
+        start_from=RULE_DEFAULT_PRIORITY,
+        increase_step=RULE_PRIORITY_INCREASE_STEP,
+    ):
         """
 
         :param int start_from:

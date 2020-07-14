@@ -34,4 +34,3 @@ class AzureTagsManager:
             tags[self.TagNames.vm_name] = vm_name
 
         return tags
-

@@ -1,5 +1,7 @@
 class CloudShellReservationOutput:
-    ERROR_MESSAGE_HTML_TPL = "<html><body><span style='color: red;'>{message}</span></body></html>"
+    ERROR_MESSAGE_HTML_TPL = (
+        "<html><body><span style='color: red;'>{message}</span></body></html>"
+    )
 
     def __init__(self, cs_api, reservation_id, logger):
         """
@@ -26,6 +28,9 @@ class CloudShellReservationOutput:
         :param str message:
         :return:
         """
-        self._logger.debug(f"Sending message: '{message}' to the reservation {self._reservation_id} output")
-        self._cs_api.WriteMessageToReservationOutput(reservationId=self._reservation_id,
-                                                     message=message)
+        self._logger.debug(
+            f"Sending message: '{message}' to the reservation {self._reservation_id} output"
+        )
+        self._cs_api.WriteMessageToReservationOutput(
+            reservationId=self._reservation_id, message=message
+        )

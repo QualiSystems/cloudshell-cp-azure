@@ -1,9 +1,8 @@
-from azure.mgmt.compute.models import OperatingSystemTypes
-from msrestazure.azure_exceptions import CloudError
 import requests
-from requests.utils import is_valid_cidr
-
+from azure.mgmt.compute.models import OperatingSystemTypes
 from cloudshell.cp.azure.actions.network import NetworkActions
+from msrestazure.azure_exceptions import CloudError
+from requests.utils import is_valid_cidr
 
 
 class ValidationActions(NetworkActions):
@@ -15,12 +14,16 @@ class ValidationActions(NetworkActions):
         :return:
         """
         self._logger.info(f"Registering subscription with Azure providers...")
-        for provider in ("Microsoft.Authorization",
-                         "Microsoft.Storage",
-                         "Microsoft.Network",
-                         "Microsoft.Compute"):
+        for provider in (
+            "Microsoft.Authorization",
+            "Microsoft.Storage",
+            "Microsoft.Network",
+            "Microsoft.Compute",
+        ):
 
-            self._logger.info(f"Registering subscription with a {provider} resource provider")
+            self._logger.info(
+                f"Registering subscription with a {provider} resource provider"
+            )
             self._azure_client.register_provider(provider)
 
     def validate_azure_region(self, region):
@@ -34,7 +37,10 @@ class ValidationActions(NetworkActions):
         if not region:
             raise Exception("Region attribute can not be empty")
 
-        available_regions = [available_region.name for available_region in self._azure_client.get_available_regions()]
+        available_regions = [
+            available_region.name
+            for available_region in self._azure_client.get_available_regions()
+        ]
         self._logger.debug(f"Available Azure regions: {available_regions}")
 
         if region not in available_regions:
@@ -47,17 +53,25 @@ class ValidationActions(NetworkActions):
         :param str region:
         :return:
         """
-        self._logger.info(f"Validating MGMT resource group {mgmt_resource_group_name}...")
+        self._logger.info(
+            f"Validating MGMT resource group {mgmt_resource_group_name}..."
+        )
 
         try:
-            resource_group = self._azure_client.get_resource_group(mgmt_resource_group_name)
+            resource_group = self._azure_client.get_resource_group(
+                mgmt_resource_group_name
+            )
         except CloudError:
-            error_msg = f"Failed to find management resource group '{mgmt_resource_group_name}'"
+            error_msg = (
+                f"Failed to find management resource group '{mgmt_resource_group_name}'"
+            )
             self._logger.exception(error_msg)
             raise Exception(error_msg)
 
         if region != resource_group.location:
-            raise Exception(f"Management group '{mgmt_resource_group_name}' is not under the '{region}' region")
+            raise Exception(
+                f"Management group '{mgmt_resource_group_name}' is not under the '{region}' region"
+            )
 
     def validate_azure_mgmt_network(self, mgmt_resource_group_name):
         """
@@ -65,7 +79,9 @@ class ValidationActions(NetworkActions):
         :param str mgmt_resource_group_name:
         :return:
         """
-        self._logger.info("Verifying that MGMT vNet exists under the MGMT resource group...")
+        self._logger.info(
+            "Verifying that MGMT vNet exists under the MGMT resource group..."
+        )
         self.get_mgmt_virtual_network(resource_group_name=mgmt_resource_group_name)
 
     def validate_azure_sandbox_network(self, mgmt_resource_group_name):
@@ -74,7 +90,9 @@ class ValidationActions(NetworkActions):
         :param str mgmt_resource_group_name:
         :return:
         """
-        self._logger.info("Verifying that sandbox vNet exists under the MGMT resource group...")
+        self._logger.info(
+            "Verifying that sandbox vNet exists under the MGMT resource group..."
+        )
         self.get_sandbox_virtual_network(resource_group_name=mgmt_resource_group_name)
 
     def validate_azure_vm_size(self, vm_size, region):
@@ -86,8 +104,12 @@ class ValidationActions(NetworkActions):
         """
         self._logger.info(f"Validating VM size {vm_size}")
         if vm_size:
-            available_vm_sizes = [vm_size.name for vm_size in
-                                  self._azure_client.get_virtual_machine_sizes_by_region(region)]
+            available_vm_sizes = [
+                vm_size.name
+                for vm_size in self._azure_client.get_virtual_machine_sizes_by_region(
+                    region
+                )
+            ]
 
             self._logger.debug(f"Available VM sizes: {available_vm_sizes}")
 
@@ -115,11 +137,16 @@ class ValidationActions(NetworkActions):
         :return:
         """
         self._logger.info("Validating Deploy App 'Add Public IP' attribute")
-        all_subnets_are_private = all([
-            not subnet.is_public() for subnet in connect_subnets]) if connect_subnets else False
+        all_subnets_are_private = (
+            all([not subnet.is_public() for subnet in connect_subnets])
+            if connect_subnets
+            else False
+        )
 
         if all_subnets_are_private and deploy_app.add_public_ip:
-            raise Exception("Cannot deploy App with Public IP when connected only to private subnets")
+            raise Exception(
+                "Cannot deploy App with Public IP when connected only to private subnets"
+            )
 
     def validate_deploy_app_inbound_ports(self, deploy_app):
         """
@@ -129,7 +156,9 @@ class ValidationActions(NetworkActions):
         """
         self._logger.info("Validating Deploy App 'Inbound Ports' attribute")
         if deploy_app.inbound_ports and not deploy_app.add_public_ip:
-            raise Exception('"Inbound Ports" attribute must be empty when "Add Public IP" is False')
+            raise Exception(
+                '"Inbound Ports" attribute must be empty when "Add Public IP" is False'
+            )
 
     def validate_deploy_app_script_file(self, deploy_app):
         self._logger.info("Validating Deploy App Extension Script File")
@@ -160,11 +189,15 @@ class ValidationActions(NetworkActions):
 
         if image_os == OperatingSystemTypes.windows:
             if not deploy_app.extension_script_file.endswith("ps1"):
-                raise Exception("Invalid format for the PowerShell script. It must have a 'ps1' extension")
+                raise Exception(
+                    "Invalid format for the PowerShell script. It must have a 'ps1' extension"
+                )
         else:
             if not deploy_app.extension_script_configurations:
-                raise Exception("Linux Custom Script must have a command to execute in "
-                                "'Extension Script Configurations' attribute")
+                raise Exception(
+                    "Linux Custom Script must have a command to execute in "
+                    "'Extension Script Configurations' attribute"
+                )
 
     def validate_deploy_app_disk_size(self, deploy_app):
         """
@@ -185,7 +218,9 @@ class ValidationActions(NetworkActions):
             raise Exception(error_msg)
 
         if disk_size_num > self.MAX_VM_DISK_SIZE_GB:
-            raise Exception(f"Virtual Machine Disk size cannot be larger than {self.MAX_VM_DISK_SIZE_GB} GB")
+            raise Exception(
+                f"Virtual Machine Disk size cannot be larger than {self.MAX_VM_DISK_SIZE_GB} GB"
+            )
 
     def validate_vm_size(self, deploy_app_vm_size, cloud_provider_vm_size):
         """

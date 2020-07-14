@@ -23,7 +23,10 @@ class RollbackCommandsManager:
                         command.rollback()
                     except Exception:
                         print(f"Unable to perform rollback for command {command}")
-                        self.logger.warning(f"Unable to perform rollback for command {command}", exc_info=True)
+                        self.logger.warning(
+                            f"Unable to perform rollback for command {command}",
+                            exc_info=True,
+                        )
 
 
 class RollbackCommand:
@@ -39,10 +42,14 @@ class RollbackCommand:
         rollback_manager.register_command(self)
 
     def _execute(self, *args, **kwargs):
-        raise NotImplementedError(f"Class {type(self)} must implement method '_execute'")
+        raise NotImplementedError(
+            f"Class {type(self)} must implement method '_execute'"
+        )
 
     def rollback(self):
-        raise NotImplementedError(f"Class {type(self)} must implement method 'rollback'")
+        raise NotImplementedError(
+            f"Class {type(self)} must implement method 'rollback'"
+        )
 
     def execute(self):
         with self._cancellation_manager:

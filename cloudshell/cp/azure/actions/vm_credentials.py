@@ -30,7 +30,9 @@ class VMCredentialsActions(SSHKeyPairActions):
         # add uppercase and digit symbol to the password
         rand_idxs = random.sample(range(length), 2)
 
-        for idx, symbols_range in zip(rand_idxs, [string.ascii_uppercase, string.digits]):
+        for idx, symbols_range in zip(
+            rand_idxs, [string.ascii_uppercase, string.digits]
+        ):
             password[idx] = random.choice(symbols_range)
 
         return "".join(password)
