@@ -4,7 +4,7 @@ from cloudshell.shell.core.driver_context import AutoLoadDetails
 
 class AzureAutoloadFlow:
     def __init__(self, resource_config, azure_client, logger):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -15,10 +15,6 @@ class AzureAutoloadFlow:
         self._logger = logger
 
     def discover(self):
-        """
-
-        :return:
-        """
         validation_actions = ValidationActions(
             azure_client=self._azure_client, logger=self._logger
         )

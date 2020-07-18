@@ -13,7 +13,7 @@ class AzureRefreshIPFlow:
         cancellation_manager,
         logger,
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -31,7 +31,7 @@ class AzureRefreshIPFlow:
 
     @staticmethod
     def _get_primary_vm_interface(vm):
-        """
+        """Get primary VM interface.
 
         :param vm:
         :return:
@@ -43,7 +43,7 @@ class AzureRefreshIPFlow:
         return vm.network_profile.network_interfaces[0]
 
     def refresh_ip(self, deployed_app):
-        """Refresh Public and Private IP on CloudShell resource from corresponding deployed Azure instance
+        """Refresh Public and Private IPs on the CloudShell resource.
 
         :param deployed_app:
         :return
@@ -87,7 +87,8 @@ class AzureRefreshIPFlow:
 
         if public_ip_on_azure != deployed_app.public_ip:
             self._logger.info(
-                f"Updating Public IP on the VM {deployed_app.name} to {public_ip_on_azure}"
+                f"Updating Public IP on the VM {deployed_app.name} "
+                f"to {public_ip_on_azure}"
             )
             self._cs_api.SetAttributeValue(
                 resourceFullPath=deployed_app.name,

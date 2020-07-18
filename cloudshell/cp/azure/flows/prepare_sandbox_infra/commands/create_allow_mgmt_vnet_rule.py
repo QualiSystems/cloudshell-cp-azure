@@ -2,7 +2,7 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateAllowMGMTVnetRuleCommand(RollbackCommand):
-    """Allow MGMT vNET CIDR inbound traffic
+    """Allow MGMT vNET CIDR inbound traffic.
 
     Basically providing access to the infrastructure to manage elements in the sandbox
     """
@@ -22,7 +22,7 @@ class CreateAllowMGMTVnetRuleCommand(RollbackCommand):
         sandbox_cidr,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

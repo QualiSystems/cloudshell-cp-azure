@@ -17,7 +17,7 @@ class NetworkActions:
     CLOUDSHELL_PRIVATE_IP_ALLOCATION_METHOD = "Cloudshell Allocation"
 
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -26,12 +26,11 @@ class NetworkActions:
         self._logger = logger
 
     def _get_virtual_network_by_tag(self, virtual_networks, tag_key, tag_value):
-        """
+        """Get vNET from Azure by tag.
 
         :param list[VirtualNetwork] virtual_networks:
         :param str tag_key:
         :param str tag_value:
-        :return:
         :rtype: VirtualNetwork
         """
         self._logger.info(f"Getting Virtual Network by tag {tag_key}={tag_value}")
@@ -45,16 +44,16 @@ class NetworkActions:
 
     @staticmethod
     def prepare_sandbox_subnet_name(resource_group_name, cidr):
-        """
+        """Prepare name for the Sandbox subnet.
 
-        :param resource_group_name:
-        :param cidr:
+        :param str resource_group_name:
+        :param str cidr:
         :return:
         """
         return f"{resource_group_name}_{cidr}".replace(" ", "").replace("/", "-")
 
     def get_mgmt_virtual_network(self, resource_group_name):
-        """
+        """Get management vNET from the management resource group.
 
         :param str resource_group_name:
         :return:
@@ -74,7 +73,7 @@ class NetworkActions:
         )
 
     def get_sandbox_virtual_network(self, resource_group_name):
-        """
+        """Get sandbox vNET from the management resource group.
 
         :param str resource_group_name:
         :return:
@@ -94,10 +93,10 @@ class NetworkActions:
         )
 
     def get_sandbox_subnets(self, resource_group_name, mgmt_resource_group_name):
-        """
+        """Get all subnets from the Sandbox vNET.
 
-        :param resource_group_name:
-        :param mgmt_resource_group_name:
+        :param str resource_group_name:
+        :param str mgmt_resource_group_name:
         :return:
         """
         # todo: rework this using some special tags ?
@@ -112,8 +111,9 @@ class NetworkActions:
 
         if not subnets:
             raise Exception(
-                f"Unable to find subnets under the Sandbox Virtual Network '{sandbox_vnet.name}' in the "
-                f"Management Resource Group '{mgmt_resource_group_name}'"
+                f"Unable to find subnets under the Sandbox Virtual Network "
+                f"'{sandbox_vnet.name}' in the Management Resource Group "
+                f"'{mgmt_resource_group_name}'"
             )
 
         return subnets
@@ -121,7 +121,7 @@ class NetworkActions:
     def create_subnet(
         self, subnet_name, cidr, vnet, resource_group_name, network_security_group
     ):
-        """
+        """Create subnet.
 
         :param str subnet_name:
         :param str cidr:
@@ -161,7 +161,7 @@ class NetworkActions:
             return create_subnet_cmd()
 
     def update_subnet(self, subnet_name, vnet_name, resource_group_name, subnet):
-        """
+        """Update subnet.
 
         :param str subnet_name:
         :param str vnet_name:
@@ -181,7 +181,7 @@ class NetworkActions:
         )
 
     def get_subnet(self, subnet_name, vnet_name, resource_group_name):
-        """
+        """Get subnet.
 
         :param str subnet_name:
         :param vnet_name:
@@ -198,10 +198,10 @@ class NetworkActions:
         )
 
     def delete_subnet(self, subnet_name, vnet_name, resource_group_name):
-        """
+        """Delete subnet.
 
         :param str subnet_name:
-        :param vnet_name:
+        :param str vnet_name:
         :param str resource_group_name:
         :return:
         """
@@ -222,12 +222,12 @@ class NetworkActions:
         mgmt_resource_group_name,
         network_security_group,
     ):
-        """
+        """Create Sanbdox subnet.
 
-        :param cidr:
+        :param str cidr:
         :param vnet:
-        :param resource_group_name:
-        :param mgmt_resource_group_name:
+        :param str resource_group_name:
+        :param str mgmt_resource_group_name:
         :param network_security_group:
         :return:
         """
@@ -245,7 +245,7 @@ class NetworkActions:
     def get_sandbox_subnet(
         self, cidr, vnet_name, resource_group_name, mgmt_resource_group_name
     ):
-        """
+        """Get Sandbox subnet.
 
         :param str cidr:
         :param str vnet_name:
@@ -265,7 +265,7 @@ class NetworkActions:
     def delete_sandbox_subnet(
         self, cidr, vnet_name, resource_group_name, mgmt_resource_group_name
     ):
-        """
+        """Delete Sandbox subnet.
 
         :param str cidr:
         :param str vnet_name:
@@ -283,7 +283,7 @@ class NetworkActions:
         )
 
     def _get_stale_subnet(self, vnet, subnet_cidr):
-        """
+        """Get Sandbox subnet.
 
         :param VirtualNetwork vnet:
         :param str subnet_cidr:
@@ -295,10 +295,10 @@ class NetworkActions:
             if any([stale_network in subnet_network, subnet_network in stale_network]):
                 return subnet
 
-        raise Exception(f"Unable to cleanup stale subnet for CIDR {subnet_cidr}")
+        raise Exception(f"Unable to find stale subnet for CIDR {subnet_cidr}")
 
     def _cleanup_stale_subnet(self, vnet, subnet_cidr, resource_group_name):
-        """
+        """Cleanup stale subnet.
 
         :param VirtualNetwork vnet:
         :param str subnet_cidr:
@@ -332,26 +332,27 @@ class NetworkActions:
         self._logger.info(f"Subnet {subnet.id} was successfully deleted")
 
     def _get_azure_ip_allocation_type(self, ip_type):
-        """Get corresponding Enum type by string ip_type
+        """Get corresponding Enum type by string ip_type.
 
         :param str ip_type: IP allocation method for the Public IP (Static/Dynamic)
         """
         types_map = {
-            self.CLOUDSHELL_STATIC_IP_ALLOCATION_TYPE: models.IPAllocationMethod.static,
-            self.CLOUDSHELL_DYNAMIC_IP_ALLOCATION_TYPE: models.IPAllocationMethod.dynamic,
+            self.CLOUDSHELL_STATIC_IP_ALLOCATION_TYPE: models.IPAllocationMethod.static,  # noqa: E501
+            self.CLOUDSHELL_DYNAMIC_IP_ALLOCATION_TYPE: models.IPAllocationMethod.dynamic,  # noqa: E501
         }
 
         allocation_type = types_map.get(ip_type.lower())
 
         if not allocation_type:
             raise Exception(
-                f"Incorrect allocation type '{ip_type}'. Possible values are {types_map.keys()}"
+                f"Incorrect allocation type '{ip_type}'."
+                f" Possible values are {types_map.keys()}"
             )
 
         return allocation_type
 
     def is_static_ip_allocation_type(self, ip_type):
-        """
+        """Check whether Azure IP Allocation type is static or not.
 
         :param ip_type:
         :return:
@@ -362,21 +363,22 @@ class NetworkActions:
         )
 
     def convert_cloudshell_private_ip_allocation_type(self, ip_type):
-        """
+        """Convert CloudShell IP Allocation Type to Static/Dynamic.
 
         :param ip_type:
         :return:
         """
         types_map = {
-            self.AZURE_PRIVATE_IP_ALLOCATION_METHOD: self.CLOUDSHELL_DYNAMIC_IP_ALLOCATION_TYPE,
-            self.CLOUDSHELL_PRIVATE_IP_ALLOCATION_METHOD: self.CLOUDSHELL_STATIC_IP_ALLOCATION_TYPE,
+            self.AZURE_PRIVATE_IP_ALLOCATION_METHOD: self.CLOUDSHELL_DYNAMIC_IP_ALLOCATION_TYPE,  # noqa: E501
+            self.CLOUDSHELL_PRIVATE_IP_ALLOCATION_METHOD: self.CLOUDSHELL_STATIC_IP_ALLOCATION_TYPE,  # noqa: E501
         }
 
         allocation_type = types_map.get(ip_type)
 
         if not allocation_type:
             raise Exception(
-                f"Incorrect allocation type '{ip_type}'. Possible values are {list(types_map.keys())}"
+                f"Incorrect allocation type '{ip_type}'. "
+                f"Possible values are {list(types_map.keys())}"
             )
 
         return allocation_type
@@ -395,19 +397,19 @@ class NetworkActions:
         add_public_ip=False,
         enable_ip_forwarding=False,
     ):
-        """
+        """Create VM network.
 
-        :param interface_name:
+        :param str interface_name:
         :param subnet:
         :param network_security_group:
-        :param public_ip_type:
-        :param resource_group_name:
-        :param region:
-        :param tags:
-        :param private_ip_allocation_method:
-        :param private_ip_address:
-        :param add_public_ip:
-        :param enable_ip_forwarding:
+        :param str public_ip_type:
+        :param str resource_group_name:
+        :param str region:
+        :param dict[str, str] tags:
+        :param str private_ip_allocation_method:
+        :param str private_ip_address:
+        :param bool add_public_ip:
+        :param bool enable_ip_forwarding:
         :return:
         """
         if add_public_ip:
@@ -444,10 +446,10 @@ class NetworkActions:
         )
 
     def get_vm_network(self, interface_name, resource_group_name):
-        """
+        """Get VM Network.
 
-        :param interface_name:
-        :param resource_group_name:
+        :param str interface_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Getting Virtual Machine Interface {interface_name}")
@@ -456,7 +458,7 @@ class NetworkActions:
         )
 
     def get_vm_network_public_ip(self, interface_name, resource_group_name):
-        """
+        """Get Public IP associated with the provided VM Network.
 
         :param interface_name:
         :param resource_group_name:
@@ -471,10 +473,10 @@ class NetworkActions:
         )
 
     def delete_vm_network(self, interface_name, resource_group_name):
-        """
+        """Delete VM Network.
 
-        :param interface_name:
-        :param resource_group_name:
+        :param str interface_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Deleting Virtual Machine Interface {interface_name}")
@@ -483,10 +485,10 @@ class NetworkActions:
         )
 
     def delete_public_ip(self, public_ip_name, resource_group_name):
-        """
+        """Delete Public IP.
 
-        :param public_ip_name:
-        :param resource_group_name:
+        :param str public_ip_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Deleting Public IP {public_ip_name}")
@@ -495,10 +497,10 @@ class NetworkActions:
         )
 
     def delete_interface_public_ip(self, interface_name, resource_group_name):
-        """
+        """Delete Public IP from the provided Interface.
 
-        :param interface_name:
-        :param resource_group_name:
+        :param str interface_name:
+        :param str resource_group_name:
         :return:
         """
         self.delete_public_ip(

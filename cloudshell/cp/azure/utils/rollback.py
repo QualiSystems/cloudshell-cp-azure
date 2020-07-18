@@ -4,7 +4,7 @@ class RollbackCommandsManager:
         self.logger = logger
 
     def register_command(self, command):
-        """
+        """Register rollback command.
 
         :param RollbackCommand command:
         :return:
@@ -22,7 +22,6 @@ class RollbackCommandsManager:
                         self.logger.info(f"Running rollback for command {command}")
                         command.rollback()
                     except Exception:
-                        print(f"Unable to perform rollback for command {command}")
                         self.logger.warning(
                             f"Unable to perform rollback for command {command}",
                             exc_info=True,
@@ -31,10 +30,10 @@ class RollbackCommandsManager:
 
 class RollbackCommand:
     def __init__(self, rollback_manager, cancellation_manager, *args, **kwargs):
-        """
+        """Init command.
 
         :param RollbackCommandsManager rollback_manager:
-        :param cloudshell.cp.core.cancellation_manager.CancellationContextManager cancellation_manager:
+        :param cloudshell.cp.core.cancellation_manager.CancellationContextManager cancellation_manager:  # noqa: E501
         """
         self._rollback_manager = rollback_manager
         self._cancellation_manager = cancellation_manager

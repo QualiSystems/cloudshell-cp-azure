@@ -21,7 +21,7 @@ class AzureDeleteInstanceFlow:
         lock_manager,
         logger,
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -38,7 +38,7 @@ class AzureDeleteInstanceFlow:
         self._logger = logger
 
     def _get_public_ip_names(self, network_interfaces):
-        """
+        """Get public IP addresses names for the provided interfaces.
 
         :param network_interfaces:
         :return:
@@ -53,8 +53,8 @@ class AzureDeleteInstanceFlow:
 
         return public_ip_names
 
-    def _get_private_ip_names(self, network_interfaces, network_actions):
-        """
+    def _get_private_ip_adresses(self, network_interfaces, network_actions):
+        """Get private IP addresses for the provided interfaces.
 
         :param network_interfaces:
         :return:
@@ -94,11 +94,12 @@ class AzureDeleteInstanceFlow:
             )
         else:
             raise Exception(
-                f"Unable to delete data disk under VM {vm.name}. Unsupported OS data disk type"
+                f"Unable to delete data disk under VM {vm.name}. "
+                f"Unsupported OS data disk type"
             )
 
     def delete_instance(self, deployed_app):
-        """
+        """Delete VM instance.
 
         :param deployed_app:
         :return:
@@ -134,7 +135,7 @@ class AzureDeleteInstanceFlow:
             network_interfaces=network_interfaces
         )
 
-        private_ips = self._get_private_ip_names(
+        private_ips = self._get_private_ip_adresses(
             network_interfaces=network_interfaces, network_actions=network_actions
         )
 

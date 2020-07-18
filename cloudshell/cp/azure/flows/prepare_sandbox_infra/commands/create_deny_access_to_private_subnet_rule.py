@@ -2,7 +2,7 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateDenyAccessToPrivateSubnetRuleCommand(RollbackCommand):
-    """Block access from the Internet to private subnet"""
+    """Block access from the Internet to private subnet."""
 
     NSG_RULE_PRIORITY = 2000
     NSG_RULE_NAME_TPL = "Deny_Internet_Traffic_To_Private_Subnet_{subnet_cidr}"
@@ -18,7 +18,7 @@ class CreateDenyAccessToPrivateSubnetRuleCommand(RollbackCommand):
         subnet_cidr,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

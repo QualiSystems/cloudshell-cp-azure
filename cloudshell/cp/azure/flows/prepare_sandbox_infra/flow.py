@@ -26,7 +26,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         cancellation_manager,
         logger,
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -46,7 +46,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         pass
 
     def prepare_common_objects(self, request_actions):
-        """
+        """Prepare common objects.
 
         :param request_actions:
         :return:
@@ -65,7 +65,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             )
 
     def prepare_subnets(self, request_actions):
-        """
+        """Prepare subnets.
 
         :param request_actions:
         :return:
@@ -92,7 +92,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             )
 
     def create_ssh_keys(self, request_actions):
-        """
+        """Create SSH public and private keys.
 
         :param request_actions:
         :return: SSH Access key
@@ -103,7 +103,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         tags = self._tags_manager.get_tags()
 
         with self._rollback_manager:
-            self._create_storage_account_command(
+            self._create_storage_account(
                 storage_account_name=storage_account_name,
                 resource_group_name=resource_group_name,
                 tags=tags,
@@ -130,11 +130,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             return private_key
 
     def _create_resource_group(self, resource_group_actions, resource_group_name, tags):
-        """
+        """Create Resource Group.
 
         :param resource_group_actions:
-        :param resource_group_name:
-        :param tags:
+        :param str resource_group_name:
+        :param dict[str, str] tags:
         :return:
         """
         commands.CreateResourceGroupCommand(
@@ -147,11 +147,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         ).execute()
 
     def _create_nsg(self, nsg_name, resource_group_name, tags):
-        """
+        """Create Network Security Group.
 
-        :param nsg_name:
-        :param resource_group_name:
-        :param tags:
+        :param str nsg_name:
+        :param str resource_group_name:
+        :param dict[str, str] tags:
         :return:
         """
         nsg_actions = NetworkSecurityGroupActions(
@@ -171,11 +171,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_nsg_allow_sandbox_traffic_to_subnet_rules(
         self, request_actions, nsg_name, resource_group_name, rules_priority_generator
     ):
-        """
+        """Create NSG allow Sandbox traffic to subnet rules.
 
         :param request_actions:
-        :param nsg_name:
-        :param resource_group_name:
+        :param str nsg_name:
+        :param str resource_group_name:
         :return:
         """
         nsg_actions = NetworkSecurityGroupActions(
@@ -197,11 +197,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_nsg_deny_access_to_private_subnet_rules(
         self, request_actions, nsg_name, resource_group_name, rules_priority_generator
     ):
-        """
+        """Create NSG deny access to private subnet rules.
 
         :param request_actions:
-        :param nsg_name:
-        :param resource_group_name:
+        :param str nsg_name:
+        :param str resource_group_name:
         :return:
         """
         nsg_actions = NetworkSecurityGroupActions(
@@ -223,11 +223,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_nsg_additional_mgmt_networks_rules(
         self, request_actions, nsg_name, resource_group_name, rules_priority_generator
     ):
-        """
+        """Create NSG rules for the additional MGMT networks.
 
         :param request_actions:
-        :param nsg_name:
-        :param resource_group_name:
+        :param str nsg_name:
+        :param str resource_group_name:
         :return:
         """
         nsg_actions = NetworkSecurityGroupActions(
@@ -249,11 +249,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_nsg_allow_mgmt_vnet_rule(
         self, request_actions, nsg_name, resource_group_name, rules_priority_generator
     ):
-        """
+        """Create NSG allow MGMT vNET rule.
 
         :param request_actions:
-        :param nsg_name:
-        :param resource_group_name:
+        :param str nsg_name:
+        :param str resource_group_name:
         :return:
         """
         nsg_actions = NetworkSecurityGroupActions(
@@ -278,11 +278,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_nsg_deny_traffic_from_other_sandboxes_rule(
         self, request_actions, nsg_name, resource_group_name, rules_priority_generator
     ):
-        """
+        """Create NSG deny traffic from other sandboxes rule.
 
         :param request_actions:
-        :param nsg_name:
-        :param resource_group_name:
+        :param str nsg_name:
+        :param str resource_group_name:
         :return:
         """
         nsg_actions = NetworkSecurityGroupActions(
@@ -305,11 +305,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         ).execute()
 
     def _create_nsg_rules(self, request_actions, resource_group_name, nsg_name):
-        """
+        """Create all required NSG rules.
 
         :param request_actions:
-        :param resource_group_name:
-        :param nsg_name:
+        :param str resource_group_name:
+        :param str nsg_name:
         :return:
         """
         rules_priority_generator = NSGRulesPriorityGenerator(
@@ -354,10 +354,10 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_subnets(
         self, request_actions, resource_group_name, network_security_group
     ):
-        """Create additional subnets requested by server
+        """Create additional subnets requested by server.
 
         :param request_actions:
-        :param resource_group_name:
+        :param str resource_group_name:
         :param network_security_group:
         :return:
         """
@@ -387,14 +387,12 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
 
         return subnet_result
 
-    def _create_storage_account_command(
-        self, storage_account_name, resource_group_name, tags
-    ):
-        """
+    def _create_storage_account(self, storage_account_name, resource_group_name, tags):
+        """Create Storage Account.
 
-        :param storage_account_name:
-        :param resource_group_name:
-        :param tags:
+        :param str storage_account_name:
+        :param str resource_group_name:
+        :param dict[str, str] tags:
         :return:
         """
         storage_actions = StorageAccountActions(
@@ -414,11 +412,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_ssh_public_key(
         self, public_key, storage_account_name, resource_group_name
     ):
-        """
+        """Save SSH public key on the Azure.
 
-        :param public_key:
-        :param storage_account_name:
-        :param resource_group_name:
+        :param str public_key:
+        :param str storage_account_name:
+        :param str resource_group_name:
         :return:
         """
         ssh_actions = SSHKeyPairActions(
@@ -437,11 +435,11 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
     def _create_ssh_private_key(
         self, private_key, storage_account_name, resource_group_name
     ):
-        """
+        """Save SSH private key on the Azure.
 
-        :param private_key:
-        :param storage_account_name:
-        :param resource_group_name:
+        :param str private_key:
+        :param str storage_account_name:
+        :param str resource_group_name:
         :return:
         """
         ssh_actions = SSHKeyPairActions(

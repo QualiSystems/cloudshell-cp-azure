@@ -3,7 +3,7 @@ from azure.mgmt.network.models import Route, RouteTable
 
 class RouteTablesActions:
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -14,7 +14,7 @@ class RouteTablesActions:
     def create_route_table(
         self, resource_group_name, route_table_name, region, route_table
     ):
-        """
+        """Create Route Table.
 
         :param str resource_group_name:
         :param str route_table_name:

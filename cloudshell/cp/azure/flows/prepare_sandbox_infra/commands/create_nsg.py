@@ -12,7 +12,7 @@ class CreateNSGCommand(RollbackCommand):
         region,
         tags,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

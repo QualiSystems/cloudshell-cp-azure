@@ -44,7 +44,7 @@ class AzureAPIClient:
         azure_application_key,
         logger,
     ):
-        """
+        """Init command.
 
         :param str azure_subscription_id:
         :param str azure_tenant_id:
@@ -90,7 +90,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_available_regions(self):
-        """List all available regions per subscription
+        """List all available regions per subscription.
 
         :rtype: list[azure.mgmt.resource.subscriptions.models.Location]
         """
@@ -105,7 +105,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def register_provider(self, provider):
-        """
+        """Register Azure Provider.
 
         :param str provider:
         :return:
@@ -118,7 +118,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_resource_group(self, resource_group_name):
-        """
+        """Get Resource Group.
 
         :param str resource_group_name:
         :return:
@@ -133,7 +133,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_virtual_networks_by_resource_group(self, resource_group_name):
-        """
+        """Get vNets for the given resource group.
 
         :param str resource_group_name:
         :return: list of vNets in group
@@ -148,7 +148,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_virtual_machine_sizes_by_region(self, region):
-        """List available virtual machine sizes within given location
+        """List available virtual machine sizes within given location.
 
         :param str region: Azure region
         :return: azure.mgmt.compute.models.VirtualMachineSizePaged instance
@@ -161,7 +161,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def create_resource_group(self, group_name, region, tags):
-        """
+        """Create Resource Group.
 
         :param str group_name:
         :param str region:
@@ -179,10 +179,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_resource_group(self, group_name, wait_for_result=False):
-        """
+        """Delete Resource Group.
 
         :param str group_name:
-        :param str region:
+        :param bool wait_for_result:
         :return:
         """
         operation_poller = self._resource_client.resource_groups.delete(
@@ -205,7 +205,7 @@ class AzureAPIClient:
         tags,
         wait_for_result=False,
     ):
-        """
+        """Create Storage Account.
 
         :param str resource_group_name:
         :param str region:
@@ -240,14 +240,13 @@ class AzureAPIClient:
     def delete_storage_account(
         self, resource_group_name, storage_account_name, wait_for_result=False
     ):
-        """
+        """Delete Storage Account.
 
         :param str resource_group_name:
         :param str storage_account_name:
         :param bool wait_for_result:
         :return:
         """
-
         operation_poller = self._storage_client.storage_accounts.delete(
             resource_group_name=resource_group_name, account_name=storage_account_name
         )
@@ -263,7 +262,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def _get_storage_account_key(self, resource_group_name, storage_account_name):
-        """Get first storage account access key for some storage
+        """Get first storage account access key for some storage.
 
         :param str resource_group_name: name of the resource group on Azure
         :param str storage_account_name: name of the storage on Azure
@@ -280,8 +279,9 @@ class AzureAPIClient:
 
         if not account_keys.keys:
             raise Exception(
-                f"Unable to find access key for the storage account '{storage_account_name}' "
-                f"under the '{resource_group_name}' resource group"
+                f"Unable to find access key for the storage account "
+                f"'{storage_account_name}' under the '{resource_group_name}' "
+                f"resource group"
             )
 
         account_key = account_keys.keys[0].value
@@ -290,7 +290,7 @@ class AzureAPIClient:
         return account_key
 
     def _get_file_service(self, resource_group_name, storage_account_name):
-        """Get Azure file service for given storage
+        """Get Azure file service for given storage.
 
         :param str resource_group_name: the name of the resource group on Azure
         :param str storage_account_name: the name of the storage on Azure
@@ -304,7 +304,7 @@ class AzureAPIClient:
         return FileService(account_name=storage_account_name, account_key=account_key)
 
     def _get_blob_service(self, storage_account_name, resource_group_name):
-        """Get Azure Blob service for given storage
+        """Get Azure Blob service for given storage.
 
         :param str resource_group_name: the name of the resource group on Azure
         :param str storage_account_name: the name of the storage on Azure
@@ -327,12 +327,12 @@ class AzureAPIClient:
     def delete_blob(
         self, blob_name, container_name, resource_group_name, storage_account_name
     ):
-        """
+        """Delete Blob file.
 
-        :param blob_name:
-        :param container_name:
-        :param resource_group_name:
-        :param storage_account_name:
+        :param str blob_name:
+        :param str container_name:
+        :param str resource_group_name:
+        :param str storage_account_name:
         :return:
         """
         blob_service = self._get_blob_service(
@@ -348,7 +348,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_managed_disk(self, disk_name, resource_group_name):
-        """
+        """Delete Managed Disk.
 
         :param str disk_name:
         :param str resource_group_name:
@@ -373,7 +373,7 @@ class AzureAPIClient:
         file_name,
         file_content,
     ):
-        """Create file on the Azure
+        """Create file on the Azure.
 
         :param str resource_group_name: name of the resource group on Azure
         :param str storage_account_name: name of the storage on Azure
@@ -409,7 +409,7 @@ class AzureAPIClient:
         directory_name,
         file_name,
     ):
-        """Get file from the Azure
+        """Get file from the Azure.
 
         :param str resource_group_name: name of the resource group on Azure
         :param str storage_account_name: name of the storage on Azure
@@ -435,17 +435,17 @@ class AzureAPIClient:
     def create_network_security_group(
         self, network_security_group_name, resource_group_name, region, tags
     ):
-        """
+        """Create Network Security Group.
 
         :param str network_security_group_name:
         :param str resource_group_name:
         :param str region:
-        :param dict tags:
+        :param dict[str, str] tags:
         :return:
         """
         nsg_model = network_models.NetworkSecurityGroup(location=region, tags=tags)
 
-        operation_poller = self._network_client.network_security_groups.create_or_update(
+        operation_poller = self._network_client.network_security_groups.create_or_update(  # noqa: E501
             resource_group_name=resource_group_name,
             network_security_group_name=network_security_group_name,
             parameters=nsg_model,
@@ -461,7 +461,7 @@ class AzureAPIClient:
     def get_network_security_group(
         self, network_security_group_name, resource_group_name
     ):
-        """
+        """Get Network Security Group.
 
         :param str network_security_group_name:
         :param str resource_group_name:
@@ -480,7 +480,7 @@ class AzureAPIClient:
     def delete_network_security_group(
         self, network_security_group_name, resource_group_name, wait_for_result=False
     ):
-        """
+        """Delete Network Security Group.
 
         :param str network_security_group_name:
         :param str resource_group_name:
@@ -501,7 +501,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_nsg_rules(self, resource_group_name, nsg_name):
-        """
+        """Get Network Security Group rules.
 
         :param str resource_group_name:
         :param str nsg_name:
@@ -520,7 +520,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def create_nsg_rule(self, resource_group_name, nsg_name, rule):
-        """
+        """Create Network Security Group rule.
 
         :param str resource_group_name:
         :param str nsg_name: Network Security Group name on the Azure
@@ -544,7 +544,7 @@ class AzureAPIClient:
     def delete_nsg_rule(
         self, resource_group_name, nsg_name, rule_name, wait_for_result=False
     ):
-        """
+        """Delete Network Security Group rule.
 
         :param str resource_group_name:
         :param str nsg_name:
@@ -574,7 +574,7 @@ class AzureAPIClient:
         network_security_group=None,
         wait_for_result=False,
     ):
-        """
+        """Create Subnet.
 
         :param str subnet_name:
         :param str cidr:
@@ -601,7 +601,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_subnet(self, subnet_name, vnet_name, resource_group_name):
-        """
+        """Get Subnet.
 
         :param str subnet_name:
         :param str vnet_name:
@@ -622,7 +622,7 @@ class AzureAPIClient:
     def update_subnet(
         self, subnet_name, vnet_name, subnet, resource_group_name, wait_for_result=False
     ):
-        """
+        """Update Subnet.
 
         :param str subnet_name:
         :param str vnet_name:
@@ -647,7 +647,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_subnet(self, subnet_name, vnet_name, resource_group_name):
-        """
+        """Delete Subnet.
 
         :param str subnet_name:
         :param str vnet_name:
@@ -667,7 +667,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def _get_vm_image_latest_version_name(self, region, publisher_name, offer, sku):
-        """Get latest version name of the VM image
+        """Get latest version name of the VM image.
 
         :param str region:
         :param str publisher_name:
@@ -686,7 +686,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_latest_virtual_machine_image(self, region, publisher_name, offer, sku):
-        """Get latest version of the VM image
+        """Get latest version of the VM image.
 
         :param str region:
         :param str publisher_name:
@@ -711,10 +711,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_custom_virtual_machine_image(self, image_name, resource_group_name):
-        """
+        """Get custom virtual machine image.
 
-        :param image_name:
-        :param resource_group_name:
+        :param str image_name:
+        :param str resource_group_name:
         :return:
         """
         return self._compute_client.images.get(
@@ -734,13 +734,13 @@ class AzureAPIClient:
         public_ip_allocation_method,
         tags,
     ):
-        """
+        """Create Public IP address.
 
-        :param public_ip_name:
-        :param resource_group_name:
-        :param region:
-        :param public_ip_allocation_method:
-        :param tags:
+        :param str public_ip_name:
+        :param str resource_group_name:
+        :param str region:
+        :param str public_ip_allocation_method:
+        :param dict[str, str] tags:
         :return:
         """
         operation_poller = self._network_client.public_ip_addresses.create_or_update(
@@ -779,18 +779,18 @@ class AzureAPIClient:
         public_ip_address=None,
         private_ip_address=None,
     ):
-        """
+        """Create VM Network interface.
 
-        :param interface_name:
-        :param resource_group_name:
+        :param str interface_name:
+        :param str resource_group_name:
         :param public_ip_address:
-        :param region:
+        :param str region:
         :param subnet:
         :param private_ip_allocation_method:
-        :param enable_ip_forwarding:
+        :param bool enable_ip_forwarding:
         :param network_security_group:
-        :param tags:
-        :param private_ip_address:
+        :param dict[str, str] tags:
+        :param str private_ip_address:
         :return:
         """
         ip_config = NetworkInterfaceIPConfiguration(
@@ -823,10 +823,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_public_ip(self, public_ip_name, resource_group_name):
-        """
+        """Get Public IP address object.
 
-        :param public_ip_name:
-        :param resource_group_name:
+        :param str public_ip_name:
+        :param str resource_group_name:
         :return:
         """
         return self._network_client.public_ip_addresses.get(
@@ -840,10 +840,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_network_interface(self, interface_name, resource_group_name):
-        """
+        """Get VM Network interface.
 
-        :param interface_name:
-        :param resource_group_name:
+        :param str interface_name:
+        :param str resource_group_name:
         :return:
         """
         return self._network_client.network_interfaces.get(
@@ -857,10 +857,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_network_interface(self, interface_name, resource_group_name):
-        """
+        """Delete VM Network interface.
 
-        :param interface_name:
-        :param resource_group_name:
+        :param str interface_name:
+        :param str resource_group_name:
         :return:
         """
         return self._network_client.network_interfaces.delete(
@@ -881,12 +881,12 @@ class AzureAPIClient:
     def create_virtual_machine(
         self, vm_name, virtual_machine, resource_group_name, wait_for_result=True
     ):
-        """
+        """Create Virtual Machine.
 
-        :param vm_name:
+        :param str vm_name:
         :param virtual_machine:
-        :param resource_group_name:
-        :param wait_for_result:
+        :param str resource_group_name:
+        :param bool wait_for_result:
         :return:
         """
         operation_poller = self._compute_client.virtual_machines.create_or_update(
@@ -915,15 +915,15 @@ class AzureAPIClient:
         tags,
         wait_for_result=True,
     ):
-        """
+        """Create Linux VM Script Extension.
 
-        :param script_file_path:
-        :param script_config:
-        :param vm_name:
-        :param resource_group_name:
-        :param region:
-        :param tags:
-        :param wait_for_result:
+        :param str script_file_path:
+        :param str script_config:
+        :param str vm_name:
+        :param str resource_group_name:
+        :param str region:
+        :param dict[str, str] tags:
+        :param bool wait_for_result:
         :return:
         """
         file_uris = [file_uri.strip() for file_uri in script_file_path.split(",")]
@@ -937,7 +937,7 @@ class AzureAPIClient:
             settings={"fileUris": file_uris, "commandToExecute": script_config},
         )
 
-        operation_poller = self._compute_client.virtual_machine_extensions.create_or_update(
+        operation_poller = self._compute_client.virtual_machine_extensions.create_or_update(  # noqa: E501
             resource_group_name=resource_group_name,
             vm_name=vm_name,
             vm_extension_name=vm_name,
@@ -964,15 +964,15 @@ class AzureAPIClient:
         tags,
         wait_for_result=True,
     ):
-        """
+        """Create Windows VM Script Extension.
 
-        :param script_file_path:
-        :param script_config:
-        :param vm_name:
-        :param resource_group_name:
-        :param region:
-        :param tags:
-        :param wait_for_result:
+        :param str script_file_path:
+        :param str script_config:
+        :param str vm_name:
+        :param str resource_group_name:
+        :param str region:
+        :param dict[str, str] tags:
+        :param bool wait_for_result:
         :return:
         """
         file_name = script_file_path.split("/")[-1]
@@ -990,7 +990,7 @@ class AzureAPIClient:
             },
         )
 
-        operation_poller = self._compute_client.virtual_machine_extensions.create_or_update(
+        operation_poller = self._compute_client.virtual_machine_extensions.create_or_update(  # noqa: E501
             resource_group_name=resource_group_name,
             vm_name=vm_name,
             vm_extension_name=vm_name,
@@ -1008,10 +1008,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_vm(self, vm_name, resource_group_name):
-        """
+        """Get Virtual Machine.
 
-        :param vm_name:
-        :param resource_group_name:
+        :param str vm_name:
+        :param str resource_group_name:
         :return:
         """
         return self._compute_client.virtual_machines.get(
@@ -1024,11 +1024,11 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def start_vm(self, vm_name, resource_group_name, wait_for_result=True):
-        """
+        """Start Virtual Machine.
 
-        :param vm_name:
-        :param resource_group_name:
-        :param wait_for_result:
+        :param str vm_name:
+        :param str resource_group_name:
+        :param bool wait_for_result:
         :return:
         """
         operation_poller = self._compute_client.virtual_machines.start(
@@ -1043,11 +1043,11 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def stop_vm(self, vm_name, resource_group_name, wait_for_result=True):
-        """
+        """Stop Virtual Machine.
 
-        :param vm_name:
-        :param resource_group_name:
-        :param wait_for_result:
+        :param str vm_name:
+        :param str resource_group_name:
+        :param bool wait_for_result:
         :return:
         """
         operation_poller = self._compute_client.virtual_machines.deallocate(
@@ -1062,10 +1062,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_vm(self, vm_name, resource_group_name):
-        """
+        """Delete Virtual Machine.
 
-        :param vm_name:
-        :param resource_group_name:
+        :param str vm_name:
+        :param str resource_group_name:
         :return:
         """
         result = self._compute_client.virtual_machines.delete(
@@ -1079,10 +1079,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_public_ip(self, public_ip_name, resource_group_name):
-        """
+        """Delete Public IP.
 
-        :param public_ip_name:
-        :param resource_group_name:
+        :param str public_ip_name:
+        :param str resource_group_name:
         :return:
         """
         result = self._network_client.public_ip_addresses.delete(
@@ -1097,10 +1097,10 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def create_route_table(self, resource_group_name, route_table_name, route_table):
-        """
+        """Create Route Table.
 
-        :param resource_group_name:
-        :param route_table_name:
+        :param str resource_group_name:
+        :param str route_table_name:
         :param route_table:
         :return:
         """

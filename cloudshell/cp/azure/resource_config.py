@@ -7,7 +7,8 @@ from cloudshell.shell.standards.core.resource_config_entities import (
 
 class RegionResourceAttrRO(ResourceAttrRO):
     def __get__(self, instance, owner):
-        """
+        """Get Region resource attribute.
+
         :param GenericResourceConfig instance:
         :rtype: str
         """
@@ -20,7 +21,8 @@ class RegionResourceAttrRO(ResourceAttrRO):
 
 class AdditionalMgmtNetworksAttrRO(ResourceAttrRO):
     def __get__(self, instance, owner):
-        """
+        """Get Additional MGM Networks resource attribute.
+
         :param GenericResourceConfig instance:
         :rtype: str
         """

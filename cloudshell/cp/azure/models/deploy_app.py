@@ -6,10 +6,6 @@ from cloudshell.cp.core.request_actions import models
 
 class InboundPortsAttrRO(ResourceAttrRO):
     def __get__(self, instance, owner):
-        """
-        :param GenericResourceConfig instance:
-        :rtype: str
-        """
         if instance is None:
             return self
 
@@ -19,10 +15,6 @@ class InboundPortsAttrRO(ResourceAttrRO):
 
 class IntegerAttrRO(ResourceAttrRO):
     def __get__(self, instance, owner):
-        """
-        :param GenericResourceConfig instance:
-        :rtype: str
-        """
         if instance is None:
             return self
 

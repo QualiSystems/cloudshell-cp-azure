@@ -16,7 +16,7 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
     def __init__(
         self, resource_config, reservation_info, azure_client, lock_manager, logger
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param reservation_info:
@@ -30,8 +30,12 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         self._lock_manager = lock_manager
 
     def _get_sandbox_subnet_name(self, subnet_id, resource_group_name):
-        """
+        """Get Sandbox subnet name from the subnet ID.
 
+        In a single subnet scenario (default subnet), the subnet id will be
+         a simple CIDR that looks like this: 10.0.3.0/24
+        In multiple subnets mode, a subnet id will look like this:
+         *4032ffa7-ada9-4ee4-9d33-70ce3c1b06e1_10.0.3.0-24
         :param str subnet_id:
         :param str resource_group_name:
         :return:
@@ -40,19 +44,15 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
             azure_client=self._azure_client, logger=self._logger
         )
 
-        # if in a single subnet scenario (default subnet), the subnet id will be
-        # a simple CIDR that looks like this: 10.0.3.0/24
         if is_valid_cidr(subnet_id):
             return network_actions.prepare_sandbox_subnet_name(
                 resource_group_name=resource_group_name, cidr=subnet_id
             )
 
-        # if in multiple subnets mode, a subnet id will look like this:
-        # *4032ffa7-ada9-4ee4-9d33-70ce3c1b06e1_10.0.3.0-24
         return get_name_from_resource_id(subnet_id)
 
     def _get_private_ip_by_subnet_map(self, vm_name, resource_group_name):
-        """
+        """Create map between subnet name and private IP address.
 
         :param str vm_name:
         :param str resource_group_name:
@@ -79,7 +79,7 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         return private_ip_map
 
     def _set_app_security_group(self, security_group):
-        """"
+        """Set Application Security Group.
 
         :param security_group:
         :return

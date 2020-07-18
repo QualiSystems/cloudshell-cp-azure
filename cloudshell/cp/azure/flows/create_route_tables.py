@@ -5,7 +5,7 @@ from cloudshell.cp.azure.utils.cs_reservation_output import CloudShellReservatio
 
 class CreateRouteTablesFlow:
     def __init__(self, resource_config, reservation_info, azure_client, cs_api, logger):
-        """
+        """Init command.
 
         :param resource_config:
         :param reservation_info:
@@ -25,7 +25,7 @@ class CreateRouteTablesFlow:
         )
 
     def _find_sandbox_subnet(self, sandbox_vnet, subnet_name):
-        """
+        """Find subnet by name in the Sandbox vNET.
 
         :param sandbox_vnet:
         :param subnet_name:
@@ -40,7 +40,7 @@ class CreateRouteTablesFlow:
         )
 
     def create_route_tables(self, request_actions):
-        """"
+        """Create Route Tables on the Azure.
 
         :param request_actions:
         :return

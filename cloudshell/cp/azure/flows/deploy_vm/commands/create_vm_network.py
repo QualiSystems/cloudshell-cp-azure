@@ -20,7 +20,7 @@ class CreateVMNetworkCommand(RollbackCommand):
         region,
         tags,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:
@@ -57,9 +57,9 @@ class CreateVMNetworkCommand(RollbackCommand):
     def _execute(self):
         # private_ip_address in required only in the case of static allocation method
         # in the case of dynamic allocation method is ignored
-        # purpose of static allocation -> on restart machine, the ip can get lost. By using static we ensure the ip
-        # will remain the same
-        private_ip_allocation_method = self._network_actions.convert_cloudshell_private_ip_allocation_type(
+        # purpose of static allocation -> on restart machine, the IP can get lost.
+        # By using static we ensure the IP will remain the same
+        private_ip_allocation_method = self._network_actions.convert_cloudshell_private_ip_allocation_type(  # noqa: E501
             ip_type=self._private_ip_allocation_method
         )
 

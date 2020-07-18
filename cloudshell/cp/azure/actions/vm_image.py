@@ -1,6 +1,6 @@
 class VMImageActions:
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -9,16 +9,17 @@ class VMImageActions:
         self._logger = logger
 
     def get_marketplace_image_os(self, region, publisher_name, offer, sku):
-        """
+        """Get marketplace image OS.
 
-        :param region:
-        :param publisher_name:
-        :param offer:
-        :param sku:
+        :param str region:
+        :param str publisher_name:
+        :param str offer:
+        :param str sku:
         :return:
         """
         self._logger.info(
-            f"Getting Marketplace Image OS for Publisher: {publisher_name}, Offer: {offer}, SKU: {sku}"
+            f"Getting Marketplace Image OS for Publisher: {publisher_name}, "
+            f"Offer: {offer}, SKU: {sku}"
         )
         image = self._azure_client.get_latest_virtual_machine_image(
             region=region, publisher_name=publisher_name, offer=offer, sku=sku
@@ -26,10 +27,10 @@ class VMImageActions:
         return image.os_disk_image.operating_system
 
     def get_custom_image_os(self, image_resource_group_name, image_name):
-        """
+        """Get custom image OS.
 
-        :param image_resource_group_name:
-        :param image_name:
+        :param str image_resource_group_name:
+        :param str image_name:
         :return:
         """
         self._logger.info(f"Getting Custom Image OS for Image: {image_name}")
@@ -39,10 +40,10 @@ class VMImageActions:
         return image.storage_profile.os_disk.os_type
 
     def get_custom_image_id(self, image_resource_group_name, image_name):
-        """
+        """Get custom image ID.
 
-        :param image_resource_group_name:
-        :param image_name:
+        :param str image_resource_group_name:
+        :param str image_name:
         :return:
         """
         self._logger.info(f"Getting Custom Image ID for Image: {image_name}")

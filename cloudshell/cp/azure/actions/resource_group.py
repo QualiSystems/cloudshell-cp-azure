@@ -1,6 +1,6 @@
 class ResourceGroupActions:
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -9,7 +9,7 @@ class ResourceGroupActions:
         self._logger = logger
 
     def create_resource_group(self, resource_group_name, region, tags):
-        """
+        """Create Resource Group.
 
         :param str resource_group_name:
         :param str region:
@@ -22,7 +22,7 @@ class ResourceGroupActions:
         )
 
     def delete_resource_group(self, resource_group_name):
-        """
+        """Delete Resource Group.
 
         :param str resource_group_name:
         :return:

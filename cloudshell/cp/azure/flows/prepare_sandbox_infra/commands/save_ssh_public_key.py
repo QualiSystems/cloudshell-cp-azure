@@ -11,7 +11,7 @@ class SaveSSHPublicKeyCommand(RollbackCommand):
         resource_group_name,
         public_key,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 class StorageAccountActions:
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -14,12 +14,12 @@ class StorageAccountActions:
     def create_storage_account(
         self, storage_account_name, resource_group_name, region, tags
     ):
-        """
+        """Create Storage Account.
 
         :param str storage_account_name:
         :param str resource_group_name:
         :param str region:
-        :param dict tags:
+        :param dict[str, str] tags:
         :return:
         """
         self._logger.info(f"Creating storage account {storage_account_name}")
@@ -32,7 +32,7 @@ class StorageAccountActions:
         )
 
     def delete_storage_account(self, storage_account_name, resource_group_name):
-        """
+        """Delete Storage Account.
 
         :param str storage_account_name:
         :param str resource_group_name:
@@ -45,9 +45,9 @@ class StorageAccountActions:
         )
 
     def _parse_blob_url(self, blob_url):
-        """Parses Blob URL into AzureBlobUrlModel
+        """Parses Blob URL into AzureBlobUrlModel.
 
-        :param str blob_url: Azure Blob URL ("https://someaccount.blob.core.windows.net/container/blobname")
+        :param str blob_url: Azure Blob URL ("https://someaccount.blob.core.windows.net/container/blobname")  # noqa: E501
         :rtype: tuple[str, str, str]
         """
         parsed_blob_url = urlparse(blob_url)
@@ -59,7 +59,7 @@ class StorageAccountActions:
         return blob_name, container_name, storage_account_name
 
     def delete_vhd_disk(self, vhd_url, resource_group_name):
-        """Delete VHD Disk Blob resource on the azure for given VM
+        """Delete VHD Disk Blob resource on the azure for given VM.
 
         :param str vhd_url: Blob VHD Disk URL
         :param str resource_group_name: The name of the resource group
@@ -77,10 +77,10 @@ class StorageAccountActions:
         )
 
     def delete_managed_disk(self, disk_name, resource_group_name):
-        """
+        """Delete Managed Disk.
 
-        :param disk_name:
-        :param resource_group_name:
+        :param str disk_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Deleting Managed Disk {disk_name}")

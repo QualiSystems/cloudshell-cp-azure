@@ -1,9 +1,6 @@
-from azure.mgmt.compute.models import OperatingSystemTypes
-
-
 class VMExtensionActions:
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -20,14 +17,14 @@ class VMExtensionActions:
         script_config,
         tags,
     ):
-        """
+        """Create Linux VM Script extension.
 
-        :param region:
-        :param resource_group_name:
-        :param vm_name:
-        :param script_file_path:
-        :param script_config:
-        :param tags:
+        :param str region:
+        :param str resource_group_name:
+        :param str vm_name:
+        :param str script_file_path:
+        :param str script_config:
+        :param dict[str, str] tags:
         :return:
         """
         self._logger.info(
@@ -55,14 +52,14 @@ class VMExtensionActions:
         script_config,
         tags,
     ):
-        """
+        """Create Windows VM Script extension.
 
-        :param region:
-        :param resource_group_name:
-        :param vm_name:
-        :param script_file_path:
-        :param script_config:
-        :param tags:
+        :param str region:
+        :param str resource_group_name:
+        :param str vm_name:
+        :param str script_file_path:
+        :param str script_config:
+        :param dict[str, str] tags:
         :return:
         """
         self._logger.info(

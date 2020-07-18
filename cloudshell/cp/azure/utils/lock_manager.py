@@ -6,7 +6,7 @@ class ThreadLockManager:
         self._locks = {}
 
     def get_lock(self, key):
-        """
+        """Get Thread lock.
 
         :param str key:
         :return:
@@ -17,9 +17,9 @@ class ThreadLockManager:
         return self._locks[key]
 
     def remove_lock(self, key):
-        """
+        """Remove Thread lock.
 
-        :param key:
+        :param str key:
         :return:
         """
         try:

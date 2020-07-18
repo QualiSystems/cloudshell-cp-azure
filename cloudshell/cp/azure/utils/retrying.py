@@ -2,8 +2,6 @@ import traceback
 
 from msrest.exceptions import ClientRequestError
 from msrestazure.azure_exceptions import CloudError
-
-# todo: check if this should be replaced to requests.exceptions.ConnectionError
 from requests.packages.urllib3.exceptions import ConnectionError
 
 RETRYABLE_ERROR_STRING = "retryable"
@@ -12,9 +10,9 @@ RETRYABLE_ERROR_MAX_ATTEMPTS = 20
 
 
 def retry_on_connection_error(exception):
-    """Return True if we should retry (in this case when it's an IOError), False otherwise
+    """Return True if we got IO error and should retry an API call.
 
-    :param exception:
+    :param Exception exception:
     """
     return any(
         [
@@ -30,9 +28,9 @@ def _is_pool_closed_error():
 
 
 def retry_on_retryable_error(exception):
-    """Return True if we should retry (in this case when it's an RetryableError), False otherwise
+    """Return True if we got retryable error and should retry an API call.
 
-    :param exceptions.Exception exception:
+    :param Exception exception:
     """
     return (
         isinstance(exception, CloudError)

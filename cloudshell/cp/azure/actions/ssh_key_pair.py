@@ -8,7 +8,7 @@ class SSHKeyPairActions:
     SSH_PRIVATE_KEY_NAME = "id_rsa"
 
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -17,7 +17,7 @@ class SSHKeyPairActions:
         self._logger = logger
 
     def create_ssh_key_pair(self):
-        """
+        """Create SSH Key Pair.
 
         :return:
         """
@@ -27,7 +27,7 @@ class SSHKeyPairActions:
     def save_ssh_public_key(
         self, resource_group_name, storage_account_name, public_key
     ):
-        """
+        """Save SSH Pubic Key on the Azure Storage.
 
         :param str resource_group_name:
         :param str storage_account_name:
@@ -47,7 +47,7 @@ class SSHKeyPairActions:
     def save_ssh_private_key(
         self, resource_group_name, storage_account_name, private_key
     ):
-        """
+        """Save SSH Private Key on the Azure Storage.
 
         :param str resource_group_name:
         :param str storage_account_name:
@@ -65,7 +65,7 @@ class SSHKeyPairActions:
         )
 
     def get_ssh_public_key(self, resource_group_name, storage_account_name):
-        """
+        """Get SSH Pubic Key from the Azure Storage.
 
         :param resource_group_name:
         :param storage_account_name:
@@ -81,7 +81,7 @@ class SSHKeyPairActions:
         )
 
     def get_ssh_private_key(self, resource_group_name, storage_account_name):
-        """
+        """Get SSH Private Key from the Azure Storage.
 
         :param resource_group_name:
         :param storage_account_name:

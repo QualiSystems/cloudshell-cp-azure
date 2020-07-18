@@ -2,7 +2,7 @@ class VMActions:
     SUCCEEDED_PROVISIONING_STATE = "Succeeded"
 
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -11,10 +11,10 @@ class VMActions:
         self._logger = logger
 
     def get_vm(self, vm_name, resource_group_name):
-        """
+        """Get VM from the Azure.
 
-        :param vm_name:
-        :param resource_group_name:
+        :param str vm_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Getting VM {vm_name}")
@@ -23,10 +23,10 @@ class VMActions:
         )
 
     def get_active_vm(self, vm_name, resource_group_name):
-        """
+        """Get Active VM from the Azure.
 
-        :param vm_name:
-        :param resource_group_name:
+        :param str vm_name:
+        :param str resource_group_name:
         :return:
         """
         vm = self.get_vm(vm_name=vm_name, resource_group_name=resource_group_name)
@@ -39,11 +39,11 @@ class VMActions:
         return vm
 
     def start_create_vm_task(self, vm_name, virtual_machine, resource_group_name):
-        """
+        """Start create VM task.
 
-        :param vm_name:
+        :param str vm_name:
         :param virtual_machine:
-        :param resource_group_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Starting VM {vm_name} create task")
@@ -55,10 +55,10 @@ class VMActions:
         )
 
     def start_vm(self, vm_name, resource_group_name):
-        """
+        """Start Azure VM.
 
-        :param vm_name:
-        :param resource_group_name:
+        :param str vm_name:
+        :param str resource_group_name:
         :return:
         """
         self._logger.info(f"Starting VM {vm_name}")
@@ -67,7 +67,7 @@ class VMActions:
         )
 
     def stop_vm(self, vm_name, resource_group_name):
-        """
+        """Stop Azure VM.
 
         :param vm_name:
         :param resource_group_name:
@@ -79,7 +79,7 @@ class VMActions:
         )
 
     def delete_vm(self, vm_name, resource_group_name):
-        """
+        """Delete Azure VM.
 
         :param vm_name:
         :param resource_group_name:

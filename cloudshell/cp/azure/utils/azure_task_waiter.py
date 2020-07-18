@@ -9,7 +9,7 @@ class AzureTaskWaiter:
     DEFAULT_TIMEOUT = 30 * 60
 
     def __init__(self, cancellation_manager, logger):
-        """
+        """Init command.
 
         :param cancellation_manager:
         :param logging.Logger logger:
@@ -18,7 +18,7 @@ class AzureTaskWaiter:
         self._logger = logger
 
     def wait_for_task(self, operation_poller, timeout=None, wait_time=None):
-        """
+        """Wait for Azure task to be processed.
 
         :param msrestazure.azure_operation.AzureOperationPoller operation_poller:
         :param int timeout:
@@ -31,7 +31,8 @@ class AzureTaskWaiter:
         while not operation_poller.done():
             with self._cancellation_manager:
                 self._logger.info(
-                    f"Waiting for operation to complete, current status is {operation_poller.status()}"
+                    f"Waiting for operation to complete, current status is "
+                    f"{operation_poller.status()}"
                 )
                 time.sleep(wait_time)
 

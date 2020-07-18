@@ -11,7 +11,7 @@ class SaveSSHPrivateKeyCommand(RollbackCommand):
         storage_account_name,
         private_key,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

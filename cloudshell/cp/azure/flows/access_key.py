@@ -3,7 +3,7 @@ from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 
 class AzureGetAccessKeyFlow:
     def __init__(self, resource_config, azure_client, reservation_info, logger):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -16,7 +16,7 @@ class AzureGetAccessKeyFlow:
         self._logger = logger
 
     def get_access_key(self):
-        """
+        """Get SSH Access Key.
 
         :return:
         """

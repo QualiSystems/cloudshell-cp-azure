@@ -14,9 +14,9 @@ from cloudshell.cp.core.request_actions.models import (
 class VMDetailsActions(NetworkActions):
     @staticmethod
     def _parse_image_name(resource_id):
-        """Get image name from the Azure image reference id
+        """Get image name from the Azure image reference ID.
 
-        :param str resource_id: Azure image reference id
+        :param str resource_id: Azure image reference ID
         :return: Azure image name
         :rtype: str
         """
@@ -27,9 +27,9 @@ class VMDetailsActions(NetworkActions):
 
     @staticmethod
     def _parse_resource_group_name(resource_id):
-        """Get resource group name from the Azure resource id
+        """Get resource group name from the Azure resource ID.
 
-        :param str resource_id: Azure resource Id
+        :param str resource_id: Azure resource ID
         :return: Azure resource group name
         :rtype: str
         """
@@ -42,11 +42,18 @@ class VMDetailsActions(NetworkActions):
 
     @staticmethod
     def _prepare_common_vm_instance_data(virtual_machine):
-        """
+        """Prepare commnon VM instance data.
 
         :param virtual_machine:
         :return:
         """
+        disk_type = (
+            "HDD"
+            if virtual_machine.storage_profile.os_disk.managed_disk.storage_account_type
+            == StorageAccountTypes.standard_lrs
+            else "SSD"
+        )
+
         return [
             VmDetailsProperty(
                 key="VM Size", value=virtual_machine.hardware_profile.vm_size
@@ -55,20 +62,14 @@ class VMDetailsActions(NetworkActions):
                 key="Operating System",
                 value=virtual_machine.storage_profile.os_disk.os_type.name,
             ),
-            VmDetailsProperty(
-                key="Disk Type",
-                value="HDD"
-                if virtual_machine.storage_profile.os_disk.managed_disk.storage_account_type
-                == StorageAccountTypes.standard_lrs
-                else "SSD",
-            ),
+            VmDetailsProperty(key="Disk Type", value=disk_type),
         ]
 
     def _prepare_vm_network_data(self, virtual_machine, resource_group_name):
-        """
+        """Prepare VM Network data.
 
         :param virtual_machine:
-        :param resource_group_name:
+        :param str resource_group_name:
         :return:
         """
         vm_network_interfaces = []
@@ -121,7 +122,7 @@ class VMDetailsActions(NetworkActions):
         return vm_network_interfaces
 
     def _prepare_marketplace_vm_instance_data(self, virtual_machine):
-        """
+        """Prepare marketplace VM instance data.
 
         :param virtual_machine:
         :return:
@@ -142,7 +143,7 @@ class VMDetailsActions(NetworkActions):
         ] + self._prepare_common_vm_instance_data(virtual_machine=virtual_machine)
 
     def _prepare_custom_vm_instance_data(self, virtual_machine):
-        """
+        """Prepare custom VM instance data.
 
         :param virtual_machine:
         :return:
@@ -159,10 +160,10 @@ class VMDetailsActions(NetworkActions):
     def _prepare_vm_details(
         self, virtual_machine, resource_group_name, prepare_vm_instance_data_function
     ):
-        """
+        """Prepare VM details.
 
         :param virtual_machine:
-        :param resource_group_name:
+        :param str resource_group_name:
         :param prepare_vm_instance_data_function:
         :return:
         """
@@ -184,23 +185,23 @@ class VMDetailsActions(NetworkActions):
             return VmDetailsData(appName=virtual_machine.name, errorMessage=str(e))
 
     def prepare_marketplace_vm_details(self, virtual_machine, resource_group_name):
-        """
+        """Prepare marketplace VM details.
 
         :param virtual_machine:
-        :param resource_group_name:
+        :param str resource_group_name:
         :return:
         """
         return self._prepare_vm_details(
             virtual_machine=virtual_machine,
             resource_group_name=resource_group_name,
-            prepare_vm_instance_data_function=self._prepare_marketplace_vm_instance_data,
+            prepare_vm_instance_data_function=self._prepare_marketplace_vm_instance_data,  # noqa: E501
         )
 
     def prepare_custom_vm_details(self, virtual_machine, resource_group_name):
-        """
+        """Prepare custom VM details.
 
         :param virtual_machine:
-        :param resource_group_name:
+        :param str resource_group_name:
         :return:
         """
         return self._prepare_vm_details(

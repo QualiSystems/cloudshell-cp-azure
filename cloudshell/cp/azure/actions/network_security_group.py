@@ -16,7 +16,7 @@ class NetworkSecurityGroupActions:
     )
 
     def __init__(self, azure_client, logger):
-        """
+        """Init command.
 
         :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
         :param logging.Logger logger:
@@ -25,17 +25,17 @@ class NetworkSecurityGroupActions:
         self._logger = logger
 
     def prepare_vm_nsg_name(self, vm_name):
-        """
+        """Prepare name for the VM Network Security Group.
 
         :param str vm_name:
-        :return:
+        :rtype: str
         """
         return self.VM_NSG_NAME_TPL.format(vm_name=vm_name)
 
     def create_network_security_group(
         self, nsg_name, resource_group_name, region, tags
     ):
-        """
+        """Create Network Security Group.
 
         :param str nsg_name:
         :param str resource_group_name:
@@ -52,7 +52,7 @@ class NetworkSecurityGroupActions:
         )
 
     def get_network_security_group(self, nsg_name, resource_group_name):
-        """
+        """Get Network Security Group.
 
         :param str nsg_name:
         :param str resource_group_name:
@@ -65,7 +65,7 @@ class NetworkSecurityGroupActions:
         )
 
     def delete_network_security_group(self, nsg_name, resource_group_name):
-        """
+        """Delete Network Security Group.
 
         :param str nsg_name:
         :param str resource_group_name:
@@ -80,12 +80,12 @@ class NetworkSecurityGroupActions:
     def create_vm_network_security_group(
         self, vm_name, resource_group_name, region, tags
     ):
-        """
+        """Create VM Network Security Group.
 
-        :param vm_name:
-        :param resource_group_name:
-        :param region:
-        :param tags:
+        :param str vm_name:
+        :param str resource_group_name:
+        :param str region:
+        :param dict[str, str] tags:
         :return:
         """
         return self.create_network_security_group(
@@ -96,10 +96,10 @@ class NetworkSecurityGroupActions:
         )
 
     def get_vm_network_security_group(self, vm_name, resource_group_name):
-        """
+        """Get VM Network Security Group.
 
-        :param vm_name:
-        :param resource_group_name:
+        :param str vm_name:
+        :param str resource_group_name:
         :return:
         """
         return self.get_network_security_group(
@@ -108,7 +108,7 @@ class NetworkSecurityGroupActions:
         )
 
     def delete_vm_network_security_group(self, vm_name, resource_group_name):
-        """
+        """Delete VM Network Security Group.
 
         :param str vm_name:
         :param str resource_group_name:
@@ -131,17 +131,17 @@ class NetworkSecurityGroupActions:
         dst_port_to=None,
         protocol=None,
     ):
-        """
+        """Create custom VM NSG Rule.
 
-        :param vm_name:
-        :param rule_priority:
-        :param resource_group_name:
-        :param nsg_name:
-        :param src_address:
-        :param dst_address:
-        :param dst_port_from:
-        :param dst_port_to:
-        :param protocol:
+        :param str vm_name:
+        :param int rule_priority:
+        :param str resource_group_name:
+        :param str nsg_name:
+        :param str src_address:
+        :param str dst_address:
+        :param str dst_port_from:
+        :param str dst_port_to:
+        :param str protocol:
         :return:
         """
         if all([dst_port_from is None, dst_port_to is None]):
@@ -187,7 +187,7 @@ class NetworkSecurityGroupActions:
         dst_port_range=SecurityRuleProtocol.asterisk,
         protocol=SecurityRuleProtocol.asterisk,
     ):
-        """
+        """Create NSG Allow Rule.
 
         :param str rule_name:
         :param str rule_priority:
@@ -229,7 +229,7 @@ class NetworkSecurityGroupActions:
         src_port_range=SecurityRuleProtocol.asterisk,
         dst_port_range=SecurityRuleProtocol.asterisk,
     ):
-        """
+        """Create NSG Deny Rule.
 
         :param str rule_name:
         :param str rule_priority:
@@ -260,7 +260,7 @@ class NetworkSecurityGroupActions:
         )
 
     def delete_nsg_rule(self, rule_name, nsg_name, resource_group_name):
-        """
+        """Delete NSG Rule.
 
         :param str rule_name:
         :param str nsg_name:
@@ -275,7 +275,7 @@ class NetworkSecurityGroupActions:
         )
 
     def get_nsg_rules(self, nsg_name, resource_group_name):
-        """
+        """Get NSG Rule.
 
         :param str nsg_name:
         :param str resource_group_name:
@@ -286,7 +286,7 @@ class NetworkSecurityGroupActions:
         )
 
     def delete_custom_nsg_rules(self, nsg_name, resource_group_name):
-        """
+        """Delete all custom NSG Rules.
 
         :param str nsg_name:
         :param str resource_group_name:

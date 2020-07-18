@@ -6,7 +6,7 @@ from cloudshell.cp.azure.flows.deploy_vm.base_flow import BaseAzureDeployVMFlow
 
 class AzureDeployMarketplaceVMFlow(BaseAzureDeployVMFlow):
     def _get_vm_image_os(self, deploy_app):
-        """
+        """Get VM Image OS.
 
         :param deploy_app:
         :return:
@@ -23,7 +23,7 @@ class AzureDeployMarketplaceVMFlow(BaseAzureDeployVMFlow):
         )
 
     def _prepare_storage_profile(self, deploy_app, os_disk):
-        """
+        """Prepare Azure Storage Profile model.
 
         :param deploy_app:
         :return:
@@ -39,7 +39,7 @@ class AzureDeployMarketplaceVMFlow(BaseAzureDeployVMFlow):
         )
 
     def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
-        """
+        """Prepare CloudShell VM Details model.
 
         :param deployed_vm:
         :param resource_group_name:

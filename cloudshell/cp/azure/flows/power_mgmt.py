@@ -3,7 +3,7 @@ from cloudshell.cp.azure.actions.vm import VMActions
 
 class AzurePowerManagementFlow:
     def __init__(self, resource_config, azure_client, reservation_info, logger):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -16,7 +16,7 @@ class AzurePowerManagementFlow:
         self._logger = logger
 
     def power_on(self, deployed_app):
-        """
+        """Power On VM.
 
         :param deployed_app:
         :return:
@@ -29,7 +29,7 @@ class AzurePowerManagementFlow:
         )
 
     def power_off(self, deployed_app):
-        """
+        """Power Off VM.
 
         :param deployed_app:
         :return:

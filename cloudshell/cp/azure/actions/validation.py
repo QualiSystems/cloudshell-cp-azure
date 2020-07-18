@@ -9,7 +9,7 @@ class ValidationActions(NetworkActions):
     MAX_VM_DISK_SIZE_GB = 1023
 
     def register_azure_providers(self):
-        """
+        """Register Azure Providers.
 
         :return:
         """
@@ -27,7 +27,7 @@ class ValidationActions(NetworkActions):
             self._azure_client.register_provider(provider)
 
     def validate_azure_region(self, region):
-        """
+        """Validate Azure Region.
 
         :param str region:
         :return:
@@ -47,7 +47,7 @@ class ValidationActions(NetworkActions):
             raise Exception(f'Region "{region}" is not a valid Azure Geo-location')
 
     def validate_azure_mgmt_resource_group(self, mgmt_resource_group_name, region):
-        """
+        """Validate Management Resource Group.
 
         :param str mgmt_resource_group_name:
         :param str region:
@@ -70,11 +70,12 @@ class ValidationActions(NetworkActions):
 
         if region != resource_group.location:
             raise Exception(
-                f"Management group '{mgmt_resource_group_name}' is not under the '{region}' region"
+                f"Management group '{mgmt_resource_group_name}' "
+                f"is not under the '{region}' region"
             )
 
     def validate_azure_mgmt_network(self, mgmt_resource_group_name):
-        """
+        """Validate Azure Management vNET.
 
         :param str mgmt_resource_group_name:
         :return:
@@ -85,7 +86,7 @@ class ValidationActions(NetworkActions):
         self.get_mgmt_virtual_network(resource_group_name=mgmt_resource_group_name)
 
     def validate_azure_sandbox_network(self, mgmt_resource_group_name):
-        """
+        """Validate Azure Sandbox vNET.
 
         :param str mgmt_resource_group_name:
         :return:
@@ -96,7 +97,7 @@ class ValidationActions(NetworkActions):
         self.get_sandbox_virtual_network(resource_group_name=mgmt_resource_group_name)
 
     def validate_azure_vm_size(self, vm_size, region):
-        """
+        """Validate 'VM Size' attribute.
 
         :param str vm_size:
         :param str region:
@@ -117,7 +118,7 @@ class ValidationActions(NetworkActions):
                 raise Exception(f"VM Size {vm_size} is not valid")
 
     def validate_azure_additional_networks(self, mgmt_networks):
-        """
+        """Validate 'Additional Mgmt Networks' attribute.
 
         :param list[str] mgmt_networks:
         :return:
@@ -125,12 +126,15 @@ class ValidationActions(NetworkActions):
         self._logger.info("Validating Deploy App 'Additional Mgmt Networks' attribute")
         for cidr in mgmt_networks:
             if not is_valid_cidr(cidr):
-                msg = f"CIDR {cidr} under the 'Additional Mgmt Networks' attribute is not in the valid format"
+                msg = (
+                    f"CIDR {cidr} under the 'Additional Mgmt Networks' attribute "
+                    f"is not in the valid format"
+                )
                 self._logger.exception(msg)
                 raise Exception(msg)
 
     def validate_deploy_app_add_public_ip(self, deploy_app, connect_subnets):
-        """
+        """Validate 'Add Public IP' attribute.
 
         :param deploy_app:
         :param connect_subnets:
@@ -138,18 +142,19 @@ class ValidationActions(NetworkActions):
         """
         self._logger.info("Validating Deploy App 'Add Public IP' attribute")
         all_subnets_are_private = (
-            all([not subnet.is_public() for subnet in connect_subnets])
+            all((not subnet.is_public() for subnet in connect_subnets))
             if connect_subnets
             else False
         )
 
         if all_subnets_are_private and deploy_app.add_public_ip:
             raise Exception(
-                "Cannot deploy App with Public IP when connected only to private subnets"
+                "Cannot deploy App with Public IP when connected "
+                "only to private subnets"
             )
 
     def validate_deploy_app_inbound_ports(self, deploy_app):
-        """
+        """Validate 'Inbound Ports' attribute.
 
         :param deploy_app:
         :return:
@@ -161,12 +166,20 @@ class ValidationActions(NetworkActions):
             )
 
     def validate_deploy_app_script_file(self, deploy_app):
+        """Validate 'Extension Script file' attribute.
+
+        :param deploy_app:
+        :return:
+        """
         self._logger.info("Validating Deploy App Extension Script File")
 
         if not deploy_app.extension_script_file:
             return
 
-        error_msg = f"Unable to retrieve VM Extension Script File: {deploy_app.extension_script_file}"
+        error_msg = (
+            f"Unable to retrieve VM Extension Script File: "
+            f"{deploy_app.extension_script_file}"
+        )
 
         try:
             response = requests.head(deploy_app.extension_script_file, verify=False)
@@ -176,7 +189,7 @@ class ValidationActions(NetworkActions):
             raise Exception(error_msg)
 
     def validate_deploy_app_script_extension(self, deploy_app, image_os):
-        """
+        """Validate 'Extension Script file' attribute script extension.
 
         :param deploy_app:
         :param image_os:
@@ -190,7 +203,8 @@ class ValidationActions(NetworkActions):
         if image_os == OperatingSystemTypes.windows:
             if not deploy_app.extension_script_file.endswith("ps1"):
                 raise Exception(
-                    "Invalid format for the PowerShell script. It must have a 'ps1' extension"
+                    "Invalid format for the PowerShell script. "
+                    "It must have a 'ps1' extension"
                 )
         else:
             if not deploy_app.extension_script_configurations:
@@ -200,7 +214,7 @@ class ValidationActions(NetworkActions):
                 )
 
     def validate_deploy_app_disk_size(self, deploy_app):
-        """
+        """Validate 'Disk Size' attribute.
 
         :param deploy_app:
         :return:
@@ -219,11 +233,12 @@ class ValidationActions(NetworkActions):
 
         if disk_size_num > self.MAX_VM_DISK_SIZE_GB:
             raise Exception(
-                f"Virtual Machine Disk size cannot be larger than {self.MAX_VM_DISK_SIZE_GB} GB"
+                f"Virtual Machine Disk size cannot be larger than "
+                f"{self.MAX_VM_DISK_SIZE_GB} GB"
             )
 
     def validate_vm_size(self, deploy_app_vm_size, cloud_provider_vm_size):
-        """
+        """Validate 'VM Size' attribute.
 
         :param str deploy_app_vm_size:
         :param str cloud_provider_vm_size:

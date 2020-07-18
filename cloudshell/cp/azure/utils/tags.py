@@ -11,16 +11,16 @@ class AzureTagsManager:
         created_by = "CloudShell"
 
     def __init__(self, reservation_info):
-        """
+        """Init command.
 
         :param reservation_info:
         """
         self._reservation_info = reservation_info
 
     def get_tags(self, vm_name=None):
-        """
+        """Get tags.
 
-        :param vm_name:
+        :param str vm_name:
         :return:
         """
         tags = {

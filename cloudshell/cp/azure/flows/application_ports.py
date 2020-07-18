@@ -5,7 +5,7 @@ from cloudshell.cp.azure.actions.network_security_group import (
 
 class AzureGetApplicationPortsFlow:
     def __init__(self, resource_config, azure_client, reservation_info, logger):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -18,7 +18,7 @@ class AzureGetApplicationPortsFlow:
         self._logger = logger
 
     def get_application_ports(self, deployed_app):
-        """
+        """Get application ports.
 
         :param deployed_app:
         :return:

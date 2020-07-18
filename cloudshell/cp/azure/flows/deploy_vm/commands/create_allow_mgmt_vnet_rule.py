@@ -2,7 +2,7 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateAllowMGMTVnetRuleCommand(RollbackCommand):
-    """Open traffic to VM from the MGMT vNET"""
+    """Open traffic to VM from the MGMT vNET."""
 
     NSG_RULE_PRIORITY = 4070
     NSG_RULE_NAME_TPL = "Allow_Traffic_From_Management_Vnet_To_Any"
@@ -18,7 +18,7 @@ class CreateAllowMGMTVnetRuleCommand(RollbackCommand):
         mgmt_resource_group_name,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

@@ -2,10 +2,11 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateAdditionalMGMTNetworkRuleCommand(RollbackCommand):
-    """Create NSG Allow rules for the Additional MGMT Networks
+    """Create NSG Allow rules for the Additional MGMT Networks.
 
-    Allow inbound traffic from additional management networks (can configure on Azure cloud provider resource
-    that additional networks are allowed to communicate with subnets and vms)
+    Allow inbound traffic from additional management networks
+    (can configure on Azure cloud provider resource that additional networks
+    are allowed to communicate with subnets and vms)
     """
 
     NSG_RULE_PRIORITY = 4000
@@ -22,7 +23,7 @@ class CreateAdditionalMGMTNetworkRuleCommand(RollbackCommand):
         sandbox_cidr,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

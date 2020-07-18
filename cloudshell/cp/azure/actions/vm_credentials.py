@@ -1,7 +1,6 @@
 import random
 import string
 
-# from azure.mgmt.compute.models import OperatingSystemTypes
 from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 
 
@@ -10,17 +9,8 @@ class VMCredentialsActions(SSHKeyPairActions):
     DEFAULT_WINDOWS_USERNAME = "adminuser"
     LINUX_SSH_KEY_PATH = "/home/{username}/.ssh/authorized_keys"
 
-    def __init__(self, azure_client, logger):
-        """
-
-        :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
-        :param logging.Logger logger:
-        """
-        self._azure_client = azure_client
-        self._logger = logger
-
     def _generate_password(self, length=10):
-        """Generate password of the given length with digit and uppercase letter
+        """Generate password of the given length with digit and uppercase letter.
 
         :param int length: password length
         :rtype: str
@@ -38,11 +28,13 @@ class VMCredentialsActions(SSHKeyPairActions):
         return "".join(password)
 
     def prepare_windows_credentials(self, username, password):
-        """Prepare Windows credentials for the VM (generates password, set default user if credentials weren't provided)
+        """Prepare Windows credentials for the VM.
 
-        :param username: VM username
-        :param password: VM password
-        :return: (tuple) username and password
+        Generates password, set default user if credentials weren't provided
+        :param str username: VM username
+        :param str password: VM password
+        :return: username and password
+        :rtype: tuple[str, str]
         """
         if not username:
             username = self.DEFAULT_WINDOWS_USERNAME
@@ -52,11 +44,13 @@ class VMCredentialsActions(SSHKeyPairActions):
         return username, password
 
     def prepare_linux_credentials(self, username, password):
-        """Prepare Linux credentials for the VM (prepare SSH key, set default user if credentials weren't provided)
+        """Prepare Linux credentials for the VM.
 
-        :param username: VM username
-        :param password: VM password
-        :return: (tuple) username, password
+        Prepare SSH key, set default user if credentials weren't provided
+        :param str username: VM username
+        :param str password: VM password
+        :return: username, password
+        :rtype: tuple[str, str]
         """
         if not username:
             username = self.DEFAULT_LINUX_USERNAME
@@ -64,9 +58,9 @@ class VMCredentialsActions(SSHKeyPairActions):
         return username, password
 
     def prepare_ssh_public_key_path(self, username):
-        """
+        """Prepare path for the SSH Public key.
 
-        :param username:
-        :return:
+        :param str username:
+        :rtype: str
         """
         return self.LINUX_SSH_KEY_PATH.format(username=username)

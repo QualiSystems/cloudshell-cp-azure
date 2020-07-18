@@ -6,7 +6,7 @@ from cloudshell.cp.azure.flows.deploy_vm.base_flow import BaseAzureDeployVMFlow
 
 class AzureDeployCustomVMFlow(BaseAzureDeployVMFlow):
     def _get_vm_image_os(self, deploy_app):
-        """
+        """Get VM Image OS.
 
         :param deploy_app:
         :return:
@@ -21,7 +21,7 @@ class AzureDeployCustomVMFlow(BaseAzureDeployVMFlow):
         )
 
     def _prepare_storage_profile(self, deploy_app, os_disk):
-        """
+        """Prepare Storage Profile.
 
         :param deploy_app:
         :param os_disk:
@@ -39,10 +39,10 @@ class AzureDeployCustomVMFlow(BaseAzureDeployVMFlow):
         )
 
     def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
-        """
+        """Prepare VM Details data.
 
         :param deployed_vm:
-        :param resource_group_name:
+        :param str resource_group_name:
         :return:
         """
         vm_details_actions = VMDetailsActions(

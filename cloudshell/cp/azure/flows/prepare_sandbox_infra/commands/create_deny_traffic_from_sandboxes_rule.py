@@ -2,7 +2,7 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
-    """Deny inbound traffic from Sandbox vNET
+    """Deny inbound traffic from Sandbox vNET.
 
     Deny traffic from azure account vNET with which subnets from all sandboxes
     are associated. The idea is to block traffic from other sandboxes in the account.
@@ -23,7 +23,7 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         sandbox_cidr,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

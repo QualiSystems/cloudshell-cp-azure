@@ -4,7 +4,7 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
-    """Open traffic to VM on inbound ports (an attribute on the App) on the VM NSG"""
+    """Open traffic to VM on inbound ports (an attribute on the App) on the VM NSG."""
 
     NSG_RULE_PRIORITY = 1000
     NSG_RULE_NAME_TPL = "{vm_name}_inbound_port:{port_range}:{protocol}"
@@ -20,7 +20,7 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
         resource_group_name,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:
@@ -43,7 +43,6 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
         self._port_range, self._protocol = self._parse_port_range(self._inbound_port)
 
     def _execute(self):
-        # dst_address = RouteNextHopType.internet
         self._nsg_actions.create_nsg_allow_rule(
             rule_name=self.NSG_RULE_NAME_TPL.format(
                 vm_name=self._vm_name,

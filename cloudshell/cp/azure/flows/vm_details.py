@@ -14,7 +14,7 @@ class AzureGetVMDetailsFlow(AbstractVMDetailsFlow):
         reservation_info,
         logger,
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -29,7 +29,7 @@ class AzureGetVMDetailsFlow(AbstractVMDetailsFlow):
         self._reservation_info = reservation_info
 
     def _get_vm_details(self, deployed_app):
-        """
+        """Get VM Details.
 
         :param deployed_app:
         :return:

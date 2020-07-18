@@ -10,7 +10,7 @@ class AzureGetAvailablePrivateIPFlow:
         reservation_info,
         logger,
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param reservation_info:
@@ -23,7 +23,7 @@ class AzureGetAvailablePrivateIPFlow:
         self._logger = logger
 
     def get_available_private_ip(self, subnet_cidr, owner):
-        """
+        """Get available private IP address from the CloudShell.
 
         :param str subnet_cidr:
         :param str owner:
@@ -45,9 +45,9 @@ class AzureGetAvailablePrivateIPFlow:
         )
 
     def _validate_ip_allocation_method(self, ip_allocation_method):
-        """
+        """Validate IP allocation method.
 
-        :param ip_allocation_method:
+        :param str ip_allocation_method:
         :return:
         """
         if (
@@ -55,17 +55,18 @@ class AzureGetAvailablePrivateIPFlow:
             != NetworkActions.CLOUDSHELL_PRIVATE_IP_ALLOCATION_METHOD
         ):
             raise Exception(
-                f"Get Available Private IP command is supported only when the Cloud Provider "
-                f"'Private IP Allocation Method' attribute is set to "
-                f"'{NetworkActions.CLOUDSHELL_PRIVATE_IP_ALLOCATION_METHOD}'. Current allocation method is"
-                f" '{self._resource_config.private_ip_allocation_method}'"
+                f"Get Available Private IP command is supported only when the Cloud "
+                f"Provider 'Private IP Allocation Method' attribute is set to "
+                f"'{NetworkActions.CLOUDSHELL_PRIVATE_IP_ALLOCATION_METHOD}'. "
+                f"Current allocation method is "
+                f"'{self._resource_config.private_ip_allocation_method}'"
             )
 
     def _validate_subnet_exists(self, subnet_cidr, resource_group_name):
-        """
+        """Validate that Sandbox subnet exists.
 
-        :param subnet_cidr:
-        :param resource_group_name:
+        :param str subnet_cidr:
+        :param str resource_group_name:
         :return:
         """
         network_actions = NetworkActions(

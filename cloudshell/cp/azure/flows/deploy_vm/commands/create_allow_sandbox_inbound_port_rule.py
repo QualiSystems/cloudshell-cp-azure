@@ -1,10 +1,10 @@
-from cloudshell.cp.azure.flows.deploy_vm.commands.create_allow_vm_inbound_port_rule import (
+from cloudshell.cp.azure.flows.deploy_vm.commands.create_allow_vm_inbound_port_rule import (  # noqa: E501
     CreateAllowVMInboundPortRuleCommand,
 )
 
 
 class CreateAllowSandboxInboundPortRuleCommand(CreateAllowVMInboundPortRuleCommand):
-    """Open traffic to VM on inbound ports (an attribute on the App) for private IP on the Sandbox NSG"""
+    """Open traffic to VM on inbound ports for private IP on the Sandbox NSG."""
 
     def __init__(
         self,
@@ -18,7 +18,7 @@ class CreateAllowSandboxInboundPortRuleCommand(CreateAllowVMInboundPortRuleComma
         rules_priority_generator,
         private_ip,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

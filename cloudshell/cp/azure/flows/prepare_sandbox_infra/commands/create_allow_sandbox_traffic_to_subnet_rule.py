@@ -2,9 +2,10 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateAllowSandboxTrafficToSubnetRuleCommand(RollbackCommand):
-    """Enable access from sandbox traffic for all subnets
+    """Enable access from sandbox traffic for all subnets.
 
-    Specific VMs can block sandbox traffic using the VM network security group, which is created per VM
+    Specific VMs can block sandbox traffic using the VM network security group,
+    which is created per VM
     """
 
     NSG_RULE_PRIORITY = 2000
@@ -21,7 +22,7 @@ class CreateAllowSandboxTrafficToSubnetRuleCommand(RollbackCommand):
         subnet_cidr,
         rules_priority_generator,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

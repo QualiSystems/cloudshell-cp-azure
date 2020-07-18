@@ -16,7 +16,7 @@ class CreateVMCommand(RollbackCommand):
         virtual_machine,
         resource_group_name,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

@@ -13,7 +13,7 @@ class CreateSubnetCommand(RollbackCommand):
         mgmt_resource_group_name,
         network_security_group,
     ):
-        """
+        """Init command.
 
         :param rollback_manager:
         :param cancellation_manager:

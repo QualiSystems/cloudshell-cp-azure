@@ -18,7 +18,7 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
     def __init__(
         self, resource_config, azure_client, reservation_info, lock_manager, logger
     ):
-        """
+        """Init command.
 
         :param resource_config:
         :param azure_client:
@@ -33,11 +33,10 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
         self._lock_manager = lock_manager
 
     def _find_sandbox_subnets(self, resource_group_name, sandbox_vnet):
-        """Find the sandbox subnet in the vNet
+        """Find the sandbox subnet in the vNet.
 
         :param str resource_group_name:
         :param VirtualNetwork sandbox_vnet:
-        :return:
         :rtype: list[Subnet]
         """
         # todo: rework this using some special tags ?
@@ -48,7 +47,7 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
         ]
 
     def cleanup_sandbox_infra(self, request_actions):
-        """
+        """Cleanp Sandbox Infra.
 
         :param request_actions:
         :return:

@@ -25,14 +25,10 @@ def generate_name(name, postfix=None, max_length=24):
 
 
 def generate_short_unique_string():
-    """Generate a short unique string
+    """Generate a short unique string.
 
-    method generate a guid and return the first 8 characteres of the new guid
+    Method generate a guid and return the first 8 characters of the new guid
     :rtype: str
     """
     unique_id = str(uuid.uuid4())[:8]
     return unique_id
-
-
-def format_subnet_name(resource_group_name, subnet_cidr):
-    return (resource_group_name + "_" + subnet_cidr).replace(" ", "").replace("/", "-")

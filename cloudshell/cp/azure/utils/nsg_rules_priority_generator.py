@@ -9,7 +9,7 @@ class NSGRulesPriorityGenerator:
         include_existing_rules=False,
         nsg_actions=None,
     ):
-        """
+        """Init command.
 
         :param str nsg_name:
         :param str resource_group_name:
@@ -27,7 +27,7 @@ class NSGRulesPriorityGenerator:
         self._existing_priorities.append(float("inf"))
 
     def _populate_existing_rules_priorities(self):
-        """
+        """Populate list with the existing priorities.
 
         :return:
         """
@@ -45,7 +45,7 @@ class NSGRulesPriorityGenerator:
         start_from=RULE_DEFAULT_PRIORITY,
         increase_step=RULE_PRIORITY_INCREASE_STEP,
     ):
-        """
+        """Get next available priority for the NSG rule.
 
         :param int start_from:
         :param int increase_step:
