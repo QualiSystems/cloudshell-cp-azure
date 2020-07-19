@@ -1,8 +1,9 @@
 import requests
 from azure.mgmt.compute.models import OperatingSystemTypes
-from cloudshell.cp.azure.actions.network import NetworkActions
 from msrestazure.azure_exceptions import CloudError
 from requests.utils import is_valid_cidr
+
+from cloudshell.cp.azure.actions.network import NetworkActions
 
 
 class ValidationActions(NetworkActions):

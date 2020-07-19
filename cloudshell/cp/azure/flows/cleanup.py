@@ -1,17 +1,17 @@
 from functools import partial
 from http import HTTPStatus
 
+from cloudshell.cp.core.flows.cleanup_sandbox_infra import (
+    AbstractCleanupSandboxInfraFlow,
+)
+from msrestazure.azure_exceptions import CloudError
+
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
 )
 from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
-from msrestazure.azure_exceptions import CloudError
-
-from cloudshell.cp.core.flows.cleanup_sandbox_infra import (
-    AbstractCleanupSandboxInfraFlow,
-)
 
 
 class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):

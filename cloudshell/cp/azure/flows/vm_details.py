@@ -1,8 +1,8 @@
+from cloudshell.cp.core.flows.vm_details import AbstractVMDetailsFlow
+
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.actions.vm_details import VMDetailsActions
 from cloudshell.cp.azure.models.deployed_app import AzureVMFromMarketplaceDeployedApp
-
-from cloudshell.cp.core.flows.vm_details import AbstractVMDetailsFlow
 
 
 class AzureGetVMDetailsFlow(AbstractVMDetailsFlow):

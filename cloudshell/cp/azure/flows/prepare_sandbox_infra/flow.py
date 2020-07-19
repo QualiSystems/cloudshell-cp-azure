@@ -1,3 +1,7 @@
+from cloudshell.cp.core.flows.prepare_sandbox_infra import (
+    AbstractPrepareSandboxInfraFlow,
+)
+
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
@@ -11,10 +15,6 @@ from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
 )
 from cloudshell.cp.azure.utils.rollback import RollbackCommandsManager
 from cloudshell.cp.azure.utils.tags import AzureTagsManager
-
-from cloudshell.cp.core.flows.prepare_sandbox_infra import (
-    AbstractPrepareSandboxInfraFlow,
-)
 
 
 class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):

@@ -1,14 +1,14 @@
 import re
 
 from azure.mgmt.compute.models import StorageAccountTypes
-from cloudshell.cp.azure.actions.network import NetworkActions
-from cloudshell.cp.azure.utils.azure_name_parser import get_name_from_resource_id
-
 from cloudshell.cp.core.request_actions.models import (
     VmDetailsData,
     VmDetailsNetworkInterface,
     VmDetailsProperty,
 )
+
+from cloudshell.cp.azure.actions.network import NetworkActions
+from cloudshell.cp.azure.utils.azure_name_parser import get_name_from_resource_id
 
 
 class VMDetailsActions(NetworkActions):

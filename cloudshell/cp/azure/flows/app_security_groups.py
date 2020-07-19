@@ -1,3 +1,6 @@
+from cloudshell.cp.core.flows.app_security_groups import AbstractAppSecurityGroupsFlow
+from requests.utils import is_valid_cidr
+
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
@@ -7,9 +10,6 @@ from cloudshell.cp.azure.utils.azure_name_parser import get_name_from_resource_i
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
 )
-from requests.utils import is_valid_cidr
-
-from cloudshell.cp.core.flows.app_security_groups import AbstractAppSecurityGroupsFlow
 
 
 class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):

@@ -1,5 +1,6 @@
-from cloudshell.cp.azure.actions.validation import ValidationActions
 from cloudshell.shell.core.driver_context import AutoLoadDetails
+
+from cloudshell.cp.azure.actions.validation import ValidationActions
 
 
 class AzureAutoloadFlow:

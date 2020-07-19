@@ -7,14 +7,15 @@ from azure.mgmt.resource.resources.models import ResourceGroup
 from azure.mgmt.storage import StorageManagementClient, models as storage_models
 from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
+from msrestazure.azure_active_directory import ServicePrincipalCredentials
+from retrying import retry
+
 from cloudshell.cp.azure.utils.retrying import (
     RETRYABLE_ERROR_MAX_ATTEMPTS,
     RETRYABLE_WAIT_TIME,
     retry_on_connection_error,
     retry_on_retryable_error,
 )
-from msrestazure.azure_active_directory import ServicePrincipalCredentials
-from retrying import retry
 
 
 class AzureAPIClient:

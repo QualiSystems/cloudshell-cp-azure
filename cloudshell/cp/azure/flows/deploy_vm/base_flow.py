@@ -1,4 +1,7 @@
 from azure.mgmt.compute import models as compute_models
+from cloudshell.cp.core.flows.deploy import AbstractDeployFlow
+from cloudshell.cp.core.request_actions.models import Attribute, DeployAppResult
+
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
@@ -17,9 +20,6 @@ from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
 )
 from cloudshell.cp.azure.utils.rollback import RollbackCommandsManager
 from cloudshell.cp.azure.utils.tags import AzureTagsManager
-
-from cloudshell.cp.core.flows.deploy import AbstractDeployFlow
-from cloudshell.cp.core.request_actions.models import Attribute, DeployAppResult
 
 
 class BaseAzureDeployVMFlow(AbstractDeployFlow):

@@ -1,4 +1,5 @@
 from azure.mgmt.compute.models import OperatingSystemTypes
+
 from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 

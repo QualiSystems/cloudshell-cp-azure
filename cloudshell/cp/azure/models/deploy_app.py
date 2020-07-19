@@ -1,7 +1,7 @@
-from cloudshell.cp.azure import constants
+from cloudshell.cp.core.request_actions import models
 from cloudshell.shell.standards.core.resource_config_entities import ResourceAttrRO
 
-from cloudshell.cp.core.request_actions import models
+from cloudshell.cp.azure import constants
 
 
 class InboundPortsAttrRO(ResourceAttrRO):

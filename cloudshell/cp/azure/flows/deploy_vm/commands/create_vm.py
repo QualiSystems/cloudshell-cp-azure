@@ -1,7 +1,8 @@
 import re
 
-from cloudshell.cp.azure.utils.rollback import RollbackCommand
 from msrestazure.azure_exceptions import CloudError
+
+from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateVMCommand(RollbackCommand):

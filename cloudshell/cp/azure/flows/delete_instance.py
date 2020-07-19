@@ -1,6 +1,8 @@
 from functools import partial
 from http import HTTPStatus
 
+from msrestazure.azure_exceptions import CloudError
+
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
@@ -8,7 +10,6 @@ from cloudshell.cp.azure.actions.network_security_group import (
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.utils.azure_name_parser import get_name_from_resource_id
-from msrestazure.azure_exceptions import CloudError
 
 
 class AzureDeleteInstanceFlow:

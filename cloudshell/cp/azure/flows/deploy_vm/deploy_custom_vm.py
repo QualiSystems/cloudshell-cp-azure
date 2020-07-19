@@ -1,4 +1,5 @@
 from azure.mgmt.compute import models
+
 from cloudshell.cp.azure.actions.vm_details import VMDetailsActions
 from cloudshell.cp.azure.actions.vm_image import VMImageActions
 from cloudshell.cp.azure.flows.deploy_vm.base_flow import BaseAzureDeployVMFlow
