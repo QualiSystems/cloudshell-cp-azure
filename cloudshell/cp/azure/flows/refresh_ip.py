@@ -90,11 +90,7 @@ class AzureRefreshIPFlow:
                 f"Updating Public IP on the VM {deployed_app.name} "
                 f"to {public_ip_on_azure}"
             )
-            self._cs_api.SetAttributeValue(
-                resourceFullPath=deployed_app.name,
-                attributeName=deployed_app.PUBLIC_IP_KEY,
-                attributeValue=public_ip_on_azure,
-            )
+            deployed_app.update_public_ip(public_ip_on_azure)
 
         self._logger.info(f"Private IP on Azure: {private_ip_on_azure}")
         self._logger.info(f"Private IP on CloudShell:".format(deployed_app.private_ip))
