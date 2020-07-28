@@ -481,7 +481,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         raise Exception(f"Unable to find Sandbox Subnet with name '{subnet_name}'")
 
     def _prepare_deploy_app_result(
-        self, deployed_vm, deploy_app, vm_interfaces, vm_name, resource_group_name
+        self,
+        deployed_vm,
+        deploy_app,
+        vm_interfaces,
+        vm_name,
+        username,
+        password,
+        resource_group_name,
     ):
         """Prepare Deploy App result.
 
@@ -489,6 +496,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         :param deploy_app:
         :param vm_interfaces:
         :param str vm_name:
+        :param str username:
+        :param str password:
+        :param str resource_group_name:
         :return:
         """
         public_ip = self._find_vm_public_ip(
@@ -497,8 +507,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         private_ip = self._find_vm_private_ip(vm_interfaces=vm_interfaces)
 
         deployed_app_attrs = [
-            Attribute("Password", deployed_vm.os_profile.admin_password),
-            Attribute("User", deployed_vm.os_profile.admin_username),
+            Attribute("Password", password),
+            Attribute("User", username),
             Attribute("Public IP", public_ip),
         ]
 
@@ -516,6 +526,27 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
 
         return deploy_result
+
+    def _prepare_vm_credentials(self, deploy_app, image_os):
+        """Generate username and password for the VM if needed.
+
+        :param deploy_app:
+        :return:
+        """
+        vm_creds_actions = VMCredentialsActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+
+        if image_os == compute_models.OperatingSystemTypes.linux:
+            username, password = vm_creds_actions.prepare_linux_credentials(
+                username=deploy_app.user, password=deploy_app.password
+            )
+        else:
+            username, password = vm_creds_actions.prepare_windows_credentials(
+                username=deploy_app.user, password=deploy_app.password
+            )
+
+        return username, password
 
     def _deploy(self, request_actions):
         """Deploy VM.
@@ -566,9 +597,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 vm_interfaces=vm_ifaces,
             )
 
+            username, password = self._prepare_vm_credentials(
+                deploy_app=deploy_app, image_os=image_os
+            )
+
             vm = self._prepare_vm(
                 deploy_app=deploy_app,
-                image_os=image_os,
+                username=username,
+                password=password,
                 resource_group_name=resource_group_name,
                 storage_account_name=storage_account_name,
                 vm_network_interfaces=vm_ifaces,
@@ -596,6 +632,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 deploy_app=deploy_app,
                 vm_interfaces=vm_ifaces,
                 vm_name=vm_name,
+                username=username,
+                password=password,
                 resource_group_name=resource_group_name,
             )
 
@@ -708,15 +746,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
     def _prepare_os_profile(
         self,
-        image_os,
-        deploy_app,
+        username,
+        password,
         resource_group_name,
         storage_account_name,
         computer_name,
     ):
         """Prepare OS Profile for the VM.
 
-        :param image_os:
         :param deploy_app:
         :param str resource_group_name:
         :param str storage_account_name:
@@ -728,32 +765,22 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
         linux_configuration = None
 
-        if image_os == compute_models.OperatingSystemTypes.linux:
-            username, password = vm_creds_actions.prepare_linux_credentials(
-                username=deploy_app.user, password=deploy_app.password
+        if not password:
+            ssh_key_path = vm_creds_actions.prepare_ssh_public_key_path(
+                username=username
             )
-            if not password:
-                ssh_key_path = vm_creds_actions.prepare_ssh_public_key_path(
-                    username=username
-                )
-                ssh_public_key = vm_creds_actions.get_ssh_public_key(
-                    resource_group_name=resource_group_name,
-                    storage_account_name=storage_account_name,
-                )
+            ssh_public_key = vm_creds_actions.get_ssh_public_key(
+                resource_group_name=resource_group_name,
+                storage_account_name=storage_account_name,
+            )
 
-                ssh_public_key = compute_models.SshPublicKey(
-                    path=ssh_key_path, key_data=ssh_public_key
-                )
-                ssh_config = compute_models.SshConfiguration(
-                    public_keys=[ssh_public_key]
-                )
+            ssh_public_key = compute_models.SshPublicKey(
+                path=ssh_key_path, key_data=ssh_public_key
+            )
+            ssh_config = compute_models.SshConfiguration(public_keys=[ssh_public_key])
 
-                linux_configuration = compute_models.LinuxConfiguration(
-                    disable_password_authentication=True, ssh=ssh_config
-                )
-        else:
-            username, password = vm_creds_actions.prepare_windows_credentials(
-                username=deploy_app.user, password=deploy_app.password
+            linux_configuration = compute_models.LinuxConfiguration(
+                disable_password_authentication=True, ssh=ssh_config
             )
 
         return compute_models.OSProfile(
@@ -766,7 +793,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
     def _prepare_vm(
         self,
         deploy_app,
-        image_os,
+        username,
+        password,
         resource_group_name,
         storage_account_name,
         vm_network_interfaces,
@@ -776,7 +804,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         """Prepare VM for the deployment.
 
         :param deploy_app:
-        :param image_os:
+        :param str username:
+        :param str password:
         :param str resource_group_name:
         :param str storage_account_name:
         :param vm_network_interfaces:
@@ -785,8 +814,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         :return:
         """
         os_profile = self._prepare_os_profile(
-            image_os=image_os,
-            deploy_app=deploy_app,
+            username=username,
+            password=password,
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
             computer_name=computer_name,
