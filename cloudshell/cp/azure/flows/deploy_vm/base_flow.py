@@ -497,8 +497,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         private_ip = self._find_vm_private_ip(vm_interfaces=vm_interfaces)
 
         deployed_app_attrs = [
-            Attribute("Password", deploy_app.password),
-            Attribute("User", deploy_app.user),
+            Attribute("Password", deployed_vm.os_profile.admin_password),
+            Attribute("User", deployed_vm.os_profile.admin_username),
             Attribute("Public IP", public_ip),
         ]
 
