@@ -154,18 +154,6 @@ class ValidationActions(NetworkActions):
                 "only to private subnets"
             )
 
-    def validate_deploy_app_inbound_ports(self, deploy_app):
-        """Validate 'Inbound Ports' attribute.
-
-        :param deploy_app:
-        :return:
-        """
-        self._logger.info("Validating Deploy App 'Inbound Ports' attribute")
-        if deploy_app.inbound_ports and not deploy_app.add_public_ip:
-            raise Exception(
-                '"Inbound Ports" attribute must be empty when "Add Public IP" is False'
-            )
-
     def validate_deploy_app_script_file(self, deploy_app):
         """Validate 'Extension Script file' attribute.
 
