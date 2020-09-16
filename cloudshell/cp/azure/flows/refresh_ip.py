@@ -93,7 +93,7 @@ class AzureRefreshIPFlow:
             deployed_app.update_public_ip(public_ip_on_azure)
 
         self._logger.info(f"Private IP on Azure: {private_ip_on_azure}")
-        self._logger.info(f"Private IP on CloudShell:".format(deployed_app.private_ip))
+        self._logger.info(f"Private IP on CloudShell: {deployed_app.private_ip}")
 
         if private_ip_on_azure != deployed_app.private_ip:
             self._logger.info(

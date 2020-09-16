@@ -14,7 +14,7 @@ class ValidationActions(NetworkActions):
 
         :return:
         """
-        self._logger.info(f"Registering subscription with Azure providers...")
+        self._logger.info("Registering subscription with Azure providers...")
         for provider in (
             "Microsoft.Authorization",
             "Microsoft.Storage",
@@ -33,7 +33,7 @@ class ValidationActions(NetworkActions):
         :param str region:
         :return:
         """
-        self._logger.info(f"Validating Azure region...")
+        self._logger.info("Validating Azure region...")
 
         if not region:
             raise Exception("Region attribute can not be empty")
