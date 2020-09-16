@@ -21,7 +21,7 @@ class SSHKeyPairActions:
 
         :return:
         """
-        self._logger.info(f"Creating SSH key pair...")
+        self._logger.info("Creating SSH key pair...")
         return generate_ssh_key_pair()
 
     def save_ssh_public_key(
@@ -34,7 +34,7 @@ class SSHKeyPairActions:
         :param str public_key:
         :return:
         """
-        self._logger.info(f"Saving SSH public key on the Azure...")
+        self._logger.info("Saving SSH public key on the Azure...")
         self._azure_client.create_file(
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
@@ -54,7 +54,7 @@ class SSHKeyPairActions:
         :param str private_key:
         :return:
         """
-        self._logger.info(f"Saving SSH private key on the Azure...")
+        self._logger.info("Saving SSH private key on the Azure...")
         self._azure_client.create_file(
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
@@ -71,7 +71,7 @@ class SSHKeyPairActions:
         :param storage_account_name:
         :return:
         """
-        self._logger.info(f"Getting SSH public key from the Azure...")
+        self._logger.info("Getting SSH public key from the Azure...")
         return self._azure_client.get_file(
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
@@ -87,7 +87,7 @@ class SSHKeyPairActions:
         :param storage_account_name:
         :return:
         """
-        self._logger.info(f"Getting SSH private key from the Azure...")
+        self._logger.info("Getting SSH private key from the Azure...")
         return self._azure_client.get_file(
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
