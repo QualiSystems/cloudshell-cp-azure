@@ -446,10 +446,12 @@ class AzureAPIClient:
         """
         nsg_model = network_models.NetworkSecurityGroup(location=region, tags=tags)
 
-        operation_poller = self._network_client.network_security_groups.create_or_update(  # noqa: E501
-            resource_group_name=resource_group_name,
-            network_security_group_name=network_security_group_name,
-            parameters=nsg_model,
+        operation_poller = (
+            self._network_client.network_security_groups.create_or_update(  # noqa: E501
+                resource_group_name=resource_group_name,
+                network_security_group_name=network_security_group_name,
+                parameters=nsg_model,
+            )
         )
 
         return operation_poller.result()
