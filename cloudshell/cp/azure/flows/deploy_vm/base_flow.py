@@ -53,7 +53,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         self._cancellation_manager = cancellation_manager
         self._cs_ip_pool_manager = cs_ip_pool_manager
         self._rollback_manager = RollbackCommandsManager(logger=self._logger)
-        self._tags_manager = AzureTagsManager(reservation_info=self._reservation_info)
+        self._tags_manager = AzureTagsManager(
+            reservation_info=self._reservation_info, resource_config=resource_config
+        )
 
         self._task_waiter_manager = AzureTaskWaiter(
             cancellation_manager=self._cancellation_manager, logger=self._logger
@@ -97,12 +99,13 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             f"Class {type(self)} must implement method '_prepare_vm_details_data'"
         )
 
-    def _validate_deploy_app_request(self, deploy_app, connect_subnets, image_os):
+    def _validate_deploy_app_request(self, deploy_app, connect_subnets, image_os, tags):
         """Validate Deploy App request.
 
         :param deploy_app:
         :param connect_subnets:
         :param image_os:
+        :param tags
         :return:
         """
         validation_actions = ValidationActions(
@@ -121,6 +124,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             deploy_app_vm_size=deploy_app.vm_size,
             cloud_provider_vm_size=self._resource_config.vm_size,
         )
+        validation_actions.validate_tags(tags=tags)
 
     def _create_vm_nsg(self, resource_group_name, vm_name, tags):
         """Create VM Network Security Group.
@@ -563,7 +567,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             name=deploy_app.app_name, postfix=name_postfix, max_length=64
         )
 
-        tags = self._tags_manager.get_tags(vm_name=vm_name)
+        tags = self._tags_manager.get_vm_tags(
+            vm_name=vm_name, extended_custom_tags=deploy_app.extended_custom_tags
+        )
 
         computer_name = vm_name[:15]  # Windows OS username limit
 
@@ -573,7 +579,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             deploy_app=deploy_app,
             connect_subnets=request_actions.connect_subnets,
             image_os=image_os,
+            tags=tags,
         )
+
         with self._rollback_manager:
             vm_nsg = self._create_vm_nsg(
                 resource_group_name=resource_group_name, vm_name=vm_name, tags=tags
