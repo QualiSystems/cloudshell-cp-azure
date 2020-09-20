@@ -43,4 +43,8 @@ class AzureAutoloadFlow:
             mgmt_networks=self._resource_config.additional_mgmt_networks
         )
 
+        validation_actions.validate_custom_tags(
+            custom_tags=self._resource_config.custom_tags
+        )
+
         return AutoLoadDetails([], [])

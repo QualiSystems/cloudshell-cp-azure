@@ -1,5 +1,5 @@
 class AzureTagsManager:
-    class TagNames:
+    class DefaultTagNames:
         created_by = "CreatedBy"
         owner = "Owner"
         blueprint = "Blueprint"
@@ -7,30 +7,63 @@ class AzureTagsManager:
         domain = "Domain"
         vm_name = "Name"
 
-    class TagValues:
+    class DefaultTagValues:
         created_by = "CloudShell"
 
-    def __init__(self, reservation_info):
+    def __init__(self, reservation_info, resource_config):
         """Init command.
 
         :param reservation_info:
+        :param resource_config:
         """
         self._reservation_info = reservation_info
+        self._resource_config = resource_config
 
-    def get_tags(self, vm_name=None):
-        """Get tags.
+    def get_default_tags(self):
+        """Get pre-defined CloudShell tags.
 
-        :param str vm_name:
         :return:
         """
-        tags = {
-            self.TagNames.created_by: self.TagValues.created_by,
-            self.TagNames.owner: self._reservation_info.owner,
-            self.TagNames.blueprint: self._reservation_info.blueprint,
-            self.TagNames.sandbox_id: self._reservation_info.reservation_id,
-            self.TagNames.domain: self._reservation_info.domain,
+        return {
+            self.DefaultTagNames.created_by: self.DefaultTagValues.created_by,
+            self.DefaultTagNames.owner: self._reservation_info.owner,
+            self.DefaultTagNames.blueprint: self._reservation_info.blueprint,
+            self.DefaultTagNames.sandbox_id: self._reservation_info.reservation_id,
+            self.DefaultTagNames.domain: self._reservation_info.domain,
         }
-        if vm_name is not None:
-            tags[self.TagNames.vm_name] = vm_name
+
+    def get_reservation_tags(self):
+        """Get tags for the reservation-related objects.
+
+        :return:
+        """
+        tags = self.get_default_tags()
+        tags.update(self._resource_config.custom_tags)
 
         return tags
+
+    def get_vm_tags(self, vm_name, extended_custom_tags=None):
+        """Get tags for the VM-related objects.
+
+        :param str vm_name:
+        :param dict extended_custom_tags:
+        :return:
+        """
+        tags = self.get_reservation_tags()
+
+        tags[self.DefaultTagNames.vm_name] = vm_name
+
+        if extended_custom_tags is not None:
+            tags.update(extended_custom_tags)
+
+        return tags
+
+
+def get_default_tags_count():
+    return len(
+        [
+            tag_name
+            for tag_name in vars(AzureTagsManager.DefaultTagNames)
+            if not tag_name.startswith("__")
+        ]
+    )

@@ -4,6 +4,8 @@ from cloudshell.shell.standards.core.resource_config_entities import (
     ResourceAttrRO,
 )
 
+from cloudshell.cp.azure.exceptions import InvalidAttrException
+
 
 class RegionResourceAttrRO(ResourceAttrRO):
     def __get__(self, instance, owner):
@@ -34,6 +36,33 @@ class AdditionalMgmtNetworksAttrRO(ResourceAttrRO):
             return [param.strip() for param in attr.split(",")]
 
         return []
+
+
+class CustomTagsAttrRO(ResourceAttrRO):
+    def __get__(self, instance, owner):
+        """Get Custom Tags resource attribute.
+
+        :param GenericResourceConfig instance:
+        :rtype: str
+        """
+        if instance is None:
+            return self
+
+        attr = instance.attributes.get(self.get_key(instance), self.default)
+        if attr:
+            try:
+                return {
+                    tag_key.strip(): tag_val.strip()
+                    for tag_key, tag_val in [
+                        tag_data.split("=") for tag_data in attr.split(";") if tag_data
+                    ]
+                }
+            except ValueError:
+                raise InvalidAttrException(
+                    "'Custom Tags' attribute is in incorrect format"
+                )
+
+        return {}
 
 
 class AzureResourceConfig(GenericResourceConfig):
@@ -70,8 +99,10 @@ class AzureResourceConfig(GenericResourceConfig):
     )
 
     additional_mgmt_networks = AdditionalMgmtNetworksAttrRO(
-        "Additional Mgmt Networks", ResourceAttrRO.NAMESPACE.SHELL_NAME
+        "Additional Mgmt Networks", AdditionalMgmtNetworksAttrRO.NAMESPACE.SHELL_NAME
     )
+
+    custom_tags = CustomTagsAttrRO("Custom Tags", CustomTagsAttrRO.NAMESPACE.SHELL_NAME)
 
     private_ip_allocation_method = ResourceAttrRO(
         "Private IP Allocation Method", ResourceAttrRO.NAMESPACE.SHELL_NAME
