@@ -4,10 +4,12 @@ from msrestazure.azure_exceptions import CloudError
 from requests.utils import is_valid_cidr
 
 from cloudshell.cp.azure.actions.network import NetworkActions
+from cloudshell.cp.azure.utils.tags import get_default_tags_count
 
 
 class ValidationActions(NetworkActions):
     MAX_VM_DISK_SIZE_GB = 1023
+    MAX_TAGS_NUMBER = 15
 
     def register_azure_providers(self):
         """Register Azure Providers.
@@ -117,6 +119,38 @@ class ValidationActions(NetworkActions):
 
             if vm_size not in available_vm_sizes:
                 raise Exception(f"VM Size {vm_size} is not valid")
+
+    def validate_custom_tags(self, custom_tags):
+        """Validate resource 'Custom tags' attribute".
+
+        :param dict custom_tags:
+        :return:
+        """
+        self._logger.info("Validating 'Custom Tags' attribute")
+        allowed_tags_number = self.MAX_TAGS_NUMBER - get_default_tags_count()
+
+        if len(custom_tags) > allowed_tags_number:
+            raise Exception(
+                f"The number of Azure custom tags must be no more than "
+                f"{allowed_tags_number}. Present number of custom tags: "
+                f"{len(custom_tags)}"
+            )
+
+    def validate_tags(self, tags):
+        """Validate resource and deployment path 'Custom tags' attributes".
+
+        :param dict tags:
+        :return:
+        """
+        self._logger.info("Validating 'Custom Tags' attribute")
+        default_tags_count = get_default_tags_count()
+
+        if len(tags) > self.MAX_TAGS_NUMBER:
+            raise Exception(
+                f"The total number of Azure custom tags must be no more than "
+                f"{self.MAX_TAGS_NUMBER - default_tags_count}. "
+                f"Present number of custom tags: {len(tags) - default_tags_count}"
+            )
 
     def validate_azure_additional_networks(self, mgmt_networks):
         """Validate 'Additional Mgmt Networks' attribute.

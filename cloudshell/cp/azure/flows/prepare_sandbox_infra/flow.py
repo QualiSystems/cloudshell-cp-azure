@@ -40,7 +40,9 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         self._reservation_info = reservation_info
         self._cancellation_manager = cancellation_manager
         self._rollback_manager = RollbackCommandsManager(logger=self._logger)
-        self._tags_manager = AzureTagsManager(reservation_info=self._reservation_info)
+        self._tags_manager = AzureTagsManager(
+            reservation_info=self._reservation_info, resource_config=resource_config
+        )
 
     def prepare_cloud_infra(self, request_actions):
         pass
@@ -51,7 +53,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         :param request_actions:
         :return:
         """
-        tags = self._tags_manager.get_tags()
+        tags = self._tags_manager.get_reservation_tags()
         resource_group_name = self._reservation_info.get_resource_group_name()
         resource_group_actions = ResourceGroupActions(
             azure_client=self._azure_client, logger=self._logger
@@ -72,7 +74,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         """
         resource_group_name = self._reservation_info.get_resource_group_name()
         nsg_name = self._reservation_info.get_network_security_group_name()
-        tags = self._tags_manager.get_tags()
+        tags = self._tags_manager.get_reservation_tags()
 
         with self._rollback_manager:
             nsg = self._create_nsg(
@@ -100,7 +102,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         """
         resource_group_name = self._reservation_info.get_resource_group_name()
         storage_account_name = self._reservation_info.get_storage_account_name()
-        tags = self._tags_manager.get_tags()
+        tags = self._tags_manager.get_reservation_tags()
 
         with self._rollback_manager:
             self._create_storage_account(
