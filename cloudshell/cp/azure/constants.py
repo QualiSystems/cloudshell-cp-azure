@@ -1,4 +1,4 @@
-SHELL_NAME = "Microsoft Azure 2nd Gen"
+SHELL_NAME = "Microsoft Azure Cloud Provider 2G"
 
 AZURE_VM_FROM_MARKETPLACE_DEPLOYMENT_PATH = (
     f"{SHELL_NAME}.Azure VM From Marketplace 2nd Gen"
