@@ -729,6 +729,71 @@ class AzureAPIClient:
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
     )
+    def get_gallery_machine_image(
+        self, resource_group, gallery_name, gallery_image_name, subscription_id=None
+    ):
+        """Get shared gallery image.
+
+        :param str gallery_name:
+        :param str gallery_image_name:
+        :param str resource_group:
+        :param str subscription_id:
+        :return:
+        """
+        if subscription_id and subscription_id != self._azure_subscription_id:
+            compute_client = ComputeManagementClient(
+                credentials=self._credentials, subscription_id=subscription_id
+            )
+        else:
+            compute_client = self._compute_client
+
+        return compute_client.gallery_images.get(
+            resource_group_name=resource_group,
+            gallery_name=gallery_name,
+            gallery_image_name=gallery_image_name,
+        )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def get_gallery_machine_image_version(
+        self,
+        resource_group,
+        gallery_name,
+        gallery_image_name,
+        gallery_image_version,
+        subscription_id=None,
+    ):
+        """Get shared gallery image version.
+
+        :param str gallery_name:
+        :param str gallery_image_name:
+        :param str resource_group:
+        :param str gallery_image_version:
+        :param str subscription_id:
+        :return:
+        """
+        if subscription_id and subscription_id != self._azure_subscription_id:
+            compute_client = ComputeManagementClient(
+                credentials=self._credentials, subscription_id=subscription_id
+            )
+        else:
+            compute_client = self._compute_client
+
+        return compute_client.gallery_image_versions.get(
+            resource_group_name=resource_group,
+            gallery_name=gallery_name,
+            gallery_image_version_name=gallery_image_version,
+            gallery_image_name=gallery_image_name,
+        )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
     def create_public_ip(
         self,
         public_ip_name,

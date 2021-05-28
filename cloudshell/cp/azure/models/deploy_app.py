@@ -101,3 +101,18 @@ class AzureVMFromCustomImageDeployApp(BaseAzureVMDeployApp):
     azure_image = ResourceAttrRO("Azure Image", "DEPLOYMENT_PATH")
 
     azure_resource_group = ResourceAttrRO("Azure Resource Group", "DEPLOYMENT_PATH")
+
+
+class AzureVMFromSharedGalleryImageDeployApp(BaseAzureVMDeployApp):
+    DEPLOYMENT_PATH = constants.AZURE_VM_FROM_SHARED_GALLERY_IMAGE_DEPLOYMENT_PATH
+
+    shared_image_gallery = ResourceAttrRO("Shared Image Gallery", "DEPLOYMENT_PATH")
+    image_definition = ResourceAttrRO("Image Definition", "DEPLOYMENT_PATH")
+    image_version = ResourceAttrRO("Image Version", "DEPLOYMENT_PATH")
+
+    shared_gallery_resource_group = ResourceAttrRO(
+        "Shared Gallery Resource Group", "DEPLOYMENT_PATH"
+    )
+    shared_gallery_subscription_id = ResourceAttrRO(
+        "Shared Gallery Subscription ID", "DEPLOYMENT_PATH"
+    )
