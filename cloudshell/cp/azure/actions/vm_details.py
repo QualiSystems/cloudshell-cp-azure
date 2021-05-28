@@ -157,6 +157,21 @@ class VMDetailsActions(NetworkActions):
             VmDetailsProperty(key="Image Resource Group", value=resource_group),
         ] + self._prepare_common_vm_instance_data(virtual_machine=virtual_machine)
 
+    def _prepare_gallery_vm_instance_data(self, virtual_machine):
+        """Prepare custom VM instance data.
+
+        :param virtual_machine:
+        :return:
+        """
+        image_resource_id = virtual_machine.storage_profile.image_reference.id
+        image_name = self._parse_image_name(resource_id=image_resource_id)
+        resource_group = self._parse_resource_group_name(resource_id=image_resource_id)
+
+        return [
+            VmDetailsProperty(key="Image", value=image_name),
+            VmDetailsProperty(key="Image Resource Group", value=resource_group),
+        ] + self._prepare_common_vm_instance_data(virtual_machine=virtual_machine)
+
     def _prepare_vm_details(
         self, virtual_machine, resource_group_name, prepare_vm_instance_data_function
     ):
@@ -208,4 +223,17 @@ class VMDetailsActions(NetworkActions):
             virtual_machine=virtual_machine,
             resource_group_name=resource_group_name,
             prepare_vm_instance_data_function=self._prepare_custom_vm_instance_data,
+        )
+
+    def prepare_shared_gallery_vm_details(self, virtual_machine, resource_group_name):
+        """Prepare Shared Gallery VM details.
+
+        :param virtual_machine:
+        :param str resource_group_name:
+        :return:
+        """
+        return self._prepare_vm_details(
+            virtual_machine=virtual_machine,
+            resource_group_name=resource_group_name,
+            prepare_vm_instance_data_function=self._prepare_gallery_vm_instance_data,
         )
