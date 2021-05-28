@@ -109,7 +109,6 @@ class VMImageActions:
                 resource_group=resource_group,
                 gallery_name=gallery_name,
                 gallery_image_name=gallery_image_name,
-                gallery_image_version=gallery_image_version,
                 subscription_id=subscription_id,
             )
         return image.id
