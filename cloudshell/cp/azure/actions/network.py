@@ -35,7 +35,7 @@ class NetworkActions:
         """
         self._logger.info(f"Getting Virtual Network by tag {tag_key}={tag_value}")
         for network in virtual_networks:
-            if network.tags.get(tag_key) == tag_value:
+            if network.tags and network.tags.get(tag_key) == tag_value:
                 return network
 
         raise Exception(
