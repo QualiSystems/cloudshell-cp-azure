@@ -4,6 +4,8 @@ from azure.mgmt.network import models
 from msrestazure.azure_exceptions import CloudError
 from netaddr import IPNetwork
 
+from cloudshell.cp.azure.exceptions import NetworkNotFoundException
+
 
 class NetworkActions:
     NETWORK_TYPE_TAG_NAME = "network_type"
@@ -38,7 +40,7 @@ class NetworkActions:
             if network.tags and network.tags.get(tag_key) == tag_value:
                 return network
 
-        raise Exception(
+        raise NetworkNotFoundException(
             f"Unable to find virtual network with tag {tag_key}={tag_value}"
         )
 
@@ -51,6 +53,14 @@ class NetworkActions:
         :return:
         """
         return f"{resource_group_name}_{cidr}".replace(" ", "").replace("/", "-")
+
+    def mgmt_virtual_network_exists(self, resource_group_name):
+        try:
+            self.get_mgmt_virtual_network(resource_group_name)
+        except NetworkNotFoundException:
+            return False
+
+        return True
 
     def get_mgmt_virtual_network(self, resource_group_name):
         """Get management vNET from the management resource group.
