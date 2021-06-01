@@ -219,16 +219,19 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             azure_client=self._azure_client, logger=self._logger
         )
 
-        commands.CreateAllowMGMTVnetRuleCommand(
-            rollback_manager=self._rollback_manager,
-            cancellation_manager=self._cancellation_manager,
-            network_actions=network_actions,
-            nsg_actions=nsg_actions,
-            nsg_name=vm_nsg.name,
-            resource_group_name=resource_group_name,
-            mgmt_resource_group_name=self._resource_config.management_group_name,
-            rules_priority_generator=rules_priority_generator,
-        ).execute()
+        if network_actions.mgmt_virtual_network_exists(
+            self._resource_config.management_group_name
+        ):
+            commands.CreateAllowMGMTVnetRuleCommand(
+                rollback_manager=self._rollback_manager,
+                cancellation_manager=self._cancellation_manager,
+                network_actions=network_actions,
+                nsg_actions=nsg_actions,
+                nsg_name=vm_nsg.name,
+                resource_group_name=resource_group_name,
+                mgmt_resource_group_name=self._resource_config.management_group_name,
+                rules_priority_generator=rules_priority_generator,
+            ).execute()
 
     def _create_vm_nsg_sandbox_traffic_rules(
         self, deploy_app, vm_nsg, resource_group_name, rules_priority_generator

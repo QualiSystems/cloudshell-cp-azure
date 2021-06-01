@@ -77,17 +77,6 @@ class ValidationActions(NetworkActions):
                 f"is not under the '{region}' region"
             )
 
-    def validate_azure_mgmt_network(self, mgmt_resource_group_name):
-        """Validate Azure Management vNET.
-
-        :param str mgmt_resource_group_name:
-        :return:
-        """
-        self._logger.info(
-            "Verifying that MGMT vNet exists under the MGMT resource group..."
-        )
-        self.get_mgmt_virtual_network(resource_group_name=mgmt_resource_group_name)
-
     def validate_azure_sandbox_network(self, mgmt_resource_group_name):
         """Validate Azure Sandbox vNET.
 

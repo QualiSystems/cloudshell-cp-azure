@@ -265,17 +265,20 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             azure_client=self._azure_client, logger=self._logger
         )
 
-        commands.CreateAllowMGMTVnetRuleCommand(
-            rollback_manager=self._rollback_manager,
-            cancellation_manager=self._cancellation_manager,
-            mgmt_resource_group_name=self._resource_config.management_group_name,
-            resource_group_name=resource_group_name,
-            network_actions=network_actions,
-            nsg_actions=nsg_actions,
-            nsg_name=nsg_name,
-            sandbox_cidr=request_actions.sandbox_cidr,
-            rules_priority_generator=rules_priority_generator,
-        ).execute()
+        if network_actions.mgmt_virtual_network_exists(
+            self._resource_config.management_group_name
+        ):
+            commands.CreateAllowMGMTVnetRuleCommand(
+                rollback_manager=self._rollback_manager,
+                cancellation_manager=self._cancellation_manager,
+                mgmt_resource_group_name=self._resource_config.management_group_name,
+                resource_group_name=resource_group_name,
+                network_actions=network_actions,
+                nsg_actions=nsg_actions,
+                nsg_name=nsg_name,
+                sandbox_cidr=request_actions.sandbox_cidr,
+                rules_priority_generator=rules_priority_generator,
+            ).execute()
 
     def _create_nsg_deny_traffic_from_other_sandboxes_rule(
         self, request_actions, nsg_name, resource_group_name, rules_priority_generator
