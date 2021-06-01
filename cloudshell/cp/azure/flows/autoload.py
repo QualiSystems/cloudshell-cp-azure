@@ -27,10 +27,6 @@ class AzureAutoloadFlow:
             region=self._resource_config.region,
         )
 
-        validation_actions.validate_azure_mgmt_network(
-            mgmt_resource_group_name=self._resource_config.management_group_name
-        )
-
         validation_actions.validate_azure_sandbox_network(
             mgmt_resource_group_name=self._resource_config.management_group_name
         )

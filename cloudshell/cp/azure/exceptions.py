@@ -8,3 +8,7 @@ class AzureTaskTimeoutException(BaseAzureException):
 
 class InvalidAttrException(BaseAzureException):
     pass
+
+
+class NetworkNotFoundException(BaseAzureException):
+    pass
