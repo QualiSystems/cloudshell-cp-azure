@@ -10,5 +10,13 @@ class InvalidAttrException(BaseAzureException):
     pass
 
 
+class ResourceNotFoundException(BaseAzureException):
+    pass
+
+
+class MultipleResourceFoundException(BaseAzureException):
+    pass
+
+
 class NetworkNotFoundException(BaseAzureException):
     pass
