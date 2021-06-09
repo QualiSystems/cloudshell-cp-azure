@@ -9,6 +9,7 @@ from cloudshell.cp.azure.actions.network_security_group import (
 from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
 from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
+from cloudshell.cp.azure.constants import SUBNET_SERVICE_NAME_ATTRIBUTE
 from cloudshell.cp.azure.flows.prepare_sandbox_infra import commands
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
@@ -377,16 +378,26 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             )
 
         for subnet_action in request_actions.prepare_subnets:
-            subnet = commands.CreateSubnetCommand(
-                rollback_manager=self._rollback_manager,
-                cancellation_manager=self._cancellation_manager,
-                network_actions=network_actions,
-                cidr=subnet_action.get_cidr(),
-                vnet=sandbox_vnet,
-                resource_group_name=resource_group_name,
-                mgmt_resource_group_name=self._resource_config.management_group_name,
-                network_security_group=network_security_group,
-            ).execute()
+            predefined_subnet_name = subnet_action.get_attribute(
+                name=SUBNET_SERVICE_NAME_ATTRIBUTE
+            )
+
+            if predefined_subnet_name:
+                subnet = network_actions.find_sandbox_subnet_by_name(
+                    sandbox_subnets=sandbox_vnet.subnets,
+                    name_reqexp=predefined_subnet_name,
+                )
+            else:
+                subnet = commands.CreateSubnetCommand(
+                    rollback_manager=self._rollback_manager,
+                    cancellation_manager=self._cancellation_manager,
+                    network_actions=network_actions,
+                    cidr=subnet_action.get_cidr(),
+                    vnet=sandbox_vnet,
+                    resource_group_name=resource_group_name,
+                    mgmt_resource_group_name=self._resource_config.management_group_name,  # noqa E501
+                    network_security_group=network_security_group,
+                ).execute()
 
             subnet_result[subnet_action.actionId] = subnet.name
 

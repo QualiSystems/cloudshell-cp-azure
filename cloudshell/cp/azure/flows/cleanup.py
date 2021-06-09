@@ -76,10 +76,11 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
         )
 
         cleanup_commands = []
-        for subnet in self._find_sandbox_subnets(
-            resource_group_name=resource_group_name, sandbox_vnet=sandbox_vnet
-        ):
 
+        for subnet in network_actions.get_sandbox_subnets(
+            resource_group_name=resource_group_name,
+            mgmt_resource_group_name=self._resource_config.management_group_name,
+        ):
             cleanup_commands.append(
                 partial(
                     network_actions.delete_subnet,

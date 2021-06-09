@@ -10,6 +10,7 @@ from azure.storage.file import FileService
 from msrestazure.azure_active_directory import ServicePrincipalCredentials
 from retrying import retry
 
+from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
     RETRYABLE_ERROR_MAX_ATTEMPTS,
     RETRYABLE_WAIT_TIME,
@@ -616,6 +617,54 @@ class AzureAPIClient:
             virtual_network_name=vnet_name,
             subnet_name=subnet_name,
         )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def get_resource_by_id(self, resource_id):
+        """Get Subnet by its Id.
+
+        :param str resource_id:
+        :return:
+        """
+        return self._resource_client.resources.get_by_id(
+            resource_id=resource_id,
+            api_version=self._resource_client.resources.api_version,
+        )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def get_resource_by_tag(self, tag_name, tag_value=None, unique=True):
+        """Get resource by specific tag/value.
+
+        :param str tag_name:
+        :param str tag_value:
+        :param bool unique:
+        :return:
+        """
+        search_filter = f"tagName eq '{tag_name}'"
+
+        if tag_value:
+            search_filter = f"{search_filter} and tagValue eq '{tag_value}'"
+
+        resources = self._resource_client.resources.list(filter=search_filter)
+
+        if not resources:
+            raise exceptions.ResourceNotFoundException(
+                f"Unable to find resource by tag {tag_name}:{tag_value}"
+            )
+
+        if unique and len(resources) > 1:
+            raise exceptions.MultipleResourceFoundException(
+                f"Found several resources with tag {tag_name}:{tag_value}"
+            )
+
+        return resources[0]
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,

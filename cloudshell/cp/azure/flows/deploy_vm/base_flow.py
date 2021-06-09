@@ -381,16 +381,15 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
         network_interfaces = []
 
-        sandbox_subnets = network_actions.get_sandbox_subnets(
-            resource_group_name=resource_group_name,
-            mgmt_resource_group_name=self._resource_config.management_group_name,
-        )
-
         if connect_subnets:
+            sandbox_vnet = network_actions.get_sandbox_virtual_network(
+                resource_group_name=self._resource_config.management_group_name
+            )
+
             for idx, connect_subnet in enumerate(connect_subnets):
-                subnet = self._find_sandbox_subnet(
-                    subnet_name=connect_subnet.subnet_id,
-                    sandbox_subnets=sandbox_subnets,
+                subnet = network_actions.find_sandbox_subnet_by_name(
+                    sandbox_subnets=sandbox_vnet.subnets,
+                    name_reqexp=connect_subnet.subnet_id,
                 )
 
                 interface = commands.CreateVMNetworkCommand(
@@ -416,6 +415,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 network_interfaces.append(interface)
 
         else:
+            sandbox_subnets = network_actions.get_sandbox_subnets(
+                resource_group_name=resource_group_name,
+                mgmt_resource_group_name=self._resource_config.management_group_name,
+            )
+
+            if not sandbox_subnets:
+                raise Exception(
+                    "Unable to find subnets under the Sandbox Virtual Network"
+                )
+
             for idx, subnet in enumerate(sandbox_subnets):
                 interface = commands.CreateVMNetworkCommand(
                     rollback_manager=self._rollback_manager,
@@ -472,19 +481,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         for vm_interface in vm_interfaces:
             if vm_interface.primary:
                 return vm_interface.ip_configurations[0].private_ip_address
-
-    def _find_sandbox_subnet(self, subnet_name, sandbox_subnets):
-        """Find Sandbox subnet by name.
-
-        :param str subnet_name:
-        :param sandbox_subnets:
-        :return:
-        """
-        for subnet in sandbox_subnets:
-            if subnet.name == subnet_name:
-                return subnet
-
-        raise Exception(f"Unable to find Sandbox Subnet with name '{subnet_name}'")
 
     def _prepare_deploy_app_result(
         self,
