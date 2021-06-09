@@ -1,10 +1,15 @@
+import re
 from functools import partial
 
 from azure.mgmt.network import models
 from msrestazure.azure_exceptions import CloudError
 from netaddr import IPNetwork
 
-from cloudshell.cp.azure.exceptions import NetworkNotFoundException
+from cloudshell.cp.azure.exceptions import (
+    MultipleResourceFoundException,
+    NetworkNotFoundException,
+    ResourceNotFoundException,
+)
 
 
 class NetworkActions:
@@ -103,30 +108,47 @@ class NetworkActions:
         )
 
     def get_sandbox_subnets(self, resource_group_name, mgmt_resource_group_name):
-        """Get all subnets from the Sandbox vNET.
+        """Get all subnets from the Sandbox vNET for a specific Resource Group.
 
         :param str resource_group_name:
         :param str mgmt_resource_group_name:
         :return:
         """
-        # todo: rework this using some special tags ?
         sandbox_vnet = self.get_sandbox_virtual_network(
             resource_group_name=mgmt_resource_group_name
         )
-        subnets = [
+        return [
             subnet
             for subnet in sandbox_vnet.subnets
             if resource_group_name in subnet.name
         ]
 
-        if not subnets:
-            raise Exception(
-                f"Unable to find subnets under the Sandbox Virtual Network "
-                f"'{sandbox_vnet.name}' in the Management Resource Group "
-                f"'{mgmt_resource_group_name}'"
+    def find_sandbox_subnet_by_name(self, sandbox_subnets, name_reqexp):
+        """Get sandbox subnet by its regexp name.
+
+        :param list sandbox_subnets:
+        :param str name_reqexp:
+        :return:
+        """
+        compiled_regexp = re.compile(name_reqexp)
+        found_subnets = [
+            subnet
+            for subnet in sandbox_subnets
+            if compiled_regexp.fullmatch(subnet.name)
+        ]
+
+        if not found_subnets:
+            raise ResourceNotFoundException(
+                f"Unable to find subnet by regexp name: {name_reqexp}"
             )
 
-        return subnets
+        if len(found_subnets) > 1:
+            raise MultipleResourceFoundException(
+                f"Several subnets match the specified regexp name: {name_reqexp}. "
+                f"Subnets: {[subnet.name for subnet in found_subnets]}"
+            )
+
+        return found_subnets[0]
 
     def create_subnet(
         self, subnet_name, cidr, vnet, resource_group_name, network_security_group
