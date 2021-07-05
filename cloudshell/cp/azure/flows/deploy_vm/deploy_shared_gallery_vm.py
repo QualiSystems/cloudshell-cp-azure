@@ -23,10 +23,12 @@ class AzureDeployGalleryImageVMFlow(BaseAzureDeployVMFlow):
             subscription_id=deploy_app.shared_gallery_subscription_id,
         )
 
-    def _prepare_storage_profile(self, deploy_app, os_disk):
-        """Prepare Azure Storage Profile model for shared gallery image.
+    def _prepare_storage_profile(self, deploy_app, os_disk, data_disks):
+        """Prepare Azure Storage Profile model.
 
         :param deploy_app:
+        :param os_disk:
+        :param data_disks:
         :return:
         """
         vm_image_actions = VMImageActions(
@@ -42,7 +44,9 @@ class AzureDeployGalleryImageVMFlow(BaseAzureDeployVMFlow):
         )
 
         return models.StorageProfile(
-            os_disk=os_disk, image_reference=models.ImageReference(id=image_id)
+            os_disk=os_disk,
+            data_disks=data_disks,
+            image_reference=models.ImageReference(id=image_id),
         )
 
     def _prepare_vm_details_data(self, deployed_vm, resource_group_name):

@@ -76,14 +76,36 @@ class StorageAccountActions:
             storage_account_name=storage_account_name,
         )
 
-    def delete_managed_disk(self, disk_name, resource_group_name):
+    def delete_disk(self, disk_name, resource_group_name):
         """Delete Managed Disk.
 
         :param str disk_name:
         :param str resource_group_name:
         :return:
         """
-        self._logger.info(f"Deleting Managed Disk {disk_name}")
-        self._azure_client.delete_managed_disk(
+        self._logger.info(f"Deleting Disk {disk_name}")
+        self._azure_client.delete_disk(
             disk_name=disk_name, resource_group_name=resource_group_name
+        )
+
+    def create_disk(
+        self, disk_name, resource_group_name, region, disk_size, disk_type, tags
+    ):
+        """Create Disk.
+
+        :param str disk_name:
+        :param str resource_group_name:
+        :param str region:
+        :param str disk_size:
+        :param str disk_type:
+        :param dict[str, str] tags:
+        """
+        self._logger.info(f"Creating Disk {disk_name}")
+        return self._azure_client.create_disk(
+            disk_name=disk_name,
+            resource_group_name=resource_group_name,
+            region=region,
+            disk_size=disk_size,
+            disk_type=disk_type,
+            tags=tags,
         )
