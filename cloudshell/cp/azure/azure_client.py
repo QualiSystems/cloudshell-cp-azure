@@ -1,5 +1,4 @@
-from azure.mgmt.compute import ComputeManagementClient
-from azure.mgmt.compute.models import VirtualMachineExtension
+from azure.mgmt.compute import ComputeManagementClient, models as compute_models
 from azure.mgmt.network import NetworkManagementClient, models as network_models
 from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
@@ -349,7 +348,41 @@ class AzureAPIClient:
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
     )
-    def delete_managed_disk(self, disk_name, resource_group_name):
+    def create_disk(
+        self, disk_name, resource_group_name, region, disk_size, disk_type, tags
+    ):
+        """Create Disk.
+
+        :param str disk_name:
+        :param str resource_group_name:
+        :param str region:
+        :param int disk_size:
+        :param str disk_type:
+        :param dict[str, str] tags:
+        :return:
+        """
+        operation = self._compute_client.disks.create_or_update(
+            resource_group_name=resource_group_name,
+            disk_name=disk_name,
+            disk=compute_models.Disk(
+                location=region,
+                disk_size_gb=disk_size,
+                creation_data=compute_models.CreationData(
+                    create_option=compute_models.DiskCreateOptionTypes.empty
+                ),
+                sku=compute_models.DiskSku(name=disk_type),
+            ),
+            tags=tags,
+        )
+
+        return operation.result()
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def delete_disk(self, disk_name, resource_group_name):
         """Delete Managed Disk.
 
         :param str disk_name:
@@ -1045,7 +1078,7 @@ class AzureAPIClient:
         """
         file_uris = [file_uri.strip() for file_uri in script_file_path.split(",")]
 
-        vm_extension = VirtualMachineExtension(
+        vm_extension = compute_models.VirtualMachineExtension(
             location=region,
             publisher=self.VM_SCRIPT_LINUX_PUBLISHER,
             type_handler_version=self.VM_SCRIPT_LINUX_HANDLER_VERSION,
@@ -1093,7 +1126,7 @@ class AzureAPIClient:
         :return:
         """
         file_name = script_file_path.split("/")[-1]
-        vm_extension = VirtualMachineExtension(
+        vm_extension = compute_models.VirtualMachineExtension(
             location=region,
             publisher=self.VM_SCRIPT_WINDOWS_PUBLISHER,
             type_handler_version=self.VM_SCRIPT_WINDOWS_HANDLER_VERSION,
