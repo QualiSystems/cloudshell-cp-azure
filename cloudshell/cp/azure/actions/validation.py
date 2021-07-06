@@ -61,9 +61,7 @@ class ValidationActions(NetworkActions):
         )
 
         try:
-            self._azure_client.get_resource_group(
-                mgmt_resource_group_name
-            )
+            self._azure_client.get_resource_group(mgmt_resource_group_name)
         except CloudError:
             error_msg = (
                 f"Failed to find management resource group '{mgmt_resource_group_name}'"
