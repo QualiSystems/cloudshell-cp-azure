@@ -61,7 +61,7 @@ class ValidationActions(NetworkActions):
         )
 
         try:
-            resource_group = self._azure_client.get_resource_group(
+            self._azure_client.get_resource_group(
                 mgmt_resource_group_name
             )
         except CloudError:
@@ -70,12 +70,6 @@ class ValidationActions(NetworkActions):
             )
             self._logger.exception(error_msg)
             raise Exception(error_msg)
-
-        if region != resource_group.location:
-            raise Exception(
-                f"Management group '{mgmt_resource_group_name}' "
-                f"is not under the '{region}' region"
-            )
 
     def validate_azure_sandbox_network(self, mgmt_resource_group_name):
         """Validate Azure Sandbox vNET.
