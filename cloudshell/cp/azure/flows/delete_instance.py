@@ -89,7 +89,7 @@ class AzureDeleteInstanceFlow:
             )
 
         elif vm.storage_profile.os_disk.managed_disk:
-            storage_actions.delete_managed_disk(
+            storage_actions.delete_disk(
                 disk_name=vm.storage_profile.os_disk.name,
                 resource_group_name=resource_group_name,
             )
@@ -113,6 +113,9 @@ class AzureDeleteInstanceFlow:
             azure_client=self._azure_client, logger=self._logger
         )
         nsg_actions = NetworkSecurityGroupActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+        storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
 
@@ -171,6 +174,15 @@ class AzureDeleteInstanceFlow:
                 self._delete_vm_disk, vm=vm, resource_group_name=resource_group_name
             )
         )
+
+        for data_disk in vm.storage_profile.data_disks:
+            delete_commands.append(
+                partial(
+                    storage_actions.delete_disk,
+                    disk_name=data_disk.name,
+                    resource_group_name=resource_group_name,
+                )
+            )
 
         delete_commands.append(
             partial(

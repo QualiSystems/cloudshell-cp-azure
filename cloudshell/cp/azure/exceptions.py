@@ -20,3 +20,11 @@ class MultipleResourceFoundException(BaseAzureException):
 
 class NetworkNotFoundException(BaseAzureException):
     pass
+
+
+class InvalidDiskTypeException(BaseAzureException):
+    pass
+
+
+class NoFreeDiskLunException(BaseAzureException):
+    pass
