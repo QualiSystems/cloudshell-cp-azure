@@ -28,3 +28,7 @@ class InvalidDiskTypeException(BaseAzureException):
 
 class NoFreeDiskLunException(BaseAzureException):
     pass
+
+
+class ReconfigureVMException(BaseAzureException):
+    pass

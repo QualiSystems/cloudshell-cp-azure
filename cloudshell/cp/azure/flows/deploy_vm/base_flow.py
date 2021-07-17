@@ -16,7 +16,11 @@ from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.cs_reservation_output import CloudShellReservationOutput
-from cloudshell.cp.azure.utils.disks import get_azure_disk_type, get_disk_lun_generator
+from cloudshell.cp.azure.utils.disks import (
+    get_azure_os_disk_type,
+    get_disk_lun_generator,
+    is_ultra_disk_in_list,
+)
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
 )
@@ -794,7 +798,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             create_option=compute_models.DiskCreateOptionTypes.from_image,
             disk_size_gb=disk_size,
             managed_disk=compute_models.ManagedDiskParameters(
-                storage_account_type=get_azure_disk_type(deploy_app.disk_type)
+                storage_account_type=get_azure_os_disk_type(deploy_app.disk_type)
             ),
         )
 
@@ -903,15 +907,21 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
 
         os_disk = self._prepare_os_disk(deploy_app=deploy_app)
-        data_disks = self._prepare_data_disks(data_disks=data_disks)
 
         storage_profile = self._prepare_storage_profile(
             deploy_app=deploy_app,
             os_disk=os_disk,
-            data_disks=data_disks,
+            data_disks=self._prepare_data_disks(data_disks=data_disks),
         )
 
         purchase_plan = self._get_image_purchase_plan(deploy_app=deploy_app)
+
+        if is_ultra_disk_in_list(data_disks):
+            additional_capabilities = compute_models.AdditionalCapabilities(
+                ultra_ssd_enabled=True
+            )
+        else:
+            additional_capabilities = None
 
         return compute_models.VirtualMachine(
             location=self._resource_config.region,
@@ -921,6 +931,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             network_profile=network_profile,
             storage_profile=storage_profile,
             plan=purchase_plan,
+            additional_capabilities=additional_capabilities,
             diagnostics_profile=compute_models.DiagnosticsProfile(
                 boot_diagnostics=compute_models.BootDiagnostics(enabled=False)
             ),
