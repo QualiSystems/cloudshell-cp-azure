@@ -1,12 +1,15 @@
 from azure.mgmt.compute import models as compute_models
+from msrestazure.azure_exceptions import CloudError
 
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 from cloudshell.cp.azure.actions.vm import VMActions
+from cloudshell.cp.azure.exceptions import ReconfigureVMException
 from cloudshell.cp.azure.flows.reconfigure_vm import commands
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.disks import (
-    get_azure_disk_type,
+    get_azure_os_disk_type,
     get_disk_lun_generator,
+    is_ultra_disk_in_list,
     parse_data_disks_input,
 )
 from cloudshell.cp.azure.utils.rollback import RollbackCommandsManager
@@ -51,7 +54,7 @@ class AzureReconfigureVMFlow:
         storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
-        os_disk_type = get_azure_disk_type(os_disk_type) if os_disk_type else None
+        os_disk_type = get_azure_os_disk_type(os_disk_type) if os_disk_type else None
 
         os_disk = storage_actions.get_disk(
             disk_name=vm.storage_profile.os_disk.name,
@@ -76,6 +79,7 @@ class AzureReconfigureVMFlow:
         lun_generator = get_disk_lun_generator(
             existing_disks=vm.storage_profile.data_disks
         )
+        disks = []
 
         for disk_model in disk_models:
             disk = storage_actions.get_vm_data_disk(
@@ -113,6 +117,10 @@ class AzureReconfigureVMFlow:
                     )
                 )
 
+            disks.append(disk)
+
+        return disks
+
     def reconfigure(
         self, deployed_app, vm_size, os_disk_size, os_disk_type, data_disks
     ):
@@ -125,17 +133,31 @@ class AzureReconfigureVMFlow:
         )
 
         if vm_size:
+            self._logger.info(f"Setting new VM Size: {vm_size}")
             vm.hardware_profile.vm_size = vm_size
 
         with self._rollback_manager:
             if data_disks:
-                self._process_data_disks(
+                self._logger.info(f"Processing Data disks: {data_disks}")
+
+                disks = self._process_data_disks(
                     data_disks=data_disks,
                     vm=vm,
                     resource_group_name=resource_group_name,
                 )
 
+                if is_ultra_disk_in_list(disks):
+                    self._logger.info(
+                        "Enabling 'Ultra SSD' additional capability on the VM"
+                    )
+                    vm.additional_capabilities = compute_models.AdditionalCapabilities(
+                        ultra_ssd_enabled=True
+                    )
+
             if any([os_disk_size, os_disk_type]):
+                self._logger.info(
+                    f"Processing OS Disk size: {os_disk_size} type: {os_disk_type}"
+                )
                 self._process_os_disk(
                     os_disk_size=os_disk_size,
                     os_disk_type=os_disk_type,
@@ -143,10 +165,21 @@ class AzureReconfigureVMFlow:
                     resource_group_name=resource_group_name,
                 )
 
-            operation_poller = vm_actions.start_create_or_update_vm_task(
-                vm_name=vm.name,
-                virtual_machine=vm,
-                resource_group_name=resource_group_name,
-            )
+            self._logger.info("Starting VM update task...")
+            try:
+                operation_poller = vm_actions.start_create_or_update_vm_task(
+                    vm_name=vm.name,
+                    virtual_machine=vm,
+                    resource_group_name=resource_group_name,
+                )
+            except CloudError as e:
+                self._logger.exception("Unable to start update VM task due to:")
+                exp_msg = str(e).lower()
+                if all(["ultrassdenabled" in exp_msg, "deallocated" in exp_msg]):
+                    raise ReconfigureVMException(
+                        "Unable to add 'Ultra SSD' Data disk. "
+                        "VM should be in the powered off state."
+                    )
+                raise
 
             self._task_waiter_manager.wait_for_task(operation_poller)
