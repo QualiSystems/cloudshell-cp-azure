@@ -348,8 +348,35 @@ class AzureAPIClient:
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
     )
+    def get_disk(
+        self,
+        disk_name,
+        resource_group_name,
+    ):
+        """Get Disk.
+
+        :param str disk_name:
+        :param str resource_group_name:
+        :return:
+        """
+        return self._compute_client.disks.get(
+            resource_group_name=resource_group_name,
+            disk_name=disk_name,
+        )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
     def create_disk(
-        self, disk_name, resource_group_name, region, disk_size, disk_type, tags
+        self,
+        disk_name,
+        resource_group_name,
+        region,
+        disk_size,
+        disk_type,
+        tags,
     ):
         """Create Disk.
 
@@ -371,8 +398,34 @@ class AzureAPIClient:
                     create_option=compute_models.DiskCreateOptionTypes.empty
                 ),
                 sku=compute_models.DiskSku(name=disk_type),
+                tags=tags,
             ),
-            tags=tags,
+        )
+
+        return operation.result()
+
+    def update_disk(
+        self,
+        disk,
+        resource_group_name,
+        disk_size=None,
+        disk_type=None,
+        tags=None,
+    ):
+        """Update Disk."""
+        if disk_size:
+            disk.disk_size_gb = disk_size
+
+        if disk_type:
+            disk.sku = compute_models.DiskSku(name=disk_type)
+
+        if tags:
+            disk.tags = tags
+
+        operation = self._compute_client.disks.create_or_update(
+            resource_group_name=resource_group_name,
+            disk_name=disk.name,
+            disk=disk,
         )
 
         return operation.result()
@@ -1028,10 +1081,10 @@ class AzureAPIClient:
         wait_fixed=RETRYABLE_WAIT_TIME,
         retry_on_exception=retry_on_retryable_error,
     )
-    def create_virtual_machine(
+    def create_or_update_virtual_machine(
         self, vm_name, virtual_machine, resource_group_name, wait_for_result=True
     ):
-        """Create Virtual Machine.
+        """Create/update Virtual Machine.
 
         :param str vm_name:
         :param virtual_machine:
