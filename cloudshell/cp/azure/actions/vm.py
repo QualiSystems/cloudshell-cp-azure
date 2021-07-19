@@ -38,16 +38,18 @@ class VMActions:
 
         return vm
 
-    def start_create_vm_task(self, vm_name, virtual_machine, resource_group_name):
-        """Start create VM task.
+    def start_create_or_update_vm_task(
+        self, vm_name, virtual_machine, resource_group_name
+    ):
+        """Start create/update VM task.
 
         :param str vm_name:
         :param virtual_machine:
         :param str resource_group_name:
         :return:
         """
-        self._logger.info(f"Starting VM {vm_name} create task")
-        return self._azure_client.create_virtual_machine(
+        self._logger.info(f"Starting VM {vm_name} create/update task")
+        return self._azure_client.create_or_update_virtual_machine(
             vm_name=vm_name,
             virtual_machine=virtual_machine,
             resource_group_name=resource_group_name,

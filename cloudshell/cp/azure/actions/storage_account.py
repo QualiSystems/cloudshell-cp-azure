@@ -1,27 +1,27 @@
+import logging
+import typing
 from urllib.parse import urlparse
+
+from azure.mgmt.compute import models as compute_models
+from msrestazure.azure_exceptions import CloudError
 
 
 class StorageAccountActions:
-    def __init__(self, azure_client, logger):
-        """Init command.
+    DATA_DISK_NAME_TPL = "{vm_name}_{disk_name}"
 
-        :param cloudshell.cp.azure.client.AzureAPIClient azure_client:
-        :param logging.Logger logger:
-        """
+    def __init__(self, azure_client, logger: logging.Logger):
+        """Init command."""
         self._azure_client = azure_client
         self._logger = logger
 
     def create_storage_account(
-        self, storage_account_name, resource_group_name, region, tags
+        self,
+        storage_account_name: str,
+        resource_group_name: str,
+        region: str,
+        tags: typing.Dict[str, str],
     ):
-        """Create Storage Account.
-
-        :param str storage_account_name:
-        :param str resource_group_name:
-        :param str region:
-        :param dict[str, str] tags:
-        :return:
-        """
+        """Create Storage Account."""
         self._logger.info(f"Creating storage account {storage_account_name}")
         self._azure_client.create_storage_account(
             resource_group_name=resource_group_name,
@@ -31,23 +31,20 @@ class StorageAccountActions:
             wait_for_result=True,
         )
 
-    def delete_storage_account(self, storage_account_name, resource_group_name):
-        """Delete Storage Account.
-
-        :param str storage_account_name:
-        :param str resource_group_name:
-        :return:
-        """
+    def delete_storage_account(
+        self, storage_account_name: str, resource_group_name: str
+    ):
+        """Delete Storage Account."""
         self._logger.info(f"Deleting storage account {storage_account_name}")
         self._azure_client.delete_storage_account(
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
         )
 
-    def _parse_blob_url(self, blob_url):
+    def _parse_blob_url(self, blob_url: str) -> typing.Tuple[str, str, str]:
         """Parses Blob URL into AzureBlobUrlModel.
 
-        :param str blob_url: Azure Blob URL ("https://someaccount.blob.core.windows.net/container/blobname")  # noqa: E501
+        :param blob_url: Azure Blob URL ("https://someaccount.blob.core.windows.net/container/blobname")  # noqa: E501
         :rtype: tuple[str, str, str]
         """
         parsed_blob_url = urlparse(blob_url)
@@ -58,13 +55,12 @@ class StorageAccountActions:
 
         return blob_name, container_name, storage_account_name
 
-    def delete_vhd_disk(self, vhd_url, resource_group_name):
-        """Delete VHD Disk Blob resource on the azure for given VM.
-
-        :param str vhd_url: Blob VHD Disk URL
-        :param str resource_group_name: The name of the resource group
-        :return:
-        """
+    def delete_vhd_disk(
+        self,
+        vhd_url: str,
+        resource_group_name: str,
+    ):
+        """Delete VHD Disk Blob resource on the azure for given VM."""
         self._logger.info(f"Deleting VHD Disk {vhd_url}")
         blob_name, container_name, storage_account_name = self._parse_blob_url(
             blob_url=vhd_url
@@ -76,30 +72,27 @@ class StorageAccountActions:
             storage_account_name=storage_account_name,
         )
 
-    def delete_disk(self, disk_name, resource_group_name):
-        """Delete Managed Disk.
-
-        :param str disk_name:
-        :param str resource_group_name:
-        :return:
-        """
+    def delete_disk(
+        self,
+        disk_name: str,
+        resource_group_name: str,
+    ):
+        """Delete Managed Disk."""
         self._logger.info(f"Deleting Disk {disk_name}")
         self._azure_client.delete_disk(
             disk_name=disk_name, resource_group_name=resource_group_name
         )
 
     def create_disk(
-        self, disk_name, resource_group_name, region, disk_size, disk_type, tags
+        self,
+        disk_name: str,
+        resource_group_name: str,
+        region: str,
+        disk_size: str,
+        disk_type: str,
+        tags: typing.Dict[str, str],
     ):
-        """Create Disk.
-
-        :param str disk_name:
-        :param str resource_group_name:
-        :param str region:
-        :param str disk_size:
-        :param str disk_type:
-        :param dict[str, str] tags:
-        """
+        """Create Disk."""
         self._logger.info(f"Creating Disk {disk_name}")
         return self._azure_client.create_disk(
             disk_name=disk_name,
@@ -108,4 +101,89 @@ class StorageAccountActions:
             disk_size=disk_size,
             disk_type=disk_type,
             tags=tags,
+        )
+
+    def update_disk(
+        self,
+        disk: compute_models.Disk,
+        resource_group_name: str,
+        disk_size: str = None,
+        disk_type: str = None,
+        tags: typing.Dict[str, str] = None,
+    ):
+        """Update Disk."""
+        self._logger.info(f"Updating Disk {disk.name}")
+        return self._azure_client.update_disk(
+            disk=disk,
+            resource_group_name=resource_group_name,
+            disk_size=disk_size,
+            disk_type=disk_type,
+            tags=tags,
+        )
+
+    def get_disk(
+        self,
+        disk_name: str,
+        resource_group_name: str,
+    ) -> compute_models.Disk:
+        """Get Disk."""
+        self._logger.info(f"Getting Disk {disk_name}")
+        return self._azure_client.get_disk(
+            disk_name=disk_name,
+            resource_group_name=resource_group_name,
+        )
+
+    def get_vm_data_disk(
+        self,
+        disk_name: str,
+        resource_group_name: str,
+        vm_name: str,
+    ) -> compute_models.Disk:
+        """Get VM Data disk."""
+        full_disk_name = self.DATA_DISK_NAME_TPL.format(
+            disk_name=disk_name, vm_name=vm_name
+        )
+
+        for disk_name in (full_disk_name, disk_name):
+            try:
+                return self.get_disk(
+                    disk_name=disk_name, resource_group_name=resource_group_name
+                )
+            except CloudError:
+                self._logger.info(f"Unable to find Disk {disk_name}")
+
+    def create_vm_data_disk(
+        self,
+        disk_name: str,
+        resource_group_name: str,
+        vm_name: str,
+        region: str,
+        disk_size: str,
+        disk_type: str,
+        tags: typing.Dict[str, str],
+    ) -> compute_models.Disk:
+        """Create VM Data disk."""
+        return self.create_disk(
+            disk_name=self.DATA_DISK_NAME_TPL.format(
+                disk_name=disk_name, vm_name=vm_name
+            ),
+            resource_group_name=resource_group_name,
+            region=region,
+            disk_size=disk_size,
+            disk_type=disk_type,
+            tags=tags,
+        )
+
+    def delete_vm_data_disk(
+        self,
+        disk_name: str,
+        resource_group_name: str,
+        vm_name: str,
+    ):
+        """Delete VM Data Disk."""
+        return self.delete_disk(
+            disk_name=self.DATA_DISK_NAME_TPL.format(
+                disk_name=disk_name, vm_name=vm_name
+            ),
+            resource_group_name=resource_group_name,
         )

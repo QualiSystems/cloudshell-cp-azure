@@ -39,7 +39,7 @@ class CreateVMCommand(RollbackCommand):
 
     def _execute(self):
         try:
-            operation_poller = self._vm_actions.start_create_vm_task(
+            operation_poller = self._vm_actions.start_create_or_update_vm_task(
                 vm_name=self._vm_name,
                 virtual_machine=self._virtual_machine,
                 resource_group_name=self._resource_group_name,

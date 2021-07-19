@@ -13,8 +13,6 @@ DISK_TYPES_MAP = {
     # "STANDARD_SSD": DiskStorageAccountTypes.standard_ssd_lrs,  # noqa
     # "ULTRA_SSD": DiskStorageAccountTypes.ultra_ssd_lrs,  # noqa
 }
-DEFAULT_DISK_TYPE = "HDD"
-DATA_DISK_NAME_TPL = "{vm_name}_{disk_name}"
 MAX_DISK_LUN_NUMBER = 64
 
 
@@ -43,23 +41,19 @@ def parse_data_disks_input(data_disks: str):
         try:
             disk_size, disk_type = disk_params.split(",")
         except ValueError:
-            disk_size, disk_type = disk_params, DEFAULT_DISK_TYPE
+            disk_size, disk_type = disk_params, None
+        else:
+            disk_type = get_azure_disk_type(disk_type)
 
-        disk_type = get_azure_disk_type(disk_type)
         disk = DataDisk(name=disk_name, disk_size=disk_size, disk_type=disk_type)
         disks.append(disk)
 
     return disks
 
 
-def get_vm_data_disk_name(disk_name: str, vm_name: str):
-    return DATA_DISK_NAME_TPL.format(disk_name=disk_name, vm_name=vm_name)
-
-
-def get_disk_lun_generator():
+def get_disk_lun_generator(existing_disks=None):
     """Get generator for the next available disk LUN."""
-    # todo: get LUNs from the image
-    existing_disks_luns = []
+    existing_disks_luns = [disk.lun for disk in existing_disks or []]
 
     for disk_lun in range(0, MAX_DISK_LUN_NUMBER + 1):
         if disk_lun not in existing_disks_luns:
@@ -72,6 +66,8 @@ def get_disk_lun_generator():
 
 @dataclass
 class DataDisk:
+    DEFAULT_DISK_TYPE = DiskStorageAccountTypes.standard_lrs
+
     name: str
     disk_size: int
     disk_type: str = DEFAULT_DISK_TYPE
