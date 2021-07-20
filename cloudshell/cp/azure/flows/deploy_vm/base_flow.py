@@ -89,6 +89,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             f"Class {type(self)} must implement method '_prepare_storage_profile'"
         )
 
+    def _get_image_purchase_plan(self, deploy_app):
+        """Purchase plan for the image.
+
+        :param deploy_app:
+        :return:
+        """
+        return None
+
     def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
         """Prepare VM Details data.
 
@@ -836,6 +844,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             deploy_app=deploy_app, os_disk=os_disk
         )
 
+        purchase_plan = self._get_image_purchase_plan(deploy_app=deploy_app)
+
         return compute_models.VirtualMachine(
             location=self._resource_config.region,
             tags=tags,
@@ -843,6 +853,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             hardware_profile=hardware_profile,
             network_profile=network_profile,
             storage_profile=storage_profile,
+            plan=purchase_plan,
             diagnostics_profile=compute_models.DiagnosticsProfile(
                 boot_diagnostics=compute_models.BootDiagnostics(enabled=False)
             ),
