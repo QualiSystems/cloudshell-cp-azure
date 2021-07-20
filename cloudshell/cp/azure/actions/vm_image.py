@@ -1,3 +1,9 @@
+from functools import lru_cache
+
+from cloudshell.cp.azure.utils.decorators import args_based_singleton
+
+
+@args_based_singleton
 class VMImageActions:
     def __init__(self, azure_client, logger):
         """Init command.
@@ -67,11 +73,8 @@ class VMImageActions:
             f"Getting image OS for image {gallery_image_name}, "
             f"from Shared Gallery {gallery_name}"
         )
-        image = self._azure_client.get_gallery_machine_image(
-            resource_group=resource_group,
-            gallery_name=gallery_name,
-            gallery_image_name=gallery_image_name,
-            subscription_id=subscription_id,
+        image = self._get_gallery_image(
+            gallery_name, gallery_image_name, resource_group, subscription_id
         )
         return image.os_type
 
@@ -112,3 +115,42 @@ class VMImageActions:
                 subscription_id=subscription_id,
             )
         return image.id
+
+    def get_gallery_image_plan(
+        self, gallery_name, gallery_image_name, resource_group, subscription_id
+    ):
+        """Get gallery image purchase plan.
+
+        :param gallery_name:
+        :param gallery_image_name:
+        :param resource_group:
+        :param subscription_id:
+        :return:
+        """
+        self._logger.info(
+            f"Getting image PurchasePlan for image {gallery_image_name}, "
+            f"from Shared Gallery {gallery_name}"
+        )
+        image = self._get_gallery_image(
+            gallery_name, gallery_image_name, resource_group, subscription_id
+        )
+        return image.purchase_plan
+
+    @lru_cache()
+    def _get_gallery_image(
+        self, gallery_name, gallery_image_name, resource_group, subscription_id
+    ):
+        """Get gallery image.
+
+        :param gallery_name:
+        :param gallery_image_name:
+        :param resource_group:
+        :param subscription_id:
+        :return:
+        """
+        return self._azure_client.get_gallery_machine_image(
+            resource_group=resource_group,
+            gallery_name=gallery_name,
+            gallery_image_name=gallery_image_name,
+            subscription_id=subscription_id,
+        )

@@ -49,6 +49,17 @@ class AzureDeployGalleryImageVMFlow(BaseAzureDeployVMFlow):
             image_reference=models.ImageReference(id=image_id),
         )
 
+    def _get_image_purchase_plan(self, deploy_app):
+        vm_image_actions = VMImageActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+        return vm_image_actions.get_gallery_image_plan(
+            gallery_name=deploy_app.shared_image_gallery,
+            gallery_image_name=deploy_app.image_definition,
+            resource_group=deploy_app.shared_gallery_resource_group,
+            subscription_id=deploy_app.shared_gallery_subscription_id,
+        )
+
     def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
         """Prepare CloudShell VM Details model.
 
