@@ -6,6 +6,7 @@ from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
 )
+from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 from cloudshell.cp.azure.actions.validation import ValidationActions
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.actions.vm_credentials import VMCredentialsActions
@@ -15,6 +16,7 @@ from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.cs_reservation_output import CloudShellReservationOutput
+from cloudshell.cp.azure.utils.disks import get_azure_disk_type, get_disk_lun_generator
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
 )
@@ -78,11 +80,12 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             f"Class {type(self)} must implement method '_get_vm_image_os'"
         )
 
-    def _prepare_storage_profile(self, deploy_app, os_disk):
+    def _prepare_storage_profile(self, deploy_app, os_disk, data_disks):
         """Prepare Storage Profile.
 
         :param deploy_app:
-        :param os_disk
+        :param os_disk:
+        :param data_disks:
         :return:
         """
         raise NotImplementedError(
@@ -367,6 +370,40 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             vm_interfaces=vm_interfaces,
         )
 
+    def _create_data_disks(
+        self,
+        deploy_app,
+        resource_group_name,
+        vm_name,
+        tags,
+    ):
+        """Create additional data disks.
+
+        :param deploy_app:
+        :param str resource_group_name:
+        :param dict[str, str] tags:
+        :return:
+        """
+        storage_actions = StorageAccountActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+        data_disks = []
+
+        for disk_model in deploy_app.data_disks:
+            data_disk = commands.CreateDataDiskCommand(
+                rollback_manager=self._rollback_manager,
+                cancellation_manager=self._cancellation_manager,
+                storage_actions=storage_actions,
+                disk_model=disk_model,
+                resource_group_name=resource_group_name,
+                region=self._resource_config.region,
+                vm_name=vm_name,
+                tags=tags,
+            ).execute()
+            data_disks.append(data_disk)
+
+        return data_disks
+
     def _create_vm_interfaces(
         self,
         deploy_app,
@@ -603,6 +640,13 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 tags=tags,
             )
 
+            data_disks = self._create_data_disks(
+                deploy_app=deploy_app,
+                resource_group_name=resource_group_name,
+                vm_name=vm_name,
+                tags=tags,
+            )
+
             self._create_vm_nsg_rules(
                 deploy_app=deploy_app,
                 vm_name=vm_name,
@@ -622,6 +666,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 resource_group_name=resource_group_name,
                 storage_account_name=storage_account_name,
                 vm_network_interfaces=vm_ifaces,
+                data_disks=data_disks,
                 computer_name=computer_name,
                 tags=tags,
             )
@@ -743,20 +788,35 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         :param deploy_app:
         :return:
         """
-        if deploy_app.disk_type == "HDD":
-            storage_account_disk_type = compute_models.StorageAccountTypes.standard_lrs
-        else:
-            storage_account_disk_type = compute_models.StorageAccountTypes.premium_lrs
-
         disk_size = int(deploy_app.disk_size) if deploy_app.disk_size else None
 
         return compute_models.OSDisk(
             create_option=compute_models.DiskCreateOptionTypes.from_image,
             disk_size_gb=disk_size,
             managed_disk=compute_models.ManagedDiskParameters(
-                storage_account_type=storage_account_disk_type
+                storage_account_type=get_azure_disk_type(deploy_app.disk_type)
             ),
         )
+
+    def _prepare_data_disks(self, data_disks):
+        """Prepare Data Disks for the VM.
+
+        :param data_disks:
+        :return:
+        """
+        prepared_disks = []
+        lun_generator = get_disk_lun_generator()
+
+        for data_disk in data_disks:
+            disk = compute_models.DataDisk(
+                lun=next(lun_generator),
+                name=data_disk.name,
+                create_option=compute_models.DiskCreateOptionTypes.attach,
+                managed_disk=compute_models.ManagedDiskParameters(id=data_disk.id),
+            )
+            prepared_disks.append(disk)
+
+        return prepared_disks
 
     def _prepare_os_profile(
         self,
@@ -812,6 +872,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         resource_group_name,
         storage_account_name,
         vm_network_interfaces,
+        data_disks,
         computer_name,
         tags,
     ):
@@ -823,6 +884,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         :param str resource_group_name:
         :param str storage_account_name:
         :param vm_network_interfaces:
+        :param data_disks:
         :param str computer_name:
         :param dict[str, str] tags:
         :return:
@@ -839,9 +901,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         network_profile = self._prepare_network_profile(
             vm_network_interfaces=vm_network_interfaces
         )
+
         os_disk = self._prepare_os_disk(deploy_app=deploy_app)
+        data_disks = self._prepare_data_disks(data_disks=data_disks)
+
         storage_profile = self._prepare_storage_profile(
-            deploy_app=deploy_app, os_disk=os_disk
+            deploy_app=deploy_app,
+            os_disk=os_disk,
+            data_disks=data_disks,
         )
 
         purchase_plan = self._get_image_purchase_plan(deploy_app=deploy_app)
