@@ -58,7 +58,7 @@ class VMImageActions(metaclass=SingletonByArgsMeta):
         return image.id
 
     def get_gallery_image_os(
-            self, gallery_name, gallery_image_name, resource_group, subscription_id
+        self, gallery_name, gallery_image_name, resource_group, subscription_id
     ):
         """Get gallery image os.
 
@@ -73,20 +73,17 @@ class VMImageActions(metaclass=SingletonByArgsMeta):
             f"from Shared Gallery {gallery_name}"
         )
         image = self._get_gallery_image(
-            gallery_name,
-            gallery_image_name,
-            resource_group,
-            subscription_id
+            gallery_name, gallery_image_name, resource_group, subscription_id
         )
         return image.os_type
 
     def get_gallery_image_id(
-            self,
-            gallery_name,
-            gallery_image_name,
-            gallery_image_version,
-            resource_group,
-            subscription_id,
+        self,
+        gallery_name,
+        gallery_image_name,
+        gallery_image_version,
+        resource_group,
+        subscription_id,
     ):
         """Get gallery image id.
 
@@ -111,18 +108,12 @@ class VMImageActions(metaclass=SingletonByArgsMeta):
             )
         else:
             image = self._get_gallery_image(
-                gallery_name,
-                gallery_image_name,
-                resource_group,
-                subscription_id
+                gallery_name, gallery_image_name, resource_group, subscription_id
             )
         return image.id
 
     def get_gallery_image_plan(
-            self, gallery_name,
-            gallery_image_name,
-            resource_group,
-            subscription_id
+        self, gallery_name, gallery_image_name, resource_group, subscription_id
     ):
         """Get gallery image purchase plan.
 
@@ -137,16 +128,13 @@ class VMImageActions(metaclass=SingletonByArgsMeta):
             f"from Shared Gallery {gallery_name}"
         )
         image = self._get_gallery_image(
-            gallery_name,
-            gallery_image_name,
-            resource_group,
-            subscription_id
+            gallery_name, gallery_image_name, resource_group, subscription_id
         )
         return image.purchase_plan
 
     @lru_cache()
     def _get_gallery_image(
-            self, gallery_name, gallery_image_name, resource_group, subscription_id
+        self, gallery_name, gallery_image_name, resource_group, subscription_id
     ):
         """Get gallery image.
 
