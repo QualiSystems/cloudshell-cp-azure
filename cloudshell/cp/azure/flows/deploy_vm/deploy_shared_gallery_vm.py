@@ -45,7 +45,7 @@ class AzureDeployGalleryImageVMFlow(BaseAzureDeployVMFlow):
 
         return models.StorageProfile(
             os_disk=os_disk,
-            data_disks=data_disks,
+            data_disks=data_disks or None,
             image_reference=models.ImageReference(id=image_id),
         )
 
