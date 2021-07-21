@@ -1,10 +1,9 @@
 from functools import lru_cache
 
-from cloudshell.cp.azure.utils.decorators import args_based_singleton
+from cloudshell.cp.azure.utils.singleton_utils import SingletonByArgsMeta
 
 
-@args_based_singleton
-class VMImageActions:
+class VMImageActions(metaclass=SingletonByArgsMeta):
     def __init__(self, azure_client, logger):
         """Init command.
 
@@ -59,7 +58,7 @@ class VMImageActions:
         return image.id
 
     def get_gallery_image_os(
-        self, gallery_name, gallery_image_name, resource_group, subscription_id
+            self, gallery_name, gallery_image_name, resource_group, subscription_id
     ):
         """Get gallery image os.
 
@@ -74,17 +73,20 @@ class VMImageActions:
             f"from Shared Gallery {gallery_name}"
         )
         image = self._get_gallery_image(
-            gallery_name, gallery_image_name, resource_group, subscription_id
+            gallery_name,
+            gallery_image_name,
+            resource_group,
+            subscription_id
         )
         return image.os_type
 
     def get_gallery_image_id(
-        self,
-        gallery_name,
-        gallery_image_name,
-        gallery_image_version,
-        resource_group,
-        subscription_id,
+            self,
+            gallery_name,
+            gallery_image_name,
+            gallery_image_version,
+            resource_group,
+            subscription_id,
     ):
         """Get gallery image id.
 
@@ -108,16 +110,19 @@ class VMImageActions:
                 subscription_id=subscription_id,
             )
         else:
-            image = self._azure_client.get_gallery_machine_image(
-                resource_group=resource_group,
-                gallery_name=gallery_name,
-                gallery_image_name=gallery_image_name,
-                subscription_id=subscription_id,
+            image = self._get_gallery_image(
+                gallery_name,
+                gallery_image_name,
+                resource_group,
+                subscription_id
             )
         return image.id
 
     def get_gallery_image_plan(
-        self, gallery_name, gallery_image_name, resource_group, subscription_id
+            self, gallery_name,
+            gallery_image_name,
+            resource_group,
+            subscription_id
     ):
         """Get gallery image purchase plan.
 
@@ -132,13 +137,16 @@ class VMImageActions:
             f"from Shared Gallery {gallery_name}"
         )
         image = self._get_gallery_image(
-            gallery_name, gallery_image_name, resource_group, subscription_id
+            gallery_name,
+            gallery_image_name,
+            resource_group,
+            subscription_id
         )
         return image.purchase_plan
 
     @lru_cache()
     def _get_gallery_image(
-        self, gallery_name, gallery_image_name, resource_group, subscription_id
+            self, gallery_name, gallery_image_name, resource_group, subscription_id
     ):
         """Get gallery image.
 
