@@ -3,6 +3,7 @@ import threading
 
 class SingletonByArgsMeta(type):
     """Metaclass that allows to create single instances per same arguments.
+
     Example usage:
         >>> class Test(metaclass=SingletonByArgsMeta):
         >>>
