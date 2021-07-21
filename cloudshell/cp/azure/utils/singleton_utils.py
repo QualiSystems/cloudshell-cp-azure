@@ -16,6 +16,7 @@ class SingletonByArgsMeta(type):
         >>> Test("a1" , "b1") is Test("a2" , "b2")
         >>> False
     """
+
     def __init__(cls, *args, **kwargs):
         super().__init__(*args, **kwargs)
         cls.__instances_by_cls = {}
