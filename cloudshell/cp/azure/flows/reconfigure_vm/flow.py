@@ -182,4 +182,5 @@ class AzureReconfigureVMFlow:
                     )
                 raise
 
+            self._logger.exception("Waiting update VM task to be completed...")
             self._task_waiter_manager.wait_for_task(operation_poller)
