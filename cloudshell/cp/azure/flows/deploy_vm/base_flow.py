@@ -84,12 +84,11 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             f"Class {type(self)} must implement method '_get_vm_image_os'"
         )
 
-    def _prepare_storage_profile(self, deploy_app, os_disk, data_disks):
+    def _prepare_storage_profile(self, deploy_app, os_disk):
         """Prepare Storage Profile.
 
         :param deploy_app:
         :param os_disk:
-        :param data_disks:
         :return:
         """
         raise NotImplementedError(
@@ -373,6 +372,42 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             resource_group_name=resource_group_name,
             vm_interfaces=vm_interfaces,
         )
+
+    def _reconfigure_vm_with_data_disks(self, vm, data_disks, resource_group_name):
+        """Add Data Disks to the deployed VM."""
+        vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
+        lun_generator = get_disk_lun_generator(
+            existing_disks=vm.storage_profile.data_disks
+        )
+
+        # todo: reuse code from the Reconfigure VM command
+        if is_ultra_disk_in_list(data_disks):
+            self._logger.info("Enabling 'Ultra SSD' additional capability on the VM")
+            vm.additional_capabilities = compute_models.AdditionalCapabilities(
+                ultra_ssd_enabled=True
+            )
+
+        for disk in data_disks:
+            lun = next(lun_generator)
+            self._logger.info(f"Adding Data disk '{disk.name}' under the LUN: {lun}")
+            vm.storage_profile.data_disks.append(
+                compute_models.DataDisk(
+                    lun=lun,
+                    name=disk.name,
+                    create_option=compute_models.DiskCreateOptionTypes.attach,
+                    managed_disk=compute_models.ManagedDiskParameters(id=disk.id),
+                )
+            )
+
+        self._logger.info("Starting VM update task...")
+        operation_poller = vm_actions.start_create_or_update_vm_task(
+            vm_name=vm.name,
+            virtual_machine=vm,
+            resource_group_name=resource_group_name,
+        )
+
+        self._logger.exception("Waiting update VM task to be completed...")
+        self._task_waiter_manager.wait_for_task(operation_poller)
 
     def _create_data_disks(
         self,
@@ -670,7 +705,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 resource_group_name=resource_group_name,
                 storage_account_name=storage_account_name,
                 vm_network_interfaces=vm_ifaces,
-                data_disks=data_disks,
                 computer_name=computer_name,
                 tags=tags,
             )
@@ -681,6 +715,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 virtual_machine=vm,
                 resource_group_name=resource_group_name,
             )
+
+            if data_disks:
+                # we can't add data disks directly to the Storage Profile
+                # (before the VM deployment), because if the VM image has predefined
+                # data disks it will not be able to deploy VM
+                self._reconfigure_vm_with_data_disks(
+                    vm=deployed_vm,
+                    data_disks=data_disks,
+                    resource_group_name=resource_group_name,
+                )
 
             self._create_vm_script_extension(
                 deploy_app=deploy_app,
@@ -802,26 +846,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             ),
         )
 
-    def _prepare_data_disks(self, data_disks):
-        """Prepare Data Disks for the VM.
-
-        :param data_disks:
-        :return:
-        """
-        prepared_disks = []
-        lun_generator = get_disk_lun_generator()
-
-        for data_disk in data_disks:
-            disk = compute_models.DataDisk(
-                lun=next(lun_generator),
-                name=data_disk.name,
-                create_option=compute_models.DiskCreateOptionTypes.attach,
-                managed_disk=compute_models.ManagedDiskParameters(id=data_disk.id),
-            )
-            prepared_disks.append(disk)
-
-        return prepared_disks
-
     def _prepare_os_profile(
         self,
         username,
@@ -876,7 +900,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         resource_group_name,
         storage_account_name,
         vm_network_interfaces,
-        data_disks,
         computer_name,
         tags,
     ):
@@ -888,7 +911,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         :param str resource_group_name:
         :param str storage_account_name:
         :param vm_network_interfaces:
-        :param data_disks:
         :param str computer_name:
         :param dict[str, str] tags:
         :return:
@@ -911,17 +933,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         storage_profile = self._prepare_storage_profile(
             deploy_app=deploy_app,
             os_disk=os_disk,
-            data_disks=self._prepare_data_disks(data_disks=data_disks),
         )
 
         purchase_plan = self._get_image_purchase_plan(deploy_app=deploy_app)
-
-        if is_ultra_disk_in_list(data_disks):
-            additional_capabilities = compute_models.AdditionalCapabilities(
-                ultra_ssd_enabled=True
-            )
-        else:
-            additional_capabilities = None
 
         return compute_models.VirtualMachine(
             location=self._resource_config.region,
@@ -931,7 +945,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             network_profile=network_profile,
             storage_profile=storage_profile,
             plan=purchase_plan,
-            additional_capabilities=additional_capabilities,
             diagnostics_profile=compute_models.DiagnosticsProfile(
                 boot_diagnostics=compute_models.BootDiagnostics(enabled=False)
             ),

@@ -23,17 +23,15 @@ class AzureDeployMarketplaceVMFlow(BaseAzureDeployVMFlow):
             sku=deploy_app.image_sku,
         )
 
-    def _prepare_storage_profile(self, deploy_app, os_disk, data_disks):
+    def _prepare_storage_profile(self, deploy_app, os_disk):
         """Prepare Azure Storage Profile model.
 
         :param deploy_app:
         :param os_disk:
-        :param data_disks:
         :return:
         """
         return models.StorageProfile(
             os_disk=os_disk,
-            data_disks=data_disks,
             image_reference=models.ImageReference(
                 publisher=deploy_app.image_publisher,
                 offer=deploy_app.image_offer,

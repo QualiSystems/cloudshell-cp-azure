@@ -21,12 +21,11 @@ class AzureDeployCustomVMFlow(BaseAzureDeployVMFlow):
             image_name=deploy_app.azure_image,
         )
 
-    def _prepare_storage_profile(self, deploy_app, os_disk, data_disks):
+    def _prepare_storage_profile(self, deploy_app, os_disk):
         """Prepare Azure Storage Profile model.
 
         :param deploy_app:
         :param os_disk:
-        :param data_disks:
         :return:
         """
         vm_image_actions = VMImageActions(
@@ -38,7 +37,6 @@ class AzureDeployCustomVMFlow(BaseAzureDeployVMFlow):
         )
         return models.StorageProfile(
             os_disk=os_disk,
-            data_disks=data_disks,
             image_reference=models.ImageReference(id=image_id),
         )
 
