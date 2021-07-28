@@ -13,8 +13,10 @@ from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
     RETRYABLE_ERROR_MAX_ATTEMPTS,
     RETRYABLE_WAIT_TIME,
+    VM_DISK_DETACH_MAX_ATTEMPT_NUMBER,
     retry_on_connection_error,
     retry_on_retryable_error,
+    retry_on_vm_disk_detach_error,
 )
 
 
@@ -434,6 +436,11 @@ class AzureAPIClient:
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
+    )
+    @retry(
+        stop_max_attempt_number=VM_DISK_DETACH_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_vm_disk_detach_error,
     )
     def delete_disk(self, disk_name, resource_group_name):
         """Delete Managed Disk.
