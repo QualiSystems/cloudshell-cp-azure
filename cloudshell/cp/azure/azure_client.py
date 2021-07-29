@@ -135,6 +135,18 @@ class AzureAPIClient:
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
     )
+    def get_virtual_network(self, virtual_network_name: str, resource_group_name: str):
+        """Get virtual network by name."""
+        return self._network_client.virtual_networks.get(
+            resource_group_name=resource_group_name,
+            virtual_network_name=virtual_network_name,
+        )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
     def get_virtual_networks_by_resource_group(self, resource_group_name):
         """Get vNets for the given resource group.
 

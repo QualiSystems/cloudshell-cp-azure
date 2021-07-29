@@ -18,6 +18,7 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         network_actions,
         nsg_actions,
         mgmt_resource_group_name,
+        sandbox_vnet_name,
         resource_group_name,
         nsg_name,
         sandbox_cidr,
@@ -30,6 +31,7 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         :param network_actions:
         :param nsg_actions:
         :param mgmt_resource_group_name:
+        :param sandbox_vnet_name:
         :param resource_group_name:
         :param nsg_name:
         :param sandbox_cidr:
@@ -41,6 +43,7 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         self._nsg_actions = nsg_actions
         self._network_actions = network_actions
         self._mgmt_resource_group_name = mgmt_resource_group_name
+        self._sandbox_vnet_name = sandbox_vnet_name
         self._resource_group_name = resource_group_name
         self._nsg_name = nsg_name
         self._sandbox_cidr = sandbox_cidr
@@ -49,7 +52,8 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
     def execute(self):
         with self._cancellation_manager:
             sandbox_vnet = self._network_actions.get_sandbox_virtual_network(
-                resource_group_name=self._mgmt_resource_group_name
+                resource_group_name=self._mgmt_resource_group_name,
+                sandbox_vnet_name=self._sandbox_vnet_name,
             )
 
         sandbox_vnet_cidr = sandbox_vnet.address_space.address_prefixes[0]

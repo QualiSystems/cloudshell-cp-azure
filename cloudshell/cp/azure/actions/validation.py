@@ -1,3 +1,5 @@
+import typing
+
 import requests
 from azure.mgmt.compute.models import OperatingSystemTypes
 from msrestazure.azure_exceptions import CloudError
@@ -12,10 +14,7 @@ class ValidationActions(NetworkActions):
     MAX_TAGS_NUMBER = 15
 
     def register_azure_providers(self):
-        """Register Azure Providers.
-
-        :return:
-        """
+        """Register Azure Providers."""
         self._logger.info("Registering subscription with Azure providers...")
         for provider in (
             "Microsoft.Authorization",
@@ -29,12 +28,8 @@ class ValidationActions(NetworkActions):
             )
             self._azure_client.register_provider(provider)
 
-    def validate_azure_region(self, region):
-        """Validate Azure Region.
-
-        :param str region:
-        :return:
-        """
+    def validate_azure_region(self, region: str):
+        """Validate Azure Region."""
         self._logger.info("Validating Azure region...")
 
         if not region:
@@ -49,13 +44,8 @@ class ValidationActions(NetworkActions):
         if region not in available_regions:
             raise Exception(f'Region "{region}" is not a valid Azure Geo-location')
 
-    def validate_azure_mgmt_resource_group(self, mgmt_resource_group_name, region):
-        """Validate Management Resource Group.
-
-        :param str mgmt_resource_group_name:
-        :param str region:
-        :return:
-        """
+    def validate_azure_mgmt_resource_group(self, mgmt_resource_group_name: str):
+        """Validate Management Resource Group."""
         self._logger.info(
             f"Validating MGMT resource group {mgmt_resource_group_name}..."
         )
@@ -69,24 +59,32 @@ class ValidationActions(NetworkActions):
             self._logger.exception(error_msg)
             raise Exception(error_msg)
 
-    def validate_azure_sandbox_network(self, mgmt_resource_group_name):
-        """Validate Azure Sandbox vNET.
-
-        :param str mgmt_resource_group_name:
-        :return:
-        """
+    def validate_azure_sandbox_network(
+        self, mgmt_resource_group_name: str, sandbox_vnet_name: str
+    ):
+        """Validate Azure sandbox vNET."""
         self._logger.info(
             "Verifying that sandbox vNet exists under the MGMT resource group..."
         )
-        self.get_sandbox_virtual_network(resource_group_name=mgmt_resource_group_name)
+        self.get_sandbox_virtual_network(
+            resource_group_name=mgmt_resource_group_name,
+            sandbox_vnet_name=sandbox_vnet_name,
+        )
 
-    def validate_azure_vm_size(self, vm_size, region):
-        """Validate 'VM Size' attribute.
+    def validate_azure_mgmt_network(
+        self, mgmt_resource_group_name: str, mgmt_vnet_name: str
+    ):
+        """Validate Azure management vNET."""
+        self._logger.info(
+            "Verifying that management vNet exists under the MGMT resource group..."
+        )
+        self.get_mgmt_virtual_network(
+            resource_group_name=mgmt_resource_group_name,
+            mgmt_vnet_name=mgmt_vnet_name,
+        )
 
-        :param str vm_size:
-        :param str region:
-        :return:
-        """
+    def validate_azure_vm_size(self, vm_size: str, region: str):
+        """Validate 'VM Size' attribute."""
         self._logger.info(f"Validating VM size {vm_size}")
         if vm_size:
             available_vm_sizes = [
@@ -101,12 +99,8 @@ class ValidationActions(NetworkActions):
             if vm_size not in available_vm_sizes:
                 raise Exception(f"VM Size {vm_size} is not valid")
 
-    def validate_custom_tags(self, custom_tags):
-        """Validate resource 'Custom tags' attribute".
-
-        :param dict custom_tags:
-        :return:
-        """
+    def validate_custom_tags(self, custom_tags: typing.Dict):
+        """Validate resource 'Custom tags' attribute."""
         self._logger.info("Validating 'Custom Tags' attribute")
         allowed_tags_number = self.MAX_TAGS_NUMBER - get_default_tags_count()
 
@@ -117,12 +111,8 @@ class ValidationActions(NetworkActions):
                 f"{len(custom_tags)}"
             )
 
-    def validate_tags(self, tags):
-        """Validate resource and deployment path 'Custom tags' attributes".
-
-        :param dict tags:
-        :return:
-        """
+    def validate_tags(self, tags: typing.Dict):
+        """Validate resource and deployment path 'Custom tags' attributes."""
         self._logger.info("Validating 'Custom Tags' attribute")
         default_tags_count = get_default_tags_count()
 
@@ -133,12 +123,8 @@ class ValidationActions(NetworkActions):
                 f"Present number of custom tags: {len(tags) - default_tags_count}"
             )
 
-    def validate_azure_additional_networks(self, mgmt_networks):
-        """Validate 'Additional Mgmt Networks' attribute.
-
-        :param list[str] mgmt_networks:
-        :return:
-        """
+    def validate_azure_additional_networks(self, mgmt_networks: typing.List[str]):
+        """Validate 'Additional Mgmt Networks' attribute."""
         self._logger.info("Validating Deploy App 'Additional Mgmt Networks' attribute")
         for cidr in mgmt_networks:
             if not is_valid_cidr(cidr):
@@ -150,12 +136,7 @@ class ValidationActions(NetworkActions):
                 raise Exception(msg)
 
     def validate_deploy_app_add_public_ip(self, deploy_app, connect_subnets):
-        """Validate 'Add Public IP' attribute.
-
-        :param deploy_app:
-        :param connect_subnets:
-        :return:
-        """
+        """Validate 'Add Public IP' attribute."""
         self._logger.info("Validating Deploy App 'Add Public IP' attribute")
         all_subnets_are_private = (
             all((not subnet.is_public() for subnet in connect_subnets))
@@ -170,11 +151,7 @@ class ValidationActions(NetworkActions):
             )
 
     def validate_deploy_app_script_file(self, deploy_app):
-        """Validate 'Extension Script file' attribute.
-
-        :param deploy_app:
-        :return:
-        """
+        """Validate 'Extension Script file' attribute."""
         self._logger.info("Validating Deploy App Extension Script File")
 
         if not deploy_app.extension_script_file:
@@ -193,12 +170,7 @@ class ValidationActions(NetworkActions):
             raise Exception(error_msg)
 
     def validate_deploy_app_script_extension(self, deploy_app, image_os):
-        """Validate 'Extension Script file' attribute script extension.
-
-        :param deploy_app:
-        :param image_os:
-        :return:
-        """
+        """Validate 'Extension Script file' attribute script extension."""
         self._logger.info("Validating Deploy App Extension Script")
 
         if not deploy_app.extension_script_file:
@@ -218,11 +190,7 @@ class ValidationActions(NetworkActions):
                 )
 
     def validate_deploy_app_disk_size(self, deploy_app):
-        """Validate 'Disk Size' attribute.
-
-        :param deploy_app:
-        :return:
-        """
+        """Validate 'Disk Size' attribute."""
         self._logger.info("Validating Deploy App VM Disk size")
 
         if not deploy_app.disk_size:
@@ -241,12 +209,7 @@ class ValidationActions(NetworkActions):
                 f"{self.MAX_VM_DISK_SIZE_GB} GB"
             )
 
-    def validate_vm_size(self, deploy_app_vm_size, cloud_provider_vm_size):
-        """Validate 'VM Size' attribute.
-
-        :param str deploy_app_vm_size:
-        :param str cloud_provider_vm_size:
-        :return:
-        """
+    def validate_vm_size(self, deploy_app_vm_size: str, cloud_provider_vm_size: str):
+        """Validate 'VM Size' attribute."""
         self._logger.info("Validating VM size")
         return any([deploy_app_vm_size, cloud_provider_vm_size])
