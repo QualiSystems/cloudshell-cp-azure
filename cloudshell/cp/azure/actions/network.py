@@ -67,14 +67,21 @@ class NetworkActions:
 
         return True
 
-    def get_mgmt_virtual_network(self, resource_group_name):
-        """Get management vNET from the management resource group.
+    def get_mgmt_virtual_network(
+        self, resource_group_name: str, mgmt_vnet_name: str = None
+    ):
+        """Get management vNET from the management resource group."""
+        if mgmt_vnet_name:
+            self._logger.info(f"Getting management vNet by name '{mgmt_vnet_name}'")
 
-        :param str resource_group_name:
-        :return:
-        """
+            return self._azure_client.get_virtual_network(
+                virtual_network_name=mgmt_vnet_name,
+                resource_group_name=resource_group_name,
+            )
+
+        # deprecated
         self._logger.info(
-            f"Getting MGMT subnet by tag "
+            f"[DEPRECATED] Getting management vNet by tag "
             f"{self.NETWORK_TYPE_TAG_NAME}={self.MGMT_NETWORK_TAG_VALUE}"
         )
 
@@ -87,14 +94,21 @@ class NetworkActions:
             tag_value=self.MGMT_NETWORK_TAG_VALUE,
         )
 
-    def get_sandbox_virtual_network(self, resource_group_name):
-        """Get sandbox vNET from the management resource group.
+    def get_sandbox_virtual_network(
+        self, resource_group_name: str, sandbox_vnet_name: str = None
+    ):
+        """Get sandbox vNET from the management resource group."""
+        if sandbox_vnet_name:
+            self._logger.info(f"Getting sandbox vNet by name '{sandbox_vnet_name}'")
 
-        :param str resource_group_name:
-        :return:
-        """
+            return self._azure_client.get_virtual_network(
+                virtual_network_name=sandbox_vnet_name,
+                resource_group_name=resource_group_name,
+            )
+
+        # deprecated
         self._logger.info(
-            f"Getting sandbox subnet by tag "
+            f"[DEPRECATED] Getting sandbox vNet by tag "
             f"{self.NETWORK_TYPE_TAG_NAME}={self.SANDBOX_NETWORK_TAG_VALUE}"
         )
 
@@ -107,15 +121,16 @@ class NetworkActions:
             tag_value=self.SANDBOX_NETWORK_TAG_VALUE,
         )
 
-    def get_sandbox_subnets(self, resource_group_name, mgmt_resource_group_name):
-        """Get all subnets from the Sandbox vNET for a specific Resource Group.
-
-        :param str resource_group_name:
-        :param str mgmt_resource_group_name:
-        :return:
-        """
+    def get_sandbox_subnets(
+        self,
+        resource_group_name: str,
+        mgmt_resource_group_name: str,
+        sandbox_vnet_name: str,
+    ):
+        """Get all subnets from the Sandbox vNET for a specific Resource Group."""
         sandbox_vnet = self.get_sandbox_virtual_network(
-            resource_group_name=mgmt_resource_group_name
+            resource_group_name=mgmt_resource_group_name,
+            sandbox_vnet_name=sandbox_vnet_name,
         )
         return [
             subnet
