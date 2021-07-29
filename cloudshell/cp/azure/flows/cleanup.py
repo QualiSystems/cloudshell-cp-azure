@@ -72,7 +72,8 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
         self._lock_manager.remove_lock(nsg_name)
 
         sandbox_vnet = network_actions.get_sandbox_virtual_network(
-            resource_group_name=self._resource_config.management_group_name
+            resource_group_name=self._resource_config.management_group_name,
+            sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
         )
 
         cleanup_commands = []
@@ -80,6 +81,7 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
         for subnet in network_actions.get_sandbox_subnets(
             resource_group_name=resource_group_name,
             mgmt_resource_group_name=self._resource_config.management_group_name,
+            sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
         ):
             cleanup_commands.append(
                 partial(

@@ -302,6 +302,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             rollback_manager=self._rollback_manager,
             cancellation_manager=self._cancellation_manager,
             mgmt_resource_group_name=self._resource_config.management_group_name,
+            sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             resource_group_name=resource_group_name,
             network_actions=network_actions,
             nsg_actions=nsg_actions,
@@ -374,7 +375,8 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
 
         with self._cancellation_manager:
             sandbox_vnet = network_actions.get_sandbox_virtual_network(
-                resource_group_name=self._resource_config.management_group_name
+                resource_group_name=self._resource_config.management_group_name,
+                sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             )
 
         for subnet_action in request_actions.prepare_subnets:

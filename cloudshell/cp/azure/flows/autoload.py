@@ -24,12 +24,18 @@ class AzureAutoloadFlow:
         validation_actions.validate_azure_region(region=self._resource_config.region)
         validation_actions.validate_azure_mgmt_resource_group(
             mgmt_resource_group_name=self._resource_config.management_group_name,
-            region=self._resource_config.region,
         )
 
         validation_actions.validate_azure_sandbox_network(
-            mgmt_resource_group_name=self._resource_config.management_group_name
+            mgmt_resource_group_name=self._resource_config.management_group_name,
+            sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
         )
+
+        if self._resource_config.management_vnet_name:
+            validation_actions.validate_azure_mgmt_network(
+                mgmt_resource_group_name=self._resource_config.management_group_name,
+                mgmt_vnet_name=self._resource_config.management_vnet_name,
+            )
 
         validation_actions.validate_azure_vm_size(
             vm_size=self._resource_config.vm_size, region=self._resource_config.region

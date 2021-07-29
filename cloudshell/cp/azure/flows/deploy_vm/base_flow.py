@@ -467,7 +467,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
         if connect_subnets:
             sandbox_vnet = network_actions.get_sandbox_virtual_network(
-                resource_group_name=self._resource_config.management_group_name
+                resource_group_name=self._resource_config.management_group_name,
+                sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             )
 
             for idx, connect_subnet in enumerate(connect_subnets):
@@ -502,6 +503,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             sandbox_subnets = network_actions.get_sandbox_subnets(
                 resource_group_name=resource_group_name,
                 mgmt_resource_group_name=self._resource_config.management_group_name,
+                sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             )
 
             if not sandbox_subnets:

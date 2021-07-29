@@ -94,6 +94,14 @@ class AzureResourceConfig(GenericResourceConfig):
         "Management Group Name", ResourceAttrRO.NAMESPACE.SHELL_NAME
     )
 
+    sandbox_vnet_name = ResourceAttrRO(
+        "Sandbox Virtual Network Name", ResourceAttrRO.NAMESPACE.SHELL_NAME
+    )
+
+    management_vnet_name = ResourceAttrRO(
+        "Management Virtual Network Name", ResourceAttrRO.NAMESPACE.SHELL_NAME
+    )
+
     execution_server_selector = ResourceAttrRO(
         "Execution Server Selector", ResourceAttrRO.NAMESPACE.SHELL_NAME
     )
