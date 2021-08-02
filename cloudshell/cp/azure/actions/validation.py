@@ -135,6 +135,23 @@ class ValidationActions(NetworkActions):
                 self._logger.exception(msg)
                 raise Exception(msg)
 
+    def validate_deploy_app_resource_group(self, deploy_app):
+        """Validate Deploy App Resource Group."""
+        self._logger.info("Validating Deploy App Resource group...")
+
+        if not deploy_app.resource_group_name:
+            return
+
+        try:
+            self._azure_client.get_resource_group(deploy_app.resource_group_name)
+        except CloudError:
+            error_msg = (
+                f"Failed to find Deploy App "
+                f"Resource group '{deploy_app.resource_group_name}'"
+            )
+            self._logger.exception(error_msg)
+            raise Exception(error_msg)
+
     def validate_deploy_app_add_public_ip(self, deploy_app, connect_subnets):
         """Validate 'Add Public IP' attribute."""
         self._logger.info("Validating Deploy App 'Add Public IP' attribute")

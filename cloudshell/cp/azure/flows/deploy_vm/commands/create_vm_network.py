@@ -1,3 +1,5 @@
+import typing
+
 from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
@@ -7,42 +9,27 @@ class CreateVMNetworkCommand(RollbackCommand):
         rollback_manager,
         cancellation_manager,
         network_actions,
-        interface_name,
-        add_public_ip,
-        resource_group_name,
+        interface_name: str,
+        add_public_ip: bool,
+        vm_resource_group_name: str,
         subnet,
         network_security_group,
-        public_ip_type,
-        private_ip_allocation_method,
+        public_ip_type: str,
+        private_ip_allocation_method: str,
         cs_ip_pool_manager,
-        reservation_id,
-        enable_ip_forwarding,
-        region,
-        tags,
+        reservation_id: str,
+        enable_ip_forwarding: bool,
+        region: str,
+        tags: typing.Dict[str, str],
     ):
-        """Init command.
-
-        :param rollback_manager:
-        :param cancellation_manager:
-        :param network_actions:
-        :param interface_name:
-        :param add_public_ip:
-        :param resource_group_name:
-        :param subnet:
-        :param network_security_group:
-        :param public_ip_type:
-        :param cs_ip_pool_manager:
-        :param reservation_id:
-        :param region:
-        :param tags:
-        """
+        """Init command."""
         super().__init__(
             rollback_manager=rollback_manager, cancellation_manager=cancellation_manager
         )
         self._network_actions = network_actions
         self._interface_name = interface_name
         self._add_public_ip = add_public_ip
-        self._resource_group_name = resource_group_name
+        self._vm_resource_group_name = vm_resource_group_name
         self._subnet = subnet
         self._network_security_group = network_security_group
         self._public_ip_type = public_ip_type
@@ -76,7 +63,7 @@ class CreateVMNetworkCommand(RollbackCommand):
             subnet=self._subnet,
             network_security_group=self._network_security_group,
             public_ip_type=self._public_ip_type,
-            resource_group_name=self._resource_group_name,
+            resource_group_name=self._vm_resource_group_name,
             region=self._region,
             tags=self._tags,
             private_ip_allocation_method=private_ip_allocation_method,
@@ -88,13 +75,13 @@ class CreateVMNetworkCommand(RollbackCommand):
     def rollback(self):
         self._network_actions.delete_vm_network(
             interface_name=self._interface_name,
-            resource_group_name=self._resource_group_name,
+            resource_group_name=self._vm_resource_group_name,
         )
 
         if self._add_public_ip:
             self._network_actions.delete_interface_public_ip(
                 interface_name=self._interface_name,
-                resource_group_name=self._resource_group_name,
+                resource_group_name=self._vm_resource_group_name,
             )
 
         if self._private_ip_address:

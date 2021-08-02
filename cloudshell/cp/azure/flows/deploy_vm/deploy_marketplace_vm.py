@@ -40,16 +40,13 @@ class AzureDeployMarketplaceVMFlow(BaseAzureDeployVMFlow):
             ),
         )
 
-    def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
-        """Prepare CloudShell VM Details model.
-
-        :param deployed_vm:
-        :param resource_group_name:
-        :return:
-        """
+    def _prepare_vm_details_data(
+        self, deployed_vm: models.VirtualMachine, vm_resource_group_name: str
+    ):
+        """Prepare CloudShell VM Details model."""
         vm_details_actions = VMDetailsActions(
             azure_client=self._azure_client, logger=self._logger
         )
         return vm_details_actions.prepare_marketplace_vm_details(
-            virtual_machine=deployed_vm, resource_group_name=resource_group_name
+            virtual_machine=deployed_vm, resource_group_name=vm_resource_group_name
         )

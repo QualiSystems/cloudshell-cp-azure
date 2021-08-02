@@ -1,3 +1,5 @@
+import typing
+
 from cloudshell.cp.core.flows.app_security_groups import AbstractAppSecurityGroupsFlow
 from requests.utils import is_valid_cidr
 
@@ -29,16 +31,15 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         self._azure_client = azure_client
         self._lock_manager = lock_manager
 
-    def _get_sandbox_subnet_name(self, subnet_id, resource_group_name):
+    def _get_sandbox_subnet_name(
+        self, subnet_id: str, sandbox_resource_group_name: str
+    ):
         """Get Sandbox subnet name from the subnet ID.
 
         In a single subnet scenario (default subnet), the subnet id will be
          a simple CIDR that looks like this: 10.0.3.0/24
         In multiple subnets mode, a subnet id will look like this:
          *4032ffa7-ada9-4ee4-9d33-70ce3c1b06e1_10.0.3.0-24
-        :param str subnet_id:
-        :param str resource_group_name:
-        :return:
         """
         network_actions = NetworkActions(
             azure_client=self._azure_client, logger=self._logger
@@ -46,30 +47,29 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
 
         if is_valid_cidr(subnet_id):
             return network_actions.prepare_sandbox_subnet_name(
-                resource_group_name=resource_group_name, cidr=subnet_id
+                resource_group_name=sandbox_resource_group_name, cidr=subnet_id
             )
 
         return get_name_from_resource_id(subnet_id)
 
-    def _get_private_ip_by_subnet_map(self, vm_name, resource_group_name):
-        """Create map between subnet name and private IP address.
-
-        :param str vm_name:
-        :param str resource_group_name:
-        :rtype: dict[str, str]
-        """
+    def _get_private_ip_by_subnet_map(
+        self, vm_name: str, vm_resource_group_name: str
+    ) -> typing.Dict[str, str]:
+        """Create map between subnet name and private IP address."""
         network_actions = NetworkActions(
             azure_client=self._azure_client, logger=self._logger
         )
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
 
-        vm = vm_actions.get_vm(vm_name=vm_name, resource_group_name=resource_group_name)
+        vm = vm_actions.get_vm(
+            vm_name=vm_name, resource_group_name=vm_resource_group_name
+        )
 
         private_ip_map = {}
         for interface_ref in vm.network_profile.network_interfaces:
             interface = network_actions.get_vm_network(
                 interface_name=get_name_from_resource_id(interface_ref.id),
-                resource_group_name=resource_group_name,
+                resource_group_name=vm_resource_group_name,
             )
 
             ip_configuration = interface.ip_configurations[0]
@@ -84,7 +84,11 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         :param security_group:
         :return
         """
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            security_group.deployed_app.resource_group_name
+            or sandbox_resource_group_name
+        )
         vm_name = security_group.deployed_app.name
 
         nsg_actions = NetworkSecurityGroupActions(
@@ -93,17 +97,17 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         vm_nsg_name = nsg_actions.prepare_vm_nsg_name(vm_name=vm_name)
 
         private_ips_map = self._get_private_ip_by_subnet_map(
-            vm_name=vm_name, resource_group_name=resource_group_name
+            vm_name=vm_name, vm_resource_group_name=vm_resource_group_name
         )
 
         with self._lock_manager.get_lock(vm_nsg_name):
             nsg_actions.delete_custom_nsg_rules(
-                nsg_name=vm_nsg_name, resource_group_name=resource_group_name
+                nsg_name=vm_nsg_name, resource_group_name=vm_resource_group_name
             )
 
             rules_priority_generator = NSGRulesPriorityGenerator(
                 nsg_name=vm_nsg_name,
-                resource_group_name=resource_group_name,
+                resource_group_name=vm_resource_group_name,
                 include_existing_rules=True,
                 nsg_actions=nsg_actions,
             )
@@ -111,14 +115,14 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
             for security_group_config in security_group.security_group_configs:
                 subnet_name = self._get_sandbox_subnet_name(
                     subnet_id=security_group_config.subnet_id,
-                    resource_group_name=resource_group_name,
+                    sandbox_resource_group_name=sandbox_resource_group_name,
                 )
 
                 dst_ip_address = private_ips_map.get(subnet_name)
                 for rule in security_group_config.rules:
                     nsg_actions.create_custom_nsg_rule(
                         vm_name=vm_name,
-                        resource_group_name=resource_group_name,
+                        resource_group_name=vm_resource_group_name,
                         nsg_name=vm_nsg_name,
                         src_address=rule.source,
                         dst_address=dst_ip_address,

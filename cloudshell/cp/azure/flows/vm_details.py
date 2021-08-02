@@ -34,7 +34,10 @@ class AzureGetVMDetailsFlow(AbstractVMDetailsFlow):
         :param deployed_app:
         :return:
         """
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deployed_app.resource_group_name or sandbox_resource_group_name
+        )
 
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
         vm_details_actions = VMDetailsActions(
@@ -43,14 +46,14 @@ class AzureGetVMDetailsFlow(AbstractVMDetailsFlow):
 
         with self._cancellation_manager:
             vm = vm_actions.get_vm(
-                vm_name=deployed_app.name, resource_group_name=resource_group_name
+                vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
             )
 
         if isinstance(deployed_app, AzureVMFromMarketplaceDeployedApp):
             return vm_details_actions.prepare_marketplace_vm_details(
-                virtual_machine=vm, resource_group_name=resource_group_name
+                virtual_machine=vm, resource_group_name=vm_resource_group_name
             )
 
         return vm_details_actions.prepare_custom_vm_details(
-            virtual_machine=vm, resource_group_name=resource_group_name
+            virtual_machine=vm, resource_group_name=vm_resource_group_name
         )
