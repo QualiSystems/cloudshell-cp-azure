@@ -19,6 +19,8 @@ class BooleanResourceAttrRO(ResourceAttrRO):
 
 
 class BaseAzureVMDeployedApp(models.DeployedApp):
+    resource_group_name = ResourceAttrRO("Resource Group Name", "DEPLOYMENT_PATH")
+
     allow_all_sandbox_traffic = BooleanResourceAttrRO(
         "Allow all Sandbox Traffic", "DEPLOYMENT_PATH"
     )

@@ -11,25 +11,14 @@ class CreateAllowSandboxInboundPortRuleCommand(CreateAllowVMInboundPortRuleComma
         rollback_manager,
         cancellation_manager,
         nsg_actions,
-        nsg_name,
-        vm_name,
+        nsg_name: str,
+        vm_name: str,
         inbound_port,
-        resource_group_name,
+        resource_group_name: str,
         rules_priority_generator,
-        private_ip,
+        private_ip: str,
     ):
-        """Init command.
-
-        :param rollback_manager:
-        :param cancellation_manager:
-        :param nsg_actions:
-        :param nsg_name:
-        :param vm_name:
-        :param inbound_port:
-        :param resource_group_name:
-        :param rules_priority_generator:
-        :param private_ip:
-        """
+        """Init command."""
         super().__init__(
             rollback_manager,
             cancellation_manager,

@@ -22,13 +22,8 @@ class AzureGetAvailablePrivateIPFlow:
         self._reservation_info = reservation_info
         self._logger = logger
 
-    def get_available_private_ip(self, subnet_cidr, owner):
-        """Get available private IP address from the CloudShell.
-
-        :param str subnet_cidr:
-        :param str owner:
-        :return:
-        """
+    def get_available_private_ip(self, subnet_cidr: str, owner: str):
+        """Get available private IP address from the CloudShell."""
         resource_group_name = self._reservation_info.get_resource_group_name()
 
         self._validate_ip_allocation_method(

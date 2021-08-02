@@ -1,3 +1,5 @@
+import logging
+
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.utils.azure_name_parser import get_name_from_resource_id
@@ -11,17 +13,9 @@ class AzureRefreshIPFlow:
         cs_api,
         reservation_info,
         cancellation_manager,
-        logger,
+        logger: logging.Logger,
     ):
-        """Init command.
-
-        :param resource_config:
-        :param azure_client:
-        :param cs_api:
-        :param reservation_info:
-        :param cancellation_manager:
-        :param logging.Logger logger:
-        """
+        """Init command."""
         self._resource_config = resource_config
         self._azure_client = azure_client
         self._cs_api = cs_api
@@ -31,11 +25,7 @@ class AzureRefreshIPFlow:
 
     @staticmethod
     def _get_primary_vm_interface(vm):
-        """Get primary VM interface.
-
-        :param vm:
-        :return:
-        """
+        """Get primary VM interface."""
         for interface in vm.network_profile.network_interfaces:
             if interface.primary:
                 return interface
@@ -43,12 +33,11 @@ class AzureRefreshIPFlow:
         return vm.network_profile.network_interfaces[0]
 
     def refresh_ip(self, deployed_app):
-        """Refresh Public and Private IPs on the CloudShell resource.
-
-        :param deployed_app:
-        :return
-        """
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        """Refresh Public and Private IPs on the CloudShell resource."""
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deployed_app.resource_group_name or sandbox_resource_group_name
+        )
 
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
         network_actions = NetworkActions(
@@ -56,14 +45,14 @@ class AzureRefreshIPFlow:
         )
 
         vm = vm_actions.get_active_vm(
-            vm_name=deployed_app.name, resource_group_name=resource_group_name
+            vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
         )
 
         primary_interface_ref = self._get_primary_vm_interface(vm)
         interface_name = get_name_from_resource_id(primary_interface_ref.id)
 
         vm_network = network_actions.get_vm_network(
-            interface_name=interface_name, resource_group_name=resource_group_name
+            interface_name=interface_name, resource_group_name=vm_resource_group_name
         )
 
         vm_ip_configuration = vm_network.ip_configurations[0]
@@ -78,7 +67,8 @@ class AzureRefreshIPFlow:
         else:
             self._logger.info(f"Retrieving Public IP for the VM {deployed_app.name}")
             pub_ip_addr = network_actions.get_vm_network_public_ip(
-                interface_name=interface_name, resource_group_name=resource_group_name
+                interface_name=interface_name,
+                resource_group_name=vm_resource_group_name,
             )
             public_ip_on_azure = pub_ip_addr.ip_address
 

@@ -1,3 +1,5 @@
+import typing
+
 from azure.mgmt.compute import models as compute_models
 from cloudshell.cp.core.flows.deploy import AbstractDeployFlow
 from cloudshell.cp.core.request_actions.models import Attribute, DeployAppResult
@@ -103,7 +105,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         """
         return None
 
-    def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
+    def _prepare_vm_details_data(self, deployed_vm, vm_resource_group_name):
         """Prepare VM Details data.
 
         :param deployed_vm:
@@ -126,6 +128,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             azure_client=self._azure_client, logger=self._logger
         )
 
+        validation_actions.validate_deploy_app_resource_group(deploy_app=deploy_app)
         validation_actions.validate_deploy_app_add_public_ip(
             deploy_app=deploy_app, connect_subnets=connect_subnets
         )
@@ -140,14 +143,10 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
         validation_actions.validate_tags(tags=tags)
 
-    def _create_vm_nsg(self, resource_group_name, vm_name, tags):
-        """Create VM Network Security Group.
-
-        :param str resource_group_name:
-        :param str vm_name:
-        :param dict[str, str] tags:
-        :return:
-        """
+    def _create_vm_nsg(
+        self, vm_resource_group_name: str, vm_name: str, tags: typing.Dict[str, str]
+    ):
+        """Create VM Network Security Group."""
         nsg_actions = NetworkSecurityGroupActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -157,23 +156,20 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             cancellation_manager=self._cancellation_manager,
             nsg_actions=nsg_actions,
             vm_name=vm_name,
-            resource_group_name=resource_group_name,
+            vm_resource_group_name=vm_resource_group_name,
             region=self._resource_config.region,
             tags=tags,
         ).execute()
 
     def _create_vm_nsg_inbound_ports_rules(
-        self, deploy_app, vm_name, vm_nsg, resource_group_name, rules_priority_generator
+        self,
+        deploy_app,
+        vm_name: str,
+        vm_nsg,
+        vm_resource_group_name: str,
+        rules_priority_generator,
     ):
-        """Create VM NSG rules for the Inbound ports.
-
-        :param deploy_app:
-        :param str vm_name:
-        :param vm_nsg:
-        :param str resource_group_name:
-        :param rules_priority_generator:
-        :return:
-        """
+        """Create VM NSG rules for the Inbound ports."""
         nsg_actions = NetworkSecurityGroupActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -186,20 +182,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 nsg_name=vm_nsg.name,
                 vm_name=vm_name,
                 inbound_port=inbound_port,
-                resource_group_name=resource_group_name,
+                resource_group_name=vm_resource_group_name,
                 rules_priority_generator=rules_priority_generator,
             ).execute()
 
     def _create_vm_nsg_additional_mgmt_networks_rules(
-        self, vm_name, vm_nsg, resource_group_name, rules_priority_generator
+        self, vm_name, vm_nsg, vm_resource_group_name, rules_priority_generator
     ):
-        """Create VM NSG rules for the additional MGMT networks.
-
-        :param vm_nsg:
-        :param str resource_group_name:
-        :param rules_priority_generator:
-        :return:
-        """
+        """Create VM NSG rules for the additional MGMT networks."""
         nsg_actions = NetworkSecurityGroupActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -210,22 +200,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 cancellation_manager=self._cancellation_manager,
                 nsg_actions=nsg_actions,
                 nsg_name=vm_nsg.name,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 vm_name=vm_name,
                 mgmt_network=mgmt_network,
                 rules_priority_generator=rules_priority_generator,
             ).execute()
 
     def _create_vm_nsg_mgmt_vnet_rule(
-        self, vm_nsg, resource_group_name, rules_priority_generator
+        self, vm_nsg, vm_resource_group_name: str, rules_priority_generator
     ):
-        """Create VM NSG rule for the MGMT vNET.
-
-        :param vm_nsg:
-        :param str resource_group_name:
-        :param rules_priority_generator:
-        :return:
-        """
+        """Create VM NSG rule for the MGMT vNET."""
         nsg_actions = NetworkSecurityGroupActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -242,22 +226,15 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 network_actions=network_actions,
                 nsg_actions=nsg_actions,
                 nsg_name=vm_nsg.name,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 mgmt_resource_group_name=self._resource_config.management_group_name,
                 rules_priority_generator=rules_priority_generator,
             ).execute()
 
     def _create_vm_nsg_sandbox_traffic_rules(
-        self, deploy_app, vm_nsg, resource_group_name, rules_priority_generator
+        self, deploy_app, vm_nsg, vm_resource_group_name, rules_priority_generator
     ):
-        """Create VM NSG rules for the Sandbox traffic.
-
-        :param deploy_app:
-        :param vm_nsg:
-        :param str resource_group_name:
-        :param rules_priority_generator:
-        :return:
-        """
+        """Create VM NSG rules for the Sandbox traffic."""
         if not deploy_app.allow_all_sandbox_traffic:
             nsg_actions = NetworkSecurityGroupActions(
                 azure_client=self._azure_client, logger=self._logger
@@ -268,7 +245,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 cancellation_manager=self._cancellation_manager,
                 nsg_actions=nsg_actions,
                 nsg_name=vm_nsg.name,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 rules_priority_generator=rules_priority_generator,
             ).execute()
 
@@ -277,21 +254,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 cancellation_manager=self._cancellation_manager,
                 nsg_actions=nsg_actions,
                 nsg_name=vm_nsg.name,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 rules_priority_generator=rules_priority_generator,
             ).execute()
 
     def _create_sandbox_nsg_inbound_ports_rules(
-        self, deploy_app, vm_name, resource_group_name, vm_interfaces
+        self, deploy_app, vm_name: str, sandbox_resource_group_name: str, vm_interfaces
     ):
-        """Create NSG rules for the Inbound ports in the Sandbox NSG.
-
-        :param deploy_app:
-        :param str vm_name:
-        :param str resource_group_name:
-        :param vm_interfaces:
-        :return:
-        """
+        """Create NSG rules for the Inbound ports in the Sandbox NSG."""
         nsg_actions = NetworkSecurityGroupActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -300,7 +270,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         with self._lock_manager.get_lock(nsg_name):
             rules_priority_generator = NSGRulesPriorityGenerator(
                 nsg_name=nsg_name,
-                resource_group_name=resource_group_name,
+                resource_group_name=sandbox_resource_group_name,
                 include_existing_rules=True,
                 nsg_actions=nsg_actions,
             )
@@ -318,62 +288,65 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                             vm_name=vm_name,
                             private_ip=private_ip,
                             inbound_port=inbound_port,
-                            resource_group_name=resource_group_name,
+                            resource_group_name=sandbox_resource_group_name,
                             rules_priority_generator=rules_priority_generator,
                         ).execute()
 
     def _create_vm_nsg_rules(
-        self, deploy_app, vm_name, vm_nsg, resource_group_name, vm_interfaces
+        self,
+        deploy_app,
+        vm_name: str,
+        vm_nsg,
+        vm_resource_group_name: str,
+        sandbox_resource_group_name: str,
+        vm_interfaces,
     ):
-        """Create all NSG rules for the VM.
-
-        :param deploy_app:
-        :param str vm_name:
-        :param vm_nsg:
-        :param str resource_group_name:
-        :param vm_interfaces:
-        :return:
-        """
+        """Create all NSG rules for the VM."""
         rules_priority_generator = NSGRulesPriorityGenerator(
-            nsg_name=vm_nsg.name, resource_group_name=resource_group_name
+            nsg_name=vm_nsg.name, resource_group_name=vm_resource_group_name
         )
 
         self._create_vm_nsg_inbound_ports_rules(
             deploy_app=deploy_app,
             vm_name=vm_name,
             vm_nsg=vm_nsg,
-            resource_group_name=resource_group_name,
+            vm_resource_group_name=vm_resource_group_name,
             rules_priority_generator=rules_priority_generator,
         )
 
         self._create_vm_nsg_additional_mgmt_networks_rules(
             vm_name=vm_name,
             vm_nsg=vm_nsg,
-            resource_group_name=resource_group_name,
+            vm_resource_group_name=vm_resource_group_name,
             rules_priority_generator=rules_priority_generator,
         )
 
         self._create_vm_nsg_mgmt_vnet_rule(
             vm_nsg=vm_nsg,
-            resource_group_name=resource_group_name,
+            vm_resource_group_name=vm_resource_group_name,
             rules_priority_generator=rules_priority_generator,
         )
 
         self._create_vm_nsg_sandbox_traffic_rules(
             deploy_app=deploy_app,
             vm_nsg=vm_nsg,
-            resource_group_name=resource_group_name,
+            vm_resource_group_name=vm_resource_group_name,
             rules_priority_generator=rules_priority_generator,
         )
 
         self._create_sandbox_nsg_inbound_ports_rules(
             deploy_app=deploy_app,
             vm_name=vm_name,
-            resource_group_name=resource_group_name,
+            sandbox_resource_group_name=sandbox_resource_group_name,
             vm_interfaces=vm_interfaces,
         )
 
-    def _reconfigure_vm_with_data_disks(self, vm, data_disks, resource_group_name):
+    def _reconfigure_vm_with_data_disks(
+        self,
+        vm: compute_models.VirtualMachine,
+        data_disks: typing.List[compute_models.Disk],
+        vm_resource_group_name: str,
+    ):
         """Add Data Disks to the deployed VM."""
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
         lun_generator = get_disk_lun_generator(
@@ -403,7 +376,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         operation_poller = vm_actions.start_create_or_update_vm_task(
             vm_name=vm.name,
             virtual_machine=vm,
-            resource_group_name=resource_group_name,
+            resource_group_name=vm_resource_group_name,
         )
 
         self._logger.exception("Waiting update VM task to be completed...")
@@ -412,17 +385,11 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
     def _create_data_disks(
         self,
         deploy_app,
-        resource_group_name,
-        vm_name,
-        tags,
+        vm_resource_group_name: str,
+        vm_name: str,
+        tags: typing.Dict[str, str],
     ):
-        """Create additional data disks.
-
-        :param deploy_app:
-        :param str resource_group_name:
-        :param dict[str, str] tags:
-        :return:
-        """
+        """Create additional data disks."""
         storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -434,7 +401,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 cancellation_manager=self._cancellation_manager,
                 storage_actions=storage_actions,
                 disk_model=disk_model,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 region=self._resource_config.region,
                 vm_name=vm_name,
                 tags=tags,
@@ -448,18 +415,12 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         deploy_app,
         connect_subnets,
         network_security_group,
-        resource_group_name,
-        vm_name,
-        tags,
+        vm_resource_group_name: str,
+        sandbox_resource_group_name: str,
+        vm_name: str,
+        tags: typing.Dict[str, str],
     ):
-        """Create VM interfaces.
-
-        :param deploy_app:
-        :param connect_subnets:
-        :param str resource_group_name:
-        :param str vm_name:
-        :return:
-        """
+        """Create VM interfaces."""
         network_actions = NetworkActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -485,7 +446,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     public_ip_type=deploy_app.public_ip_type,
                     private_ip_allocation_method=self._resource_config.private_ip_allocation_method,  # noqa: E501
                     cs_ip_pool_manager=self._cs_ip_pool_manager,
-                    resource_group_name=resource_group_name,
+                    vm_resource_group_name=vm_resource_group_name,
                     subnet=subnet,
                     network_security_group=network_security_group,
                     add_public_ip=all(
@@ -501,7 +462,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
         else:
             sandbox_subnets = network_actions.get_sandbox_subnets(
-                resource_group_name=resource_group_name,
+                resource_group_name=sandbox_resource_group_name,
                 mgmt_resource_group_name=self._resource_config.management_group_name,
                 sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             )
@@ -520,7 +481,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     public_ip_type=deploy_app.public_ip_type,
                     private_ip_allocation_method=self._resource_config.private_ip_allocation_method,  # noqa: E501
                     cs_ip_pool_manager=self._cs_ip_pool_manager,
-                    resource_group_name=resource_group_name,
+                    vm_resource_group_name=vm_resource_group_name,
                     subnet=subnet,
                     network_security_group=network_security_group,
                     add_public_ip=deploy_app.add_public_ip,
@@ -540,13 +501,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         network_interfaces[0].primary = True
         return network_interfaces
 
-    def _find_vm_public_ip(self, vm_interfaces, resource_group_name):
-        """Find public IP address on the provided VM interfaces.
-
-        :param vm_interfaces:
-        :param str resource_group_name:
-        :return:
-        """
+    def _find_vm_public_ip(self, vm_interfaces, vm_resource_group_name: str):
+        """Find public IP address on the provided VM interfaces."""
         for vm_interface in vm_interfaces:
             if vm_interface.ip_configurations[0].public_ip_address is not None:
                 network_actions = NetworkActions(
@@ -554,7 +510,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 )
                 public_ip = network_actions.get_vm_network_public_ip(
                     interface_name=vm_interface.name,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
                 return public_ip.ip_address
 
@@ -570,27 +526,17 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
     def _prepare_deploy_app_result(
         self,
-        deployed_vm,
+        deployed_vm: compute_models.VirtualMachine,
         deploy_app,
         vm_interfaces,
-        vm_name,
-        username,
-        password,
-        resource_group_name,
+        vm_name: str,
+        username: str,
+        password: str,
+        vm_resource_group_name: str,
     ):
-        """Prepare Deploy App result.
-
-        :param deployed_vm:
-        :param deploy_app:
-        :param vm_interfaces:
-        :param str vm_name:
-        :param str username:
-        :param str password:
-        :param str resource_group_name:
-        :return:
-        """
+        """Prepare Deploy App result."""
         public_ip = self._find_vm_public_ip(
-            vm_interfaces=vm_interfaces, resource_group_name=resource_group_name
+            vm_interfaces=vm_interfaces, vm_resource_group_name=vm_resource_group_name
         )
         private_ip = self._find_vm_private_ip(vm_interfaces=vm_interfaces)
 
@@ -601,7 +547,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         ]
 
         vm_details_data = self._prepare_vm_details_data(
-            deployed_vm=deployed_vm, resource_group_name=resource_group_name
+            deployed_vm=deployed_vm, vm_resource_group_name=vm_resource_group_name
         )
 
         deploy_result = DeployAppResult(
@@ -644,7 +590,10 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         """
         deploy_app = request_actions.deploy_app
 
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deploy_app.resource_group_name or sandbox_resource_group_name
+        )
         storage_account_name = self._reservation_info.get_storage_account_name()
 
         name_postfix = name_generator.generate_short_unique_string()
@@ -669,21 +618,24 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
         with self._rollback_manager:
             vm_nsg = self._create_vm_nsg(
-                resource_group_name=resource_group_name, vm_name=vm_name, tags=tags
+                vm_resource_group_name=vm_resource_group_name,
+                vm_name=vm_name,
+                tags=tags,
             )
 
             vm_ifaces = self._create_vm_interfaces(
                 deploy_app=deploy_app,
                 connect_subnets=request_actions.connect_subnets,
                 network_security_group=vm_nsg,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
+                sandbox_resource_group_name=sandbox_resource_group_name,
                 vm_name=vm_name,
                 tags=tags,
             )
 
             data_disks = self._create_data_disks(
                 deploy_app=deploy_app,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 vm_name=vm_name,
                 tags=tags,
             )
@@ -692,7 +644,8 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 deploy_app=deploy_app,
                 vm_name=vm_name,
                 vm_nsg=vm_nsg,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
+                sandbox_resource_group_name=sandbox_resource_group_name,
                 vm_interfaces=vm_ifaces,
             )
 
@@ -704,7 +657,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 deploy_app=deploy_app,
                 username=username,
                 password=password,
-                resource_group_name=resource_group_name,
+                sandbox_resource_group_name=sandbox_resource_group_name,
                 storage_account_name=storage_account_name,
                 vm_network_interfaces=vm_ifaces,
                 computer_name=computer_name,
@@ -715,7 +668,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 vm_name=vm_name,
                 deploy_app=deploy_app,
                 virtual_machine=vm,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
             )
 
             if data_disks:
@@ -725,13 +678,13 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 self._reconfigure_vm_with_data_disks(
                     vm=deployed_vm,
                     data_disks=data_disks,
-                    resource_group_name=resource_group_name,
+                    vm_resource_group_name=vm_resource_group_name,
                 )
 
             self._create_vm_script_extension(
                 deploy_app=deploy_app,
                 image_os_type=image_os,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 vm_name=vm_name,
                 tags=tags,
             )
@@ -743,21 +696,18 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 vm_name=vm_name,
                 username=username,
                 password=password,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
             )
 
     def _create_vm_script_extension(
-        self, deploy_app, image_os_type, resource_group_name, vm_name, tags
+        self,
+        deploy_app,
+        image_os_type,
+        vm_resource_group_name: str,
+        vm_name: str,
+        tags: typing.Dict[str, str],
     ):
-        """Create VM Script Extension.
-
-        :param deploy_app:
-        :param image_os_type:
-        :param str resource_group_name:
-        :param str vm_name:
-        :param dict[str, str] tags:
-        :return:
-        """
+        """Create VM Script Extension."""
         if deploy_app.extension_script_file:
             vm_extension_actions = VMExtensionActions(
                 azure_client=self._azure_client, logger=self._logger
@@ -774,7 +724,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 image_os_type=image_os_type,
                 region=self._resource_config.region,
                 vm_name=vm_name,
-                resource_group_name=resource_group_name,
+                vm_resource_group_name=vm_resource_group_name,
                 tags=tags,
             )
             try:
@@ -789,14 +739,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 self._logger.warning(msg, exc_info=True)
                 self._cs_reservation_output.write_error_message(message=msg)
 
-    def _create_vm(self, vm_name, deploy_app, virtual_machine, resource_group_name):
-        """Create and deploy Azure VM from the given parameters.
-
-        :param str vm_name:
-        :param deploy_app:
-        :param azure.mgmt.compute.models.VirtualMachine virtual_machine:
-        :param str resource_group_name:
-        """
+    def _create_vm(
+        self,
+        vm_name,
+        deploy_app,
+        virtual_machine: compute_models.VirtualMachine,
+        vm_resource_group_name: str,
+    ):
+        """Create and deploy Azure VM from the given parameters."""
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
 
         return commands.CreateVMCommand(
@@ -807,7 +757,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             vm_name=vm_name,
             disk_type=deploy_app.disk_type,
             virtual_machine=virtual_machine,
-            resource_group_name=resource_group_name,
+            vm_resource_group_name=vm_resource_group_name,
         ).execute()
 
     def _prepare_hardware_profile(self, deploy_app):
@@ -850,20 +800,13 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
     def _prepare_os_profile(
         self,
-        username,
-        password,
-        resource_group_name,
-        storage_account_name,
-        computer_name,
+        username: str,
+        password: str,
+        sandbox_resource_group_name: str,
+        storage_account_name: str,
+        computer_name: str,
     ):
-        """Prepare OS Profile for the VM.
-
-        :param deploy_app:
-        :param str resource_group_name:
-        :param str storage_account_name:
-        :param str computer_name:
-        :return:
-        """
+        """Prepare OS Profile for the VM."""
         vm_creds_actions = VMCredentialsActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -874,7 +817,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 username=username
             )
             ssh_public_key = vm_creds_actions.get_ssh_public_key(
-                resource_group_name=resource_group_name,
+                resource_group_name=sandbox_resource_group_name,
                 storage_account_name=storage_account_name,
             )
 
@@ -897,30 +840,19 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
     def _prepare_vm(
         self,
         deploy_app,
-        username,
-        password,
-        resource_group_name,
-        storage_account_name,
+        username: str,
+        password: str,
+        sandbox_resource_group_name: str,
+        storage_account_name: str,
         vm_network_interfaces,
-        computer_name,
-        tags,
+        computer_name: str,
+        tags: typing.Dict[str, str],
     ):
-        """Prepare VM for the deployment.
-
-        :param deploy_app:
-        :param str username:
-        :param str password:
-        :param str resource_group_name:
-        :param str storage_account_name:
-        :param vm_network_interfaces:
-        :param str computer_name:
-        :param dict[str, str] tags:
-        :return:
-        """
+        """Prepare VM for the deployment."""
         os_profile = self._prepare_os_profile(
             username=username,
             password=password,
-            resource_group_name=resource_group_name,
+            sandbox_resource_group_name=sandbox_resource_group_name,
             storage_account_name=storage_account_name,
             computer_name=computer_name,
         )

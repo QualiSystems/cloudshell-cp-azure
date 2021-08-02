@@ -1,6 +1,9 @@
+import logging
+import typing
 from functools import partial
 from http import HTTPStatus
 
+from azure.mgmt.network import models as network_models
 from cloudshell.cp.core.flows.cleanup_sandbox_infra import (
     AbstractCleanupSandboxInfraFlow,
 )
@@ -16,29 +19,23 @@ from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 
 class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
     def __init__(
-        self, resource_config, azure_client, reservation_info, lock_manager, logger
+        self,
+        resource_config,
+        azure_client,
+        reservation_info,
+        lock_manager,
+        logger: logging.Logger,
     ):
-        """Init command.
-
-        :param resource_config:
-        :param azure_client:
-        :param reservation_info:
-        :param lock_manager:
-        :param logging.Logger logger:
-        """
         super().__init__(logger=logger)
         self._resource_config = resource_config
         self._azure_client = azure_client
         self._reservation_info = reservation_info
         self._lock_manager = lock_manager
 
-    def _find_sandbox_subnets(self, resource_group_name, sandbox_vnet):
-        """Find the sandbox subnet in the vNet.
-
-        :param str resource_group_name:
-        :param VirtualNetwork sandbox_vnet:
-        :rtype: list[Subnet]
-        """
+    def _find_sandbox_subnets(
+        self, resource_group_name: str, sandbox_vnet: network_models.VirtualNetwork
+    ) -> typing.List[network_models.Subnet]:
+        """Find the sandbox subnet in the vNet."""
         # todo: rework this using some special tags ?
         return [
             subnet

@@ -21,11 +21,14 @@ class AzurePowerManagementFlow:
         :param deployed_app:
         :return:
         """
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deployed_app.resource_group_name or sandbox_resource_group_name
+        )
 
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
         vm_actions.start_vm(
-            vm_name=deployed_app.name, resource_group_name=resource_group_name
+            vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
         )
 
     def power_off(self, deployed_app):
@@ -34,9 +37,12 @@ class AzurePowerManagementFlow:
         :param deployed_app:
         :return:
         """
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deployed_app.resource_group_name or sandbox_resource_group_name
+        )
 
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
         vm_actions.stop_vm(
-            vm_name=deployed_app.name, resource_group_name=resource_group_name
+            vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
         )

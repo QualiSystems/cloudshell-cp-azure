@@ -79,6 +79,8 @@ class BaseAzureVMDeployApp(models.DeployApp):
 
     data_disks = DataDisksAttrRO("Data Disks", "DEPLOYMENT_PATH")
 
+    resource_group_name = ResourceAttrRO("Resource Group Name", "DEPLOYMENT_PATH")
+
     add_public_ip = ResourceAttrRO("Add Public IP", "DEPLOYMENT_PATH")
 
     wait_for_ip = ResourceAttrRO("Wait for IP", "DEPLOYMENT_PATH")
