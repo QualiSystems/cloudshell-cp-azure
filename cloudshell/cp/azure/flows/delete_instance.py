@@ -105,7 +105,10 @@ class AzureDeleteInstanceFlow:
         :param deployed_app:
         :return:
         """
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deployed_app.resource_group_name or sandbox_resource_group_name
+        )
         nsg_name = self._reservation_info.get_network_security_group_name()
 
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
@@ -120,7 +123,7 @@ class AzureDeleteInstanceFlow:
         )
 
         vm = vm_actions.get_vm(
-            vm_name=deployed_app.name, resource_group_name=resource_group_name
+            vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
         )
 
         network_interface_names = [
@@ -130,7 +133,8 @@ class AzureDeleteInstanceFlow:
 
         network_interfaces = [
             network_actions.get_vm_network(
-                interface_name=interface_name, resource_group_name=resource_group_name
+                interface_name=interface_name,
+                resource_group_name=vm_resource_group_name,
             )
             for interface_name in network_interface_names
         ]
@@ -147,7 +151,7 @@ class AzureDeleteInstanceFlow:
             partial(
                 vm_actions.delete_vm,
                 vm_name=deployed_app.name,
-                resource_group_name=resource_group_name,
+                resource_group_name=vm_resource_group_name,
             )
         ]
 
@@ -156,7 +160,7 @@ class AzureDeleteInstanceFlow:
                 partial(
                     network_actions.delete_vm_network,
                     interface_name=interface_name,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
             )
 
@@ -165,13 +169,13 @@ class AzureDeleteInstanceFlow:
                 partial(
                     network_actions.delete_public_ip,
                     public_ip_name=public_ip_name,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
             )
 
         delete_commands.append(
             partial(
-                self._delete_vm_disk, vm=vm, resource_group_name=resource_group_name
+                self._delete_vm_disk, vm=vm, resource_group_name=vm_resource_group_name
             )
         )
 
@@ -180,7 +184,7 @@ class AzureDeleteInstanceFlow:
                 partial(
                     storage_actions.delete_disk,
                     disk_name=data_disk.name,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
             )
 
@@ -188,19 +192,19 @@ class AzureDeleteInstanceFlow:
             partial(
                 nsg_actions.delete_vm_network_security_group,
                 vm_name=vm.name,
-                resource_group_name=resource_group_name,
+                resource_group_name=vm_resource_group_name,
             )
         )
 
         for nsg_rule in nsg_actions.get_nsg_rules(
-            nsg_name=nsg_name, resource_group_name=resource_group_name
+            nsg_name=nsg_name, resource_group_name=sandbox_resource_group_name
         ):
             delete_commands.append(
                 partial(
                     nsg_actions.delete_nsg_rule,
                     rule_name=nsg_rule.name,
                     nsg_name=nsg_name,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=sandbox_resource_group_name,
                 )
             )
 

@@ -125,11 +125,14 @@ class AzureReconfigureVMFlow:
         self, deployed_app, vm_size, os_disk_size, os_disk_type, data_disks
     ):
         """Change VM Size and Data Disks."""
-        resource_group_name = self._reservation_info.get_resource_group_name()
+        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
+        vm_resource_group_name = (
+            deployed_app.resource_group_name or sandbox_resource_group_name
+        )
         vm_actions = VMActions(azure_client=self._azure_client, logger=self._logger)
 
         vm = vm_actions.get_vm(
-            vm_name=deployed_app.name, resource_group_name=resource_group_name
+            vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
         )
 
         if vm_size:
@@ -143,7 +146,7 @@ class AzureReconfigureVMFlow:
                 disks = self._process_data_disks(
                     data_disks=data_disks,
                     vm=vm,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
 
                 if is_ultra_disk_in_list(disks):
@@ -162,7 +165,7 @@ class AzureReconfigureVMFlow:
                     os_disk_size=os_disk_size,
                     os_disk_type=os_disk_type,
                     vm=vm,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
 
             self._logger.info("Starting VM update task...")
@@ -170,7 +173,7 @@ class AzureReconfigureVMFlow:
                 operation_poller = vm_actions.start_create_or_update_vm_task(
                     vm_name=vm.name,
                     virtual_machine=vm,
-                    resource_group_name=resource_group_name,
+                    resource_group_name=vm_resource_group_name,
                 )
             except CloudError as e:
                 self._logger.exception("Unable to start update VM task due to:")

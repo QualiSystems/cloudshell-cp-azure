@@ -40,16 +40,18 @@ class AzureDeployCustomVMFlow(BaseAzureDeployVMFlow):
             image_reference=models.ImageReference(id=image_id),
         )
 
-    def _prepare_vm_details_data(self, deployed_vm, resource_group_name):
+    def _prepare_vm_details_data(
+        self, deployed_vm: models.VirtualMachine, vm_resource_group_name: str
+    ):
         """Prepare VM Details data.
 
         :param deployed_vm:
-        :param str resource_group_name:
+        :param str vm_resource_group_name:
         :return:
         """
         vm_details_actions = VMDetailsActions(
             azure_client=self._azure_client, logger=self._logger
         )
         vm_details_actions.prepare_custom_vm_details(
-            virtual_machine=deployed_vm, resource_group_name=resource_group_name
+            virtual_machine=deployed_vm, resource_group_name=vm_resource_group_name
         )
