@@ -8,6 +8,7 @@ RETRYABLE_ERROR_STRING = "retryable"
 RETRYABLE_WAIT_TIME = 2000
 RETRYABLE_ERROR_MAX_ATTEMPTS = 20
 VM_DISK_DETACH_MAX_ATTEMPT_NUMBER = 300
+PUBLIC_IP_DETACH_MAX_ATTEMPT_NUMBER = 500
 
 
 def retry_on_connection_error(exception):
@@ -41,4 +42,12 @@ def retry_on_vm_disk_detach_error(exception: Exception):
     return (
         isinstance(exception, CloudError)
         and "is being attached to vm" in exception.message.lower()
+    )
+
+
+def retry_on_public_ip_detach_error(exception: Exception):
+    """Return True if we got an error that Public IP is still attached to the VM."""
+    return (
+        isinstance(exception, CloudError)
+        and "still allocated" in exception.message.lower()
     )
