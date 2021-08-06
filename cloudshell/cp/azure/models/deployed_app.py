@@ -35,4 +35,4 @@ class AzureVMFromCustomImageDeployedApp(BaseAzureVMDeployedApp):
 
 
 class AzureVMFromSharedGalleryImageDeployedApp(BaseAzureVMDeployedApp):
-    DEPLOYMENT_PATH = constants.AZURE_VM_FROM_CUSTOM_IMAGE_DEPLOYMENT_PATH
+    DEPLOYMENT_PATH = constants.AZURE_VM_FROM_SHARED_GALLERY_IMAGE_DEPLOYMENT_PATH
