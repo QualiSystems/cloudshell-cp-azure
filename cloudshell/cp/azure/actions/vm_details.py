@@ -1,4 +1,5 @@
 import re
+import typing
 
 from azure.mgmt.compute.models import StorageAccountTypes
 from cloudshell.cp.core.request_actions.models import (
@@ -41,12 +42,8 @@ class VMDetailsActions(NetworkActions):
         return match_groups.group("group_name") if match_groups else ""
 
     @staticmethod
-    def _prepare_common_vm_instance_data(virtual_machine):
-        """Prepare commnon VM instance data.
-
-        :param virtual_machine:
-        :return:
-        """
+    def _prepare_common_vm_instance_data(virtual_machine, resource_group_name: str):
+        """Prepare common VM instance data."""
         disk_type = (
             "HDD"
             if virtual_machine.storage_profile.os_disk.managed_disk.storage_account_type
@@ -63,6 +60,10 @@ class VMDetailsActions(NetworkActions):
                 value=virtual_machine.storage_profile.os_disk.os_type.name,
             ),
             VmDetailsProperty(key="Disk Type", value=disk_type),
+            VmDetailsProperty(
+                key="Resource Group",
+                value=resource_group_name,
+            ),
         ]
 
     def _prepare_vm_network_data(self, virtual_machine, resource_group_name):
@@ -121,12 +122,10 @@ class VMDetailsActions(NetworkActions):
 
         return vm_network_interfaces
 
-    def _prepare_marketplace_vm_instance_data(self, virtual_machine):
-        """Prepare marketplace VM instance data.
-
-        :param virtual_machine:
-        :return:
-        """
+    def _prepare_marketplace_vm_instance_data(
+        self, virtual_machine, resource_group_name: str
+    ):
+        """Prepare marketplace VM instance data."""
         return [
             VmDetailsProperty(
                 key="Image Publisher",
@@ -140,14 +139,33 @@ class VMDetailsActions(NetworkActions):
                 key="Image SKU",
                 value=virtual_machine.storage_profile.image_reference.sku,
             ),
-        ] + self._prepare_common_vm_instance_data(virtual_machine=virtual_machine)
+        ] + self._prepare_common_vm_instance_data(
+            virtual_machine=virtual_machine,
+            resource_group_name=resource_group_name,
+        )
 
-    def _prepare_custom_vm_instance_data(self, virtual_machine):
-        """Prepare custom VM instance data.
+    def _prepare_custom_vm_instance_data(
+        self, virtual_machine, resource_group_name: str
+    ):
+        """Prepare custom VM instance data."""
+        image_resource_id = virtual_machine.storage_profile.image_reference.id
+        image_name = self._parse_image_name(resource_id=image_resource_id)
+        image_resource_group = self._parse_resource_group_name(
+            resource_id=image_resource_id
+        )
 
-        :param virtual_machine:
-        :return:
-        """
+        return [
+            VmDetailsProperty(key="Image", value=image_name),
+            VmDetailsProperty(key="Image Resource Group", value=image_resource_group),
+        ] + self._prepare_common_vm_instance_data(
+            virtual_machine=virtual_machine,
+            resource_group_name=resource_group_name,
+        )
+
+    def _prepare_gallery_vm_instance_data(
+        self, virtual_machine, resource_group_name: str
+    ):
+        """Prepare custom VM instance data."""
         image_resource_id = virtual_machine.storage_profile.image_reference.id
         image_name = self._parse_image_name(resource_id=image_resource_id)
         resource_group = self._parse_resource_group_name(resource_id=image_resource_id)
@@ -155,38 +173,24 @@ class VMDetailsActions(NetworkActions):
         return [
             VmDetailsProperty(key="Image", value=image_name),
             VmDetailsProperty(key="Image Resource Group", value=resource_group),
-        ] + self._prepare_common_vm_instance_data(virtual_machine=virtual_machine)
-
-    def _prepare_gallery_vm_instance_data(self, virtual_machine):
-        """Prepare custom VM instance data.
-
-        :param virtual_machine:
-        :return:
-        """
-        image_resource_id = virtual_machine.storage_profile.image_reference.id
-        image_name = self._parse_image_name(resource_id=image_resource_id)
-        resource_group = self._parse_resource_group_name(resource_id=image_resource_id)
-
-        return [
-            VmDetailsProperty(key="Image", value=image_name),
-            VmDetailsProperty(key="Image Resource Group", value=resource_group),
-        ] + self._prepare_common_vm_instance_data(virtual_machine=virtual_machine)
+        ] + self._prepare_common_vm_instance_data(
+            virtual_machine=virtual_machine,
+            resource_group_name=resource_group_name,
+        )
 
     def _prepare_vm_details(
-        self, virtual_machine, resource_group_name, prepare_vm_instance_data_function
+        self,
+        virtual_machine,
+        resource_group_name: str,
+        prepare_vm_instance_data_function: typing.Callable,
     ):
-        """Prepare VM details.
-
-        :param virtual_machine:
-        :param str resource_group_name:
-        :param prepare_vm_instance_data_function:
-        :return:
-        """
+        """Prepare VM details."""
         try:
             return VmDetailsData(
                 appName=virtual_machine.name,
                 vmInstanceData=prepare_vm_instance_data_function(
-                    virtual_machine=virtual_machine
+                    virtual_machine=virtual_machine,
+                    resource_group_name=resource_group_name,
                 ),
                 vmNetworkData=self._prepare_vm_network_data(
                     virtual_machine=virtual_machine,
@@ -199,39 +203,26 @@ class VMDetailsActions(NetworkActions):
             )
             return VmDetailsData(appName=virtual_machine.name, errorMessage=str(e))
 
-    def prepare_marketplace_vm_details(self, virtual_machine, resource_group_name):
-        """Prepare marketplace VM details.
-
-        :param virtual_machine:
-        :param str resource_group_name:
-        :return:
-        """
+    def prepare_marketplace_vm_details(self, virtual_machine, resource_group_name: str):
+        """Prepare marketplace VM details."""
         return self._prepare_vm_details(
             virtual_machine=virtual_machine,
             resource_group_name=resource_group_name,
             prepare_vm_instance_data_function=self._prepare_marketplace_vm_instance_data,  # noqa: E501
         )
 
-    def prepare_custom_vm_details(self, virtual_machine, resource_group_name):
-        """Prepare custom VM details.
-
-        :param virtual_machine:
-        :param str resource_group_name:
-        :return:
-        """
+    def prepare_custom_vm_details(self, virtual_machine, resource_group_name: str):
+        """Prepare custom VM details."""
         return self._prepare_vm_details(
             virtual_machine=virtual_machine,
             resource_group_name=resource_group_name,
             prepare_vm_instance_data_function=self._prepare_custom_vm_instance_data,
         )
 
-    def prepare_shared_gallery_vm_details(self, virtual_machine, resource_group_name):
-        """Prepare Shared Gallery VM details.
-
-        :param virtual_machine:
-        :param str resource_group_name:
-        :return:
-        """
+    def prepare_shared_gallery_vm_details(
+        self, virtual_machine, resource_group_name: str
+    ):
+        """Prepare Shared Gallery VM details."""
         return self._prepare_vm_details(
             virtual_machine=virtual_machine,
             resource_group_name=resource_group_name,
