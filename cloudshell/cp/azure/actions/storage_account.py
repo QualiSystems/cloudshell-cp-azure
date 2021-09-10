@@ -5,10 +5,10 @@ from urllib.parse import urlparse
 from azure.mgmt.compute import models as compute_models
 from msrestazure.azure_exceptions import CloudError
 
+from cloudshell.cp.azure.utils.disks import prepare_full_data_disk_name
+
 
 class StorageAccountActions:
-    DATA_DISK_NAME_TPL = "{vm_name}_{disk_name}"
-
     def __init__(self, azure_client, logger: logging.Logger):
         """Init command."""
         self._azure_client = azure_client
@@ -140,7 +140,7 @@ class StorageAccountActions:
         vm_name: str,
     ) -> compute_models.Disk:
         """Get VM Data disk."""
-        full_disk_name = self.DATA_DISK_NAME_TPL.format(
+        full_disk_name = prepare_full_data_disk_name(
             disk_name=disk_name, vm_name=vm_name
         )
 
@@ -163,10 +163,11 @@ class StorageAccountActions:
         tags: typing.Dict[str, str],
     ) -> compute_models.Disk:
         """Create VM Data disk."""
+        full_disk_name = prepare_full_data_disk_name(
+            disk_name=disk_name, vm_name=vm_name
+        )
         return self.create_disk(
-            disk_name=self.DATA_DISK_NAME_TPL.format(
-                disk_name=disk_name, vm_name=vm_name
-            ),
+            disk_name=full_disk_name,
             resource_group_name=resource_group_name,
             region=region,
             disk_size=disk_size,
@@ -181,9 +182,10 @@ class StorageAccountActions:
         vm_name: str,
     ):
         """Delete VM Data Disk."""
+        full_disk_name = prepare_full_data_disk_name(
+            disk_name=disk_name, vm_name=vm_name
+        )
         return self.delete_disk(
-            disk_name=self.DATA_DISK_NAME_TPL.format(
-                disk_name=disk_name, vm_name=vm_name
-            ),
+            disk_name=full_disk_name,
             resource_group_name=resource_group_name,
         )
