@@ -19,7 +19,7 @@ from cloudshell.cp.azure.utils import name_generator
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.cs_reservation_output import CloudShellReservationOutput
 from cloudshell.cp.azure.utils.disks import (
-    get_azure_os_disk_type,
+    convert_cs_to_azure_os_disk_type,
     get_disk_lun_generator,
     is_ultra_disk_in_list,
 )
@@ -794,7 +794,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             create_option=compute_models.DiskCreateOptionTypes.from_image,
             disk_size_gb=disk_size,
             managed_disk=compute_models.ManagedDiskParameters(
-                storage_account_type=get_azure_os_disk_type(deploy_app.disk_type)
+                storage_account_type=convert_cs_to_azure_os_disk_type(
+                    deploy_app.disk_type
+                )
             ),
         )
 

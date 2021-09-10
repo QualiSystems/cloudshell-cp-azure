@@ -7,7 +7,7 @@ from cloudshell.cp.azure.exceptions import ReconfigureVMException
 from cloudshell.cp.azure.flows.reconfigure_vm import commands
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.disks import (
-    get_azure_os_disk_type,
+    convert_cs_to_azure_os_disk_type,
     get_disk_lun_generator,
     is_ultra_disk_in_list,
     parse_data_disks_input,
@@ -54,7 +54,9 @@ class AzureReconfigureVMFlow:
         storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
-        os_disk_type = get_azure_os_disk_type(os_disk_type) if os_disk_type else None
+        os_disk_type = (
+            convert_cs_to_azure_os_disk_type(os_disk_type) if os_disk_type else None
+        )
 
         os_disk = storage_actions.get_disk(
             disk_name=vm.storage_profile.os_disk.name,

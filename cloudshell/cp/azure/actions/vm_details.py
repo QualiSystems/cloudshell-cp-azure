@@ -1,7 +1,6 @@
 import re
 import typing
 
-from azure.mgmt.compute.models import StorageAccountTypes
 from cloudshell.cp.core.request_actions.models import (
     VmDetailsData,
     VmDetailsNetworkInterface,
@@ -10,6 +9,10 @@ from cloudshell.cp.core.request_actions.models import (
 
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.utils.azure_name_parser import get_name_from_resource_id
+from cloudshell.cp.azure.utils.disks import (
+    convert_azure_to_cs_disk_type,
+    get_display_data_disk_name,
+)
 
 
 class VMDetailsActions(NetworkActions):
@@ -44,14 +47,12 @@ class VMDetailsActions(NetworkActions):
     @staticmethod
     def _prepare_common_vm_instance_data(virtual_machine, resource_group_name: str):
         """Prepare common VM instance data."""
-        disk_type = (
-            "HDD"
-            if virtual_machine.storage_profile.os_disk.managed_disk.storage_account_type
-            == StorageAccountTypes.standard_lrs
-            else "SSD"
+        os_disk = virtual_machine.storage_profile.os_disk
+        os_disk_type = convert_azure_to_cs_disk_type(
+            azure_disk_type=os_disk.managed_disk.storage_account_type
         )
 
-        return [
+        vm_properties = [
             VmDetailsProperty(
                 key="VM Size", value=virtual_machine.hardware_profile.vm_size
             ),
@@ -59,12 +60,37 @@ class VMDetailsActions(NetworkActions):
                 key="Operating System",
                 value=virtual_machine.storage_profile.os_disk.os_type.name,
             ),
-            VmDetailsProperty(key="Disk Type", value=disk_type),
+            VmDetailsProperty(
+                key="OS Disk Size",
+                value=f"{virtual_machine.storage_profile.os_disk.disk_size_gb}GB "
+                f"({os_disk_type})",
+            ),
             VmDetailsProperty(
                 key="Resource Group",
                 value=resource_group_name,
             ),
         ]
+
+        for disk_number, data_disk in enumerate(
+            virtual_machine.storage_profile.data_disks, start=1
+        ):
+            disk_type = convert_azure_to_cs_disk_type(
+                azure_disk_type=data_disk.managed_disk.storage_account_type
+            )
+            disk_name_prop = VmDetailsProperty(
+                key=f"Data Disk {disk_number} Name",
+                value=get_display_data_disk_name(
+                    vm_name=virtual_machine.name, full_disk_name=data_disk.name
+                ),
+            )
+            disk_size_prop = VmDetailsProperty(
+                key=f"Data Disk {disk_number} Size",
+                value=f"{data_disk.disk_size_gb}GB ({disk_type})",
+            )
+            vm_properties.append(disk_name_prop)
+            vm_properties.append(disk_size_prop)
+
+        return vm_properties
 
     def _prepare_vm_network_data(self, virtual_machine, resource_group_name):
         """Prepare VM Network data.
