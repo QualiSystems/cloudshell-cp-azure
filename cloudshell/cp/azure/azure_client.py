@@ -11,10 +11,12 @@ from retrying import retry
 
 from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
+    ANOTHER_OPERATION_IN_PROGRESS_MAX_ATTEMPT_NUMBER,
     PUBLIC_IP_DETACH_MAX_ATTEMPT_NUMBER,
     RETRYABLE_ERROR_MAX_ATTEMPTS,
     RETRYABLE_WAIT_TIME,
     VM_DISK_DETACH_MAX_ATTEMPT_NUMBER,
+    retry_on_another_operation_in_progress_error,
     retry_on_connection_error,
     retry_on_public_ip_detach_error,
     retry_on_retryable_error,
@@ -630,6 +632,11 @@ class AzureAPIClient:
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
     )
+    @retry(
+        stop_max_attempt_number=ANOTHER_OPERATION_IN_PROGRESS_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_another_operation_in_progress_error,
+    )
     def create_nsg_rule(self, resource_group_name, nsg_name, rule):
         """Create Network Security Group rule.
 
@@ -651,6 +658,11 @@ class AzureAPIClient:
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
+    )
+    @retry(
+        stop_max_attempt_number=ANOTHER_OPERATION_IN_PROGRESS_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_another_operation_in_progress_error,
     )
     def delete_nsg_rule(
         self, resource_group_name, nsg_name, rule_name, wait_for_result=False
@@ -675,6 +687,11 @@ class AzureAPIClient:
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
+    )
+    @retry(
+        stop_max_attempt_number=ANOTHER_OPERATION_IN_PROGRESS_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_another_operation_in_progress_error,
     )
     def create_subnet(
         self,
@@ -804,6 +821,11 @@ class AzureAPIClient:
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
+    )
+    @retry(
+        stop_max_attempt_number=ANOTHER_OPERATION_IN_PROGRESS_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_another_operation_in_progress_error,
     )
     def delete_subnet(self, subnet_name, vnet_name, resource_group_name):
         """Delete Subnet.
