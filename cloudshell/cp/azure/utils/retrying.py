@@ -9,6 +9,7 @@ RETRYABLE_WAIT_TIME = 2000
 RETRYABLE_ERROR_MAX_ATTEMPTS = 20
 VM_DISK_DETACH_MAX_ATTEMPT_NUMBER = 300
 PUBLIC_IP_DETACH_MAX_ATTEMPT_NUMBER = 500
+ANOTHER_OPERATION_IN_PROGRESS_MAX_ATTEMPT_NUMBER = 500
 
 
 def retry_on_connection_error(exception):
@@ -50,4 +51,12 @@ def retry_on_public_ip_detach_error(exception: Exception):
     return (
         isinstance(exception, CloudError)
         and "still allocated" in exception.message.lower()
+    )
+
+
+def retry_on_another_operation_in_progress_error(exception: Exception):
+    """Return True if another operation on this resource is in progress."""
+    return (
+        isinstance(exception, CloudError)
+        and "another operation" in exception.message.lower()
     )
