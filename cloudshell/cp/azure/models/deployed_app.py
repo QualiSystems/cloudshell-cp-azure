@@ -2,6 +2,7 @@ from cloudshell.cp.core.request_actions import models
 from cloudshell.shell.standards.core.resource_config_entities import ResourceAttrRO
 
 from cloudshell.cp.azure import constants
+from cloudshell.cp.azure.models.attributes import CustomTagsAttrRO
 
 
 class BooleanResourceAttrRO(ResourceAttrRO):
@@ -24,6 +25,7 @@ class BaseAzureVMDeployedApp(models.DeployedApp):
     allow_all_sandbox_traffic = BooleanResourceAttrRO(
         "Allow all Sandbox Traffic", "DEPLOYMENT_PATH"
     )
+    extended_custom_tags = CustomTagsAttrRO("Custom Tags", "DEPLOYMENT_PATH")
 
 
 class AzureVMFromMarketplaceDeployedApp(BaseAzureVMDeployedApp):
