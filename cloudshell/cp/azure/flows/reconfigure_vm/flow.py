@@ -68,12 +68,14 @@ class AzureReconfigureVMFlow:
             disk_type=os_disk_type,
         )
 
-    def _process_data_disks(self, data_disks, vm, resource_group_name):
+    def _process_data_disks(self, data_disks, vm, resource_group_name, deployed_app):
         """Add/Update VM Data disks."""
         storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
-        tags = self._tags_manager.get_vm_tags(vm_name=vm.name)
+        tags = self._tags_manager.get_vm_tags(
+            vm_name=vm.name, extended_custom_tags=deployed_app.extended_custom_tags
+        )
 
         disk_models = parse_data_disks_input(data_disks)
         lun_generator = get_disk_lun_generator(
@@ -147,6 +149,7 @@ class AzureReconfigureVMFlow:
                     data_disks=data_disks,
                     vm=vm,
                     resource_group_name=vm_resource_group_name,
+                    deployed_app=deployed_app,
                 )
 
                 if is_ultra_disk_in_list(disks):
