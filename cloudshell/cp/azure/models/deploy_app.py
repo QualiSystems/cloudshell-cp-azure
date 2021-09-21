@@ -66,6 +66,21 @@ class IntegerAttrRO(ResourceAttrRO):
         return int(attr) if attr else None
 
 
+class LicenseTypeAttrRO(ResourceAttrRO):
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        attr = instance.attributes.get(self.get_key(instance), self.default)
+        if attr not in constants.AZURE_VM_LICENSES_MAP:
+            raise InvalidAttrException(
+                f"'License Type' attribute is invalid. It should be "
+                f"one of the {list(constants.AZURE_VM_LICENSES_MAP.keys())}"
+            )
+
+        return constants.AZURE_VM_LICENSES_MAP[attr]
+
+
 class BaseAzureVMDeployApp(models.DeployApp):
     @property
     def app_name(self):
@@ -78,6 +93,8 @@ class BaseAzureVMDeployApp(models.DeployApp):
     disk_size = ResourceAttrRO("Disk Size", "DEPLOYMENT_PATH")
 
     data_disks = DataDisksAttrRO("Data Disks", "DEPLOYMENT_PATH")
+
+    license_type = LicenseTypeAttrRO("License Type", "DEPLOYMENT_PATH")
 
     resource_group_name = ResourceAttrRO("Resource Group Name", "DEPLOYMENT_PATH")
 
