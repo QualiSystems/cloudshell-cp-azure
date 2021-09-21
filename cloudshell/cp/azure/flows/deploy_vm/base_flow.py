@@ -103,7 +103,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         :param deploy_app:
         :return:
         """
-        return None
+        pass
 
     def _prepare_vm_details_data(self, deployed_vm, vm_resource_group_name):
         """Prepare VM Details data.
@@ -879,6 +879,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             network_profile=network_profile,
             storage_profile=storage_profile,
             plan=purchase_plan,
+            license_type=deploy_app.license_type,
             diagnostics_profile=compute_models.DiagnosticsProfile(
                 boot_diagnostics=compute_models.BootDiagnostics(enabled=False)
             ),
