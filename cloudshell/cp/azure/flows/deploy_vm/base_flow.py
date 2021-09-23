@@ -269,30 +269,33 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
         nsg_name = self._reservation_info.get_network_security_group_name()
 
-        with self._lock_manager.get_lock(nsg_name):
-            rules_priority_generator = NSGRulesPriorityGenerator(
-                nsg_name=nsg_name,
-                resource_group_name=sandbox_resource_group_name,
-                include_existing_rules=True,
-                nsg_actions=nsg_actions,
-            )
+        if nsg_actions.network_security_group_exists(
+            nsg_name=nsg_name, resource_group_name=sandbox_resource_group_name
+        ):
+            with self._lock_manager.get_lock(nsg_name):
+                rules_priority_generator = NSGRulesPriorityGenerator(
+                    nsg_name=nsg_name,
+                    resource_group_name=sandbox_resource_group_name,
+                    include_existing_rules=True,
+                    nsg_actions=nsg_actions,
+                )
 
-            for interface in vm_interfaces:
-                if interface.ip_configurations[0].public_ip_address is not None:
-                    private_ip = interface.ip_configurations[0].private_ip_address
+                for interface in vm_interfaces:
+                    if interface.ip_configurations[0].public_ip_address is not None:
+                        private_ip = interface.ip_configurations[0].private_ip_address
 
-                    for inbound_port in deploy_app.inbound_ports:
-                        commands.CreateAllowSandboxInboundPortRuleCommand(
-                            rollback_manager=self._rollback_manager,
-                            cancellation_manager=self._cancellation_manager,
-                            nsg_actions=nsg_actions,
-                            nsg_name=nsg_name,
-                            vm_name=vm_name,
-                            private_ip=private_ip,
-                            inbound_port=inbound_port,
-                            resource_group_name=sandbox_resource_group_name,
-                            rules_priority_generator=rules_priority_generator,
-                        ).execute()
+                        for inbound_port in deploy_app.inbound_ports:
+                            commands.CreateAllowSandboxInboundPortRuleCommand(
+                                rollback_manager=self._rollback_manager,
+                                cancellation_manager=self._cancellation_manager,
+                                nsg_actions=nsg_actions,
+                                nsg_name=nsg_name,
+                                vm_name=vm_name,
+                                private_ip=private_ip,
+                                inbound_port=inbound_port,
+                                resource_group_name=sandbox_resource_group_name,
+                                rules_priority_generator=rules_priority_generator,
+                            ).execute()
 
     def _create_vm_nsg_rules(
         self,
