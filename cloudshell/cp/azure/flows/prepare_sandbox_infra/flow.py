@@ -76,17 +76,27 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         resource_group_name = self._reservation_info.get_resource_group_name()
         nsg_name = self._reservation_info.get_network_security_group_name()
         tags = self._tags_manager.get_reservation_tags()
+        nsg = None
+        all_subnets_are_predefined = all(
+            [
+                subnet_action.get_attribute(name=SUBNET_SERVICE_NAME_ATTRIBUTE)
+                for subnet_action in request_actions.prepare_subnets
+            ]
+        )
 
         with self._rollback_manager:
-            nsg = self._create_nsg(
-                nsg_name=nsg_name, resource_group_name=resource_group_name, tags=tags
-            )
+            if not all_subnets_are_predefined:
+                nsg = self._create_nsg(
+                    nsg_name=nsg_name,
+                    resource_group_name=resource_group_name,
+                    tags=tags,
+                )
 
-            self._create_nsg_rules(
-                request_actions=request_actions,
-                resource_group_name=resource_group_name,
-                nsg_name=nsg_name,
-            )
+                self._create_nsg_rules(
+                    request_actions=request_actions,
+                    resource_group_name=resource_group_name,
+                    nsg_name=nsg_name,
+                )
 
             return self._create_subnets(
                 request_actions=request_actions,
@@ -359,7 +369,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         )
 
     def _create_subnets(
-        self, request_actions, resource_group_name, network_security_group
+        self, request_actions, resource_group_name, network_security_group=None
     ):
         """Create additional subnets requested by server.
 
