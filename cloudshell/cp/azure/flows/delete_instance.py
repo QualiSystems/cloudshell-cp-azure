@@ -196,17 +196,20 @@ class AzureDeleteInstanceFlow:
             )
         )
 
-        for nsg_rule in nsg_actions.get_nsg_rules(
+        if nsg_actions.network_security_group_exists(
             nsg_name=nsg_name, resource_group_name=sandbox_resource_group_name
         ):
-            delete_commands.append(
-                partial(
-                    nsg_actions.delete_nsg_rule,
-                    rule_name=nsg_rule.name,
-                    nsg_name=nsg_name,
-                    resource_group_name=sandbox_resource_group_name,
+            for nsg_rule in nsg_actions.get_nsg_rules(
+                nsg_name=nsg_name, resource_group_name=sandbox_resource_group_name
+            ):
+                delete_commands.append(
+                    partial(
+                        nsg_actions.delete_nsg_rule,
+                        rule_name=nsg_rule.name,
+                        nsg_name=nsg_name,
+                        resource_group_name=sandbox_resource_group_name,
+                    )
                 )
-            )
 
         for delete_command in delete_commands:
             try:

@@ -64,6 +64,17 @@ class NetworkSecurityGroupActions:
             resource_group_name=resource_group_name,
         )
 
+    def network_security_group_exists(self, nsg_name: str, resource_group_name: str):
+        """Check if the network security group exists."""
+        self._logger.info(
+            f"Checking network security group {nsg_name} exists "
+            f"(all subnets are predefined)..."
+        )
+        return self._azure_client.network_security_group_exists(
+            nsg_name=nsg_name,
+            resource_group_name=resource_group_name,
+        )
+
     def delete_network_security_group(self, nsg_name, resource_group_name):
         """Delete Network Security Group.
 

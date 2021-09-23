@@ -89,21 +89,16 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
                 )
             )
 
-        cleanup_commands.append(
-            partial(
-                nsg_actions.delete_network_security_group,
-                nsg_name=nsg_name,
-                resource_group_name=resource_group_name,
+        if nsg_actions.network_security_group_exists(
+            nsg_name=nsg_name, resource_group_name=resource_group_name
+        ):
+            cleanup_commands.append(
+                partial(
+                    nsg_actions.delete_network_security_group,
+                    nsg_name=nsg_name,
+                    resource_group_name=resource_group_name,
+                )
             )
-        )
-
-        cleanup_commands.append(
-            partial(
-                nsg_actions.delete_network_security_group,
-                nsg_name=nsg_name,
-                resource_group_name=resource_group_name,
-            )
-        )
 
         cleanup_commands.append(
             partial(

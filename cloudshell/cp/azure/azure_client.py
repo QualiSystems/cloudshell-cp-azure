@@ -7,6 +7,7 @@ from azure.mgmt.storage import StorageManagementClient, models as storage_models
 from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
 from msrestazure.azure_active_directory import ServicePrincipalCredentials
+from msrestazure.azure_exceptions import CloudError
 from retrying import retry
 
 from cloudshell.cp.azure import exceptions
@@ -607,6 +608,23 @@ class AzureAPIClient:
 
         if wait_for_result:
             return operation_poller.wait()
+
+    def network_security_group_exists(self, nsg_name: str, resource_group_name: str):
+        """Check if the network security group exists."""
+        try:
+            self.get_network_security_group(
+                network_security_group_name=nsg_name,
+                resource_group_name=resource_group_name,
+            )
+        except CloudError:
+            self._logger.info(
+                f"Network security group '{nsg_name}' "
+                f"doesn't exist, all subnets are predefined",
+                exc_info=True,
+            )
+            return False
+
+        return True
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
