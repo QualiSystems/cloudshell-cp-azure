@@ -128,7 +128,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             azure_client=self._azure_client, logger=self._logger
         )
 
-        validation_actions.validate_deploy_app_resource_group(deploy_app=deploy_app)
+        validation_actions.validate_deploy_app_resource_group(
+            deploy_app=deploy_app, cs_api=self._cs_api
+        )
         validation_actions.validate_deploy_app_add_public_ip(
             deploy_app=deploy_app, connect_subnets=connect_subnets
         )
