@@ -135,7 +135,7 @@ class ValidationActions(NetworkActions):
                 self._logger.exception(msg)
                 raise Exception(msg)
 
-    def validate_deploy_app_resource_group(self, deploy_app):
+    def validate_deploy_app_resource_group(self, deploy_app, cs_api):
         """Validate Deploy App Resource Group."""
         self._logger.info("Validating Deploy App Resource group...")
 
@@ -148,6 +148,18 @@ class ValidationActions(NetworkActions):
             error_msg = (
                 f"Failed to find Deploy App "
                 f"Resource group '{deploy_app.resource_group_name}'"
+            )
+            self._logger.exception(error_msg)
+            raise Exception(error_msg)
+
+        if deploy_app.resource_group_name.lower() in (
+            reservation.Name.lower()
+            for reservation in cs_api.GetCurrentReservations().Reservations
+        ):
+            error_msg = (
+                f"Invalid Deploy App "
+                f"Resource group '{deploy_app.resource_group_name}'. It cannot "
+                f"be a resource group created by another CloudShell reservation."
             )
             self._logger.exception(error_msg)
             raise Exception(error_msg)
