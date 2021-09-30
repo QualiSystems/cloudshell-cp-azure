@@ -145,6 +145,17 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
         validation_actions.validate_tags(tags=tags)
 
+    def _get_sandbox_storage_account(
+        self, storage_account_name: str, sandbox_resource_group_name: str
+    ):
+        storage_actions = StorageAccountActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+        return storage_actions.get_storage_account(
+            storage_account_name=storage_account_name,
+            resource_group_name=sandbox_resource_group_name,
+        )
+
     def _create_vm_nsg(
         self, vm_resource_group_name: str, vm_name: str, tags: typing.Dict[str, str]
     ):
@@ -529,6 +540,21 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             if vm_interface.primary:
                 return vm_interface.ip_configurations[0].private_ip_address
 
+    def _prepare_diagnostics_profile(
+        self, deploy_app, storage_account
+    ) -> compute_models.DiagnosticsProfile:
+        if deploy_app.enable_boot_diagnostics:
+            boot_diagnostics = compute_models.BootDiagnostics(
+                enabled=True,
+                storage_uri=storage_account.primary_endpoints.blob,
+            )
+        else:
+            boot_diagnostics = compute_models.BootDiagnostics(
+                enabled=False,
+            )
+
+        return compute_models.DiagnosticsProfile(boot_diagnostics=boot_diagnostics)
+
     def _prepare_deploy_app_result(
         self,
         deployed_vm: compute_models.VirtualMachine,
@@ -599,7 +625,6 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         vm_resource_group_name = (
             deploy_app.resource_group_name or sandbox_resource_group_name
         )
-        storage_account_name = self._reservation_info.get_storage_account_name()
 
         name_postfix = name_generator.generate_short_unique_string()
         vm_name = name_generator.generate_name(
@@ -613,6 +638,11 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         computer_name = vm_name[:15]  # Windows OS username limit
 
         image_os = self._get_vm_image_os(deploy_app=deploy_app)
+
+        storage_account = self._get_sandbox_storage_account(
+            storage_account_name=self._reservation_info.get_storage_account_name(),
+            sandbox_resource_group_name=sandbox_resource_group_name,
+        )
 
         self._validate_deploy_app_request(
             deploy_app=deploy_app,
@@ -663,7 +693,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 username=username,
                 password=password,
                 sandbox_resource_group_name=sandbox_resource_group_name,
-                storage_account_name=storage_account_name,
+                storage_account=storage_account,
                 vm_network_interfaces=vm_ifaces,
                 computer_name=computer_name,
                 tags=tags,
@@ -850,7 +880,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         username: str,
         password: str,
         sandbox_resource_group_name: str,
-        storage_account_name: str,
+        storage_account,
         vm_network_interfaces,
         computer_name: str,
         tags: typing.Dict[str, str],
@@ -860,7 +890,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             username=username,
             password=password,
             sandbox_resource_group_name=sandbox_resource_group_name,
-            storage_account_name=storage_account_name,
+            storage_account_name=storage_account.name,
             computer_name=computer_name,
         )
 
@@ -876,6 +906,10 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             os_disk=os_disk,
         )
 
+        diagnostics_profile = self._prepare_diagnostics_profile(
+            deploy_app=deploy_app,
+            storage_account=storage_account,
+        )
         purchase_plan = self._get_image_purchase_plan(deploy_app=deploy_app)
 
         return compute_models.VirtualMachine(
@@ -887,7 +921,5 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             storage_profile=storage_profile,
             plan=purchase_plan,
             license_type=deploy_app.license_type,
-            diagnostics_profile=compute_models.DiagnosticsProfile(
-                boot_diagnostics=compute_models.BootDiagnostics(enabled=False)
-            ),
+            diagnostics_profile=diagnostics_profile,
         )
