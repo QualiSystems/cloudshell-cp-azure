@@ -153,7 +153,7 @@ class ValidationActions(NetworkActions):
             raise Exception(error_msg)
 
         if deploy_app.resource_group_name.lower() in (
-            reservation.Name.lower()
+            reservation.Id.lower()
             for reservation in cs_api.GetCurrentReservations().Reservations
         ):
             error_msg = (
