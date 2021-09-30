@@ -1,5 +1,8 @@
 from cloudshell.cp.core.request_actions import models
-from cloudshell.shell.standards.core.resource_config_entities import ResourceAttrRO
+from cloudshell.shell.standards.core.resource_config_entities import (
+    ResourceAttrRO,
+    ResourceBoolAttrRO,
+)
 
 from cloudshell.cp.azure import constants
 from cloudshell.cp.azure.models.attributes import (
@@ -26,11 +29,15 @@ class BaseAzureVMDeployApp(models.DeployApp):
 
     license_type = LicenseTypeAttrRO("License Type", "DEPLOYMENT_PATH")
 
+    enable_boot_diagnostics = ResourceBoolAttrRO(
+        "Enable Boot Diagnostics", "DEPLOYMENT_PATH"
+    )
+
     resource_group_name = ResourceAttrRO("Resource Group Name", "DEPLOYMENT_PATH")
 
-    add_public_ip = ResourceAttrRO("Add Public IP", "DEPLOYMENT_PATH")
+    add_public_ip = ResourceBoolAttrRO("Add Public IP", "DEPLOYMENT_PATH")
 
-    wait_for_ip = ResourceAttrRO("Wait for IP", "DEPLOYMENT_PATH")
+    wait_for_ip = ResourceBoolAttrRO("Wait for IP", "DEPLOYMENT_PATH")
 
     extension_script_file = ResourceAttrRO("Extension Script file", "DEPLOYMENT_PATH")
 
@@ -48,9 +55,9 @@ class BaseAzureVMDeployApp(models.DeployApp):
 
     extended_custom_tags = CustomTagsAttrRO("Custom Tags", "DEPLOYMENT_PATH")
 
-    enable_ip_forwarding = ResourceAttrRO("Enable IP Forwarding", "DEPLOYMENT_PATH")
+    enable_ip_forwarding = ResourceBoolAttrRO("Enable IP Forwarding", "DEPLOYMENT_PATH")
 
-    allow_all_sandbox_traffic = ResourceAttrRO(
+    allow_all_sandbox_traffic = ResourceBoolAttrRO(
         "Allow all Sandbox Traffic", "DEPLOYMENT_PATH"
     )
 
