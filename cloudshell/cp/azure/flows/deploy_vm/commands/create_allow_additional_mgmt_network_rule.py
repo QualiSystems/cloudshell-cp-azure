@@ -36,6 +36,7 @@ class CreateAllowAdditionalMGMTNetworkRuleCommand(RollbackCommand):
             ).replace("/", "-"),
             resource_group_name=self._vm_resource_group_name,
             nsg_name=self._nsg_name,
+            src_address=self._mgmt_network,
             rule_priority=self._rules_priority_generator.get_priority(
                 start_from=self.NSG_RULE_PRIORITY
             ),

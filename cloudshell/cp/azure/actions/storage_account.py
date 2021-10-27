@@ -38,6 +38,12 @@ class StorageAccountActions:
             storage_account_name=storage_account_name,
         )
 
+    def get_storage_account_by_name(self, storage_account_name: str):
+        self._logger.info(f"Getting storage account {storage_account_name}")
+        return self._azure_client.get_storage_account_by_name(
+            storage_account_name=storage_account_name
+        )
+
     def delete_storage_account(
         self, storage_account_name: str, resource_group_name: str
     ):
