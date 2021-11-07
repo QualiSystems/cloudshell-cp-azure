@@ -559,9 +559,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     storage_uri=storage_uri,
                 )
             else:
-                boot_diagnostics = compute_models.BootDiagnostics(
-                    enabled=True
-                )
+                boot_diagnostics = compute_models.BootDiagnostics(enabled=True)
         else:
             boot_diagnostics = compute_models.BootDiagnostics(
                 enabled=False,
@@ -658,7 +656,10 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             sandbox_resource_group_name=sandbox_resource_group_name,
         )
         boot_diagnostics_storage_account = ""
-        if deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "") == "sandboxstorage":
+        if (
+            deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
+            == "sandboxstorage"
+        ):
             boot_diagnostics_storage_account = storage_account
         elif deploy_app.boot_diagnostics_storage_account:
             boot_diagnostics_storage_account = self._get_storage_account_by_name(

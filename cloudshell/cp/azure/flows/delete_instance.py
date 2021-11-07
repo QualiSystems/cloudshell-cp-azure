@@ -121,10 +121,12 @@ class AzureDeleteInstanceFlow:
         storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
-
-        vm = vm_actions.get_vm(
-            vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
-        )
+        try:
+            vm = vm_actions.get_vm(
+                vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
+            )
+        except CloudError:
+            return
 
         network_interface_names = [
             get_name_from_resource_id(interface.id)
