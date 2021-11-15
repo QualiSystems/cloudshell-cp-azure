@@ -33,6 +33,10 @@ class BaseAzureVMDeployApp(models.DeployApp):
         "Enable Boot Diagnostics", "DEPLOYMENT_PATH"
     )
 
+    boot_diagnostics_storage_account = ResourceAttrRO(
+        "Boot Diagnostics Storage Account", "DEPLOYMENT_PATH"
+    )
+
     resource_group_name = ResourceAttrRO("Resource Group Name", "DEPLOYMENT_PATH")
 
     add_public_ip = ResourceBoolAttrRO("Add Public IP", "DEPLOYMENT_PATH")

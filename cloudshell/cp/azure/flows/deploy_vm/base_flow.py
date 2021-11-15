@@ -156,6 +156,14 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             resource_group_name=sandbox_resource_group_name,
         )
 
+    def _get_storage_account_by_name(self, storage_account_name: str):
+        storage_actions = StorageAccountActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+        return storage_actions.get_storage_account_by_name(
+            storage_account_name=storage_account_name,
+        )
+
     def _create_vm_nsg(
         self, vm_resource_group_name: str, vm_name: str, tags: typing.Dict[str, str]
     ):
@@ -541,13 +549,17 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 return vm_interface.ip_configurations[0].private_ip_address
 
     def _prepare_diagnostics_profile(
-        self, deploy_app, storage_account
+        self, deploy_app, storage_account=None
     ) -> compute_models.DiagnosticsProfile:
         if deploy_app.enable_boot_diagnostics:
-            boot_diagnostics = compute_models.BootDiagnostics(
-                enabled=True,
-                storage_uri=storage_account.primary_endpoints.blob,
-            )
+            if storage_account:
+                storage_uri = storage_account.primary_endpoints.blob
+                boot_diagnostics = compute_models.BootDiagnostics(
+                    enabled=True,
+                    storage_uri=storage_uri,
+                )
+            else:
+                boot_diagnostics = compute_models.BootDiagnostics(enabled=True)
         else:
             boot_diagnostics = compute_models.BootDiagnostics(
                 enabled=False,
@@ -643,6 +655,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             storage_account_name=self._reservation_info.get_storage_account_name(),
             sandbox_resource_group_name=sandbox_resource_group_name,
         )
+        boot_diagnostics_storage_account = ""
+        if (
+            deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
+            == "sandboxstorage"
+        ):
+            boot_diagnostics_storage_account = storage_account
+        elif deploy_app.boot_diagnostics_storage_account:
+            boot_diagnostics_storage_account = self._get_storage_account_by_name(
+                storage_account_name=deploy_app.boot_diagnostics_storage_account
+            )
 
         self._validate_deploy_app_request(
             deploy_app=deploy_app,
@@ -694,6 +716,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 password=password,
                 sandbox_resource_group_name=sandbox_resource_group_name,
                 storage_account=storage_account,
+                boot_diagnostic_storage_account=boot_diagnostics_storage_account,
                 vm_network_interfaces=vm_ifaces,
                 computer_name=computer_name,
                 tags=tags,
@@ -881,6 +904,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         password: str,
         sandbox_resource_group_name: str,
         storage_account,
+        boot_diagnostic_storage_account,
         vm_network_interfaces,
         computer_name: str,
         tags: typing.Dict[str, str],
@@ -905,10 +929,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             deploy_app=deploy_app,
             os_disk=os_disk,
         )
-
         diagnostics_profile = self._prepare_diagnostics_profile(
             deploy_app=deploy_app,
-            storage_account=storage_account,
+            storage_account=boot_diagnostic_storage_account,
         )
         purchase_plan = self._get_image_purchase_plan(deploy_app=deploy_app)
 

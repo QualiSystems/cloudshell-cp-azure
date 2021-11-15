@@ -278,6 +278,23 @@ class AzureAPIClient:
         wait_fixed=RETRYING_WAIT_FIXED,
         retry_on_exception=retry_on_connection_error,
     )
+    def get_storage_account_by_name(
+        self,
+        storage_account_name: str,
+    ):
+        for storage in self._storage_client.storage_accounts.list():
+            if storage.name == storage_account_name:
+                return storage
+
+        raise exceptions.ResourceNotFoundException(
+            f"Unable to find Storage Account '{storage_account_name}'."
+        )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
     def delete_storage_account(
         self, resource_group_name, storage_account_name, wait_for_result=False
     ):
