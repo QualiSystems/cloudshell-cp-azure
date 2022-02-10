@@ -13,6 +13,7 @@ from cloudshell.cp.azure.actions.validation import ValidationActions
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.actions.vm_credentials import VMCredentialsActions
 from cloudshell.cp.azure.actions.vm_extension import VMExtensionActions
+from cloudshell.cp.azure.constants import VNET_SERVICE_NAME_ATTRIBUTE
 from cloudshell.cp.azure.exceptions import AzureTaskTimeoutException
 from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
@@ -434,6 +435,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
         return data_disks
 
+    def _get_subnet_attribute(self, subnet, name):
+        return next(
+            (
+                attr.attributeValue
+                for attr in subnet.actionParams.subnetServiceAttributes or []
+                if attr.attributeName == name
+            ),
+            None,
+        )
+
     def _create_vm_interfaces(
         self,
         deploy_app,
@@ -451,12 +462,24 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         network_interfaces = []
 
         if connect_subnets:
+            resource_group = self._resource_config.management_group_name
             sandbox_vnet = network_actions.get_sandbox_virtual_network(
-                resource_group_name=self._resource_config.management_group_name,
+                resource_group_name=resource_group,
                 sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             )
 
             for idx, connect_subnet in enumerate(connect_subnets):
+                vnet = self._get_subnet_attribute(
+                    subnet=connect_subnet,
+                    name=VNET_SERVICE_NAME_ATTRIBUTE
+                )
+                if vnet:
+                    if "/" in vnet:
+                        resource_group, vnet = vnet.split("/")
+                    sandbox_vnet = network_actions.get_sandbox_virtual_network(
+                        resource_group_name=resource_group,
+                        sandbox_vnet_name=vnet,
+                    )
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=sandbox_vnet.subnets,
                     name_reqexp=connect_subnet.subnet_id,
