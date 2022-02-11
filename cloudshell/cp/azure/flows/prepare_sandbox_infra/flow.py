@@ -10,6 +10,7 @@ from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
 from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 from cloudshell.cp.azure.constants import SUBNET_SERVICE_NAME_ATTRIBUTE, VNET_SERVICE_NAME_ATTRIBUTE
+from cloudshell.cp.azure.exceptions import InvalidAttrException
 from cloudshell.cp.azure.flows.prepare_sandbox_infra import commands
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
@@ -400,6 +401,12 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
                 name=VNET_SERVICE_NAME_ATTRIBUTE
             )
             if vnet:
+                if not predefined_subnet_name:
+                    raise InvalidAttrException(
+                        f"Custom VNet could be used only with predefined subnet. "
+                        f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' attribute on Subnet service "
+                        f"with an appropriate value."
+                    )
                 if "/" in vnet:
                     resource_group, vnet = vnet.split("/")
                 subnet_vnet = network_actions.get_sandbox_virtual_network(
