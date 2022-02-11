@@ -9,7 +9,10 @@ from cloudshell.cp.azure.actions.network_security_group import (
 from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
 from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
-from cloudshell.cp.azure.constants import SUBNET_SERVICE_NAME_ATTRIBUTE, VNET_SERVICE_NAME_ATTRIBUTE
+from cloudshell.cp.azure.constants import (
+    SUBNET_SERVICE_NAME_ATTRIBUTE,
+    VNET_SERVICE_NAME_ATTRIBUTE,
+)
 from cloudshell.cp.azure.exceptions import InvalidAttrException
 from cloudshell.cp.azure.flows.prepare_sandbox_infra import commands
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
@@ -397,14 +400,13 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             subnet_vnet = sandbox_vnet
             resource_group = self._resource_config.management_group_name
 
-            vnet = subnet_action.get_attribute(
-                name=VNET_SERVICE_NAME_ATTRIBUTE
-            )
+            vnet = subnet_action.get_attribute(name=VNET_SERVICE_NAME_ATTRIBUTE)
             if vnet:
                 if not predefined_subnet_name:
                     raise InvalidAttrException(
                         f"Custom VNet could be used only with predefined subnet. "
-                        f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' attribute on Subnet service "
+                        f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' "
+                        f"attribute on Subnet service "
                         f"with an appropriate value."
                     )
                 if "/" in vnet:
@@ -413,8 +415,10 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
                     resource_group_name=resource_group,
                     sandbox_vnet_name=vnet,
                 )
-            self._logger.info(f"Adding Subnet {predefined_subnet_name or subnet_action.get_cidr()} "
-                              f"in vnet {subnet_vnet.name} in resource group {resource_group}")
+            self._logger.info(
+                f"Adding Subnet {predefined_subnet_name or subnet_action.get_cidr()} "
+                f"in vnet {subnet_vnet.name} in resource group {resource_group}"
+            )
             if predefined_subnet_name:
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=subnet_vnet.subnets,

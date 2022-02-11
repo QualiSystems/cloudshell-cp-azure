@@ -13,8 +13,14 @@ from cloudshell.cp.azure.actions.validation import ValidationActions
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.actions.vm_credentials import VMCredentialsActions
 from cloudshell.cp.azure.actions.vm_extension import VMExtensionActions
-from cloudshell.cp.azure.constants import VNET_SERVICE_NAME_ATTRIBUTE, SUBNET_SERVICE_NAME_ATTRIBUTE
-from cloudshell.cp.azure.exceptions import AzureTaskTimeoutException, InvalidAttrException
+from cloudshell.cp.azure.constants import (
+    SUBNET_SERVICE_NAME_ATTRIBUTE,
+    VNET_SERVICE_NAME_ATTRIBUTE,
+)
+from cloudshell.cp.azure.exceptions import (
+    AzureTaskTimeoutException,
+    InvalidAttrException,
+)
 from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
@@ -470,18 +476,17 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
             for idx, connect_subnet in enumerate(connect_subnets):
                 vnet = self._get_subnet_attribute(
-                    subnet=connect_subnet,
-                    name=VNET_SERVICE_NAME_ATTRIBUTE
+                    subnet=connect_subnet, name=VNET_SERVICE_NAME_ATTRIBUTE
                 )
                 predefined_subnet_name = self._get_subnet_attribute(
-                    subnet=connect_subnet,
-                    name=SUBNET_SERVICE_NAME_ATTRIBUTE
+                    subnet=connect_subnet, name=SUBNET_SERVICE_NAME_ATTRIBUTE
                 )
                 if vnet:
                     if not predefined_subnet_name:
                         raise InvalidAttrException(
                             f"Custom VNet could be used only with predefined subnet. "
-                            f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' attribute on Subnet service "
+                            f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' "
+                            f"attribute on Subnet service "
                             f"with an appropriate value."
                         )
                     if "/" in vnet:
