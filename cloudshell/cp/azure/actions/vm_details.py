@@ -58,7 +58,7 @@ class VMDetailsActions(NetworkActions):
             ),
             VmDetailsProperty(
                 key="Operating System",
-                value=virtual_machine.storage_profile.os_disk.os_type.name,
+                value=virtual_machine.storage_profile.os_disk.os_type,
             ),
             VmDetailsProperty(
                 key="OS Disk Size",
