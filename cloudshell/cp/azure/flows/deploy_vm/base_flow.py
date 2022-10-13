@@ -13,7 +13,14 @@ from cloudshell.cp.azure.actions.validation import ValidationActions
 from cloudshell.cp.azure.actions.vm import VMActions
 from cloudshell.cp.azure.actions.vm_credentials import VMCredentialsActions
 from cloudshell.cp.azure.actions.vm_extension import VMExtensionActions
-from cloudshell.cp.azure.exceptions import AzureTaskTimeoutException
+from cloudshell.cp.azure.constants import (
+    SUBNET_SERVICE_NAME_ATTRIBUTE,
+    VNET_SERVICE_NAME_ATTRIBUTE,
+)
+from cloudshell.cp.azure.exceptions import (
+    AzureTaskTimeoutException,
+    InvalidAttrException,
+)
 from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
@@ -27,6 +34,7 @@ from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
 )
 from cloudshell.cp.azure.utils.rollback import RollbackCommandsManager
+from cloudshell.cp.azure.utils.availability_zones import AzureZonesManager
 from cloudshell.cp.azure.utils.tags import AzureTagsManager
 
 
@@ -64,6 +72,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         self._tags_manager = AzureTagsManager(
             reservation_info=self._reservation_info, resource_config=resource_config
         )
+        self._zones_manager = AzureZonesManager(resource_config=resource_config)
 
         self._task_waiter_manager = AzureTaskWaiter(
             cancellation_manager=self._cancellation_manager, logger=self._logger
@@ -434,6 +443,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
 
         return data_disks
 
+    def _get_subnet_attribute(self, subnet, name):
+        return next(
+            (
+                attr.attributeValue
+                for attr in subnet.actionParams.subnetServiceAttributes or []
+                if attr.attributeName == name
+            ),
+            None,
+        )
+
     def _create_vm_interfaces(
         self,
         deploy_app,
@@ -443,6 +462,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         sandbox_resource_group_name: str,
         vm_name: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Create VM interfaces."""
         network_actions = NetworkActions(
@@ -451,15 +471,37 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         network_interfaces = []
 
         if connect_subnets:
+            resource_group = self._resource_config.management_group_name
             sandbox_vnet = network_actions.get_sandbox_virtual_network(
-                resource_group_name=self._resource_config.management_group_name,
+                resource_group_name=resource_group,
                 sandbox_vnet_name=self._resource_config.sandbox_vnet_name,
             )
 
             for idx, connect_subnet in enumerate(connect_subnets):
+                vnet = self._get_subnet_attribute(
+                    subnet=connect_subnet, name=VNET_SERVICE_NAME_ATTRIBUTE
+                )
+                predefined_subnet_name = self._get_subnet_attribute(
+                    subnet=connect_subnet, name=SUBNET_SERVICE_NAME_ATTRIBUTE
+                )
+                if vnet:
+                    if not predefined_subnet_name:
+                        raise InvalidAttrException(
+                            f"Custom VNet could be used only with predefined subnet. "
+                            f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' "
+                            f"attribute on Subnet service "
+                            f"with an appropriate value."
+                        )
+                    if "/" in vnet:
+                        resource_group, vnet = vnet.split("/")
+                    sandbox_vnet = network_actions.get_sandbox_virtual_network(
+                        resource_group_name=resource_group,
+                        sandbox_vnet_name=vnet,
+                    )
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=sandbox_vnet.subnets,
                     name_reqexp=connect_subnet.subnet_id,
+                    resource_group_name=resource_group
                 )
 
                 interface = commands.CreateVMNetworkCommand(
@@ -480,6 +522,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     enable_ip_forwarding=deploy_app.enable_ip_forwarding,
                     region=self._resource_config.region,
                     tags=tags,
+                    zones=zones,
                 ).execute()
 
                 network_interfaces.append(interface)
@@ -513,6 +556,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     enable_ip_forwarding=deploy_app.enable_ip_forwarding,
                     region=self._resource_config.region,
                     tags=tags,
+                    zones=zones,
                 ).execute()
 
                 network_interfaces.append(interface)
@@ -638,10 +682,20 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             deploy_app.resource_group_name or sandbox_resource_group_name
         )
 
-        name_postfix = name_generator.generate_short_unique_string()
-        vm_name = name_generator.generate_name(
-            name=deploy_app.app_name, postfix=name_postfix, max_length=64
-        )
+        if deploy_app.autogenerated_name:
+            name_postfix = name_generator.generate_short_unique_string()
+            vm_name = name_generator.generate_name(
+                name=deploy_app.app_name, postfix=name_postfix, max_length=64
+            )
+        else:
+            vm_name = deploy_app.app_name
+
+        if deploy_app.availability_zones:
+            zones = [zone.strip().capitalize() for zone in deploy_app.availability_zones.split(",")]
+        else:
+            zones = []
+
+        zones = self._zones_manager.get_availility_zones(zones=zones)
 
         tags = self._tags_manager.get_vm_tags(
             vm_name=vm_name, extended_custom_tags=deploy_app.extended_custom_tags
@@ -655,8 +709,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             storage_account_name=self._reservation_info.get_storage_account_name(),
             sandbox_resource_group_name=sandbox_resource_group_name,
         )
+
         boot_diagnostics_storage_account = ""
-        if (
+        if (storage_account and
             deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
             == "sandboxstorage"
         ):
@@ -688,6 +743,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 sandbox_resource_group_name=sandbox_resource_group_name,
                 vm_name=vm_name,
                 tags=tags,
+                zones=zones,
             )
 
             data_disks = self._create_data_disks(
@@ -720,6 +776,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 vm_network_interfaces=vm_ifaces,
                 computer_name=computer_name,
                 tags=tags,
+                zones=zones,
             )
 
             deployed_vm = self._create_vm(
@@ -877,6 +934,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 username=username
             )
             ssh_public_key = vm_creds_actions.get_ssh_public_key(
+                public_key_name=self._reservation_info.reservation_id,
                 resource_group_name=sandbox_resource_group_name,
                 storage_account_name=storage_account_name,
             )
@@ -908,13 +966,18 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         vm_network_interfaces,
         computer_name: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Prepare VM for the deployment."""
+        if not storage_account:
+            storage_account_name = self._reservation_info.get_storage_account_name()
+        else:
+            storage_account_name = storage_account.name
         os_profile = self._prepare_os_profile(
             username=username,
             password=password,
             sandbox_resource_group_name=sandbox_resource_group_name,
-            storage_account_name=storage_account.name,
+            storage_account_name=storage_account_name,
             computer_name=computer_name,
         )
 
@@ -945,4 +1008,5 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             plan=purchase_plan,
             license_type=deploy_app.license_type,
             diagnostics_profile=diagnostics_profile,
+            zones=zones,
         )

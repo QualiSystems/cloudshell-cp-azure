@@ -7,32 +7,30 @@ class SaveSSHPublicKeyCommand(RollbackCommand):
         rollback_manager,
         cancellation_manager,
         ssh_actions,
-        storage_account_name,
+        public_key_name,
         resource_group_name,
         public_key,
+        region,
+        tags,
     ):
-        """Init command.
-
-        :param rollback_manager:
-        :param cancellation_manager:
-        :param ssh_actions:
-        :param storage_account_name:
-        :param resource_group_name:
-        :param public_key:
-        """
+        """Init command."""
         super().__init__(
             rollback_manager=rollback_manager, cancellation_manager=cancellation_manager
         )
         self._ssh_actions = ssh_actions
-        self._storage_account_name = storage_account_name
+        self._public_key_name = public_key_name
         self._resource_group_name = resource_group_name
         self._public_key = public_key
+        self._region = region
+        self._tags = tags
 
     def _execute(self):
         self._ssh_actions.save_ssh_public_key(
             resource_group_name=self._resource_group_name,
-            storage_account_name=self._storage_account_name,
+            public_key_name=self._public_key_name,
             public_key=self._public_key,
+            region=self._region,
+            tags=self._tags,
         )
 
     def rollback(self):

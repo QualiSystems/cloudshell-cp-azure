@@ -21,6 +21,7 @@ class CreateVMNetworkCommand(RollbackCommand):
         enable_ip_forwarding: bool,
         region: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Init command."""
         super().__init__(
@@ -40,6 +41,7 @@ class CreateVMNetworkCommand(RollbackCommand):
         self._region = region
         self._tags = tags
         self._private_ip_address = None
+        self._zones = zones
 
     def _execute(self):
         # private_ip_address in required only in the case of static allocation method
@@ -70,6 +72,7 @@ class CreateVMNetworkCommand(RollbackCommand):
             private_ip_address=self._private_ip_address,
             add_public_ip=self._add_public_ip,
             enable_ip_forwarding=self._enable_ip_forwarding,
+            zones=self._zones,
         )
 
     def rollback(self):

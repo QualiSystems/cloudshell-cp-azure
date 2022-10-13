@@ -36,7 +36,12 @@ class CreateVMCommand(RollbackCommand):
                 resource_group_name=self._vm_resource_group_name,
             )
 
-            return self._task_waiter_manager.wait_for_task(operation_poller)
+            return self._task_waiter_manager.wait_for_task(
+                operation_poller=operation_poller,
+                azure_client=self._vm_actions._azure_client,
+                vm_name=self._vm_name,
+                resource_group_name=self._vm_resource_group_name
+            )
         except CloudError as e:
             if re.search(
                 "storage account type .+ is not supported for vm size",

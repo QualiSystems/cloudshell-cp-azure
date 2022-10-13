@@ -40,6 +40,18 @@ class AzureDeployMarketplaceVMFlow(BaseAzureDeployVMFlow):
             ),
         )
 
+    def _get_image_purchase_plan(self, deploy_app):
+        vm_image_actions = VMImageActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+
+        return vm_image_actions.get_marketplace_image_plan(
+            region=self._resource_config.region,
+            publisher_name=deploy_app.image_publisher,
+            offer=deploy_app.image_offer,
+            sku=deploy_app.image_sku,
+        )
+
     def _prepare_vm_details_data(
         self, deployed_vm: models.VirtualMachine, vm_resource_group_name: str
     ):

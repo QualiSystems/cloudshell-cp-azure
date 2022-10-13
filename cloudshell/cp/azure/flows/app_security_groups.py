@@ -84,11 +84,11 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         :param security_group:
         :return
         """
-        sandbox_resource_group_name = self._reservation_info.get_resource_group_name()
-        vm_resource_group_name = (
-            security_group.deployed_app.resource_group_name
-            or sandbox_resource_group_name
-        )
+        vm_resource_group_name = self._reservation_info.get_resource_group_name()
+        # vm_resource_group_name = (
+        #     security_group.deployed_app.resource_group_name
+        #     or sandbox_resource_group_name
+        # )
         vm_name = security_group.deployed_app.name
 
         nsg_actions = NetworkSecurityGroupActions(
@@ -115,7 +115,7 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
             for security_group_config in security_group.security_group_configs:
                 subnet_name = self._get_sandbox_subnet_name(
                     subnet_id=security_group_config.subnet_id,
-                    sandbox_resource_group_name=sandbox_resource_group_name,
+                    sandbox_resource_group_name=vm_resource_group_name,
                 )
 
                 dst_ip_address = private_ips_map.get(subnet_name)

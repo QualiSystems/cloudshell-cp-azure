@@ -28,6 +28,8 @@ class AzureGetAccessKeyFlow:
         )
 
         return ssh_keypair_actions.get_ssh_private_key(
+            key_vault_name="",
+            private_key_name=self._reservation_info.reservation_id,
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
         )

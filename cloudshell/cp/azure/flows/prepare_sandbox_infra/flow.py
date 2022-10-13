@@ -9,7 +9,11 @@ from cloudshell.cp.azure.actions.network_security_group import (
 from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
 from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
-from cloudshell.cp.azure.constants import SUBNET_SERVICE_NAME_ATTRIBUTE
+from cloudshell.cp.azure.constants import (
+    SUBNET_SERVICE_NAME_ATTRIBUTE,
+    VNET_SERVICE_NAME_ATTRIBUTE,
+)
+from cloudshell.cp.azure.exceptions import InvalidAttrException
 from cloudshell.cp.azure.flows.prepare_sandbox_infra import commands
 from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
@@ -112,15 +116,18 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         :rtype: str
         """
         resource_group_name = self._reservation_info.get_resource_group_name()
-        storage_account_name = self._reservation_info.get_storage_account_name()
+        # storage_account_name = self._reservation_info.get_storage_account_name()
         tags = self._tags_manager.get_reservation_tags()
+        # key_vault_name = self._key_vault_manager.get_vm_key_vault_name(
+        #     vm_key_vault_name=deploy_app.key_vault,
+        # )
 
         with self._rollback_manager:
-            self._create_storage_account(
-                storage_account_name=storage_account_name,
-                resource_group_name=resource_group_name,
-                tags=tags,
-            )
+            # self._create_storage_account(
+            #     storage_account_name=storage_account_name,
+            #     resource_group_name=resource_group_name,
+            #     tags=tags,
+            # )
 
             ssh_actions = SSHKeyPairActions(
                 azure_client=self._azure_client, logger=self._logger
@@ -130,15 +137,16 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
 
             self._create_ssh_public_key(
                 public_key=public_key,
-                storage_account_name=storage_account_name,
                 resource_group_name=resource_group_name,
+                tags=tags,
             )
 
-            self._create_ssh_private_key(
-                private_key=private_key,
-                storage_account_name=storage_account_name,
-                resource_group_name=resource_group_name,
-            )
+            if self._resource_config.key_vault:
+                self._create_ssh_private_key(
+                    key_vault_name=self._resource_config.key_vault,
+                    private_key=private_key,
+                    tags=tags,
+                )
 
             return private_key
 
@@ -393,11 +401,33 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
             predefined_subnet_name = subnet_action.get_attribute(
                 name=SUBNET_SERVICE_NAME_ATTRIBUTE
             )
+            subnet_vnet = sandbox_vnet
+            resource_group = self._resource_config.management_group_name
 
+            vnet = subnet_action.get_attribute(name=VNET_SERVICE_NAME_ATTRIBUTE)
+            if vnet:
+                if not predefined_subnet_name:
+                    raise InvalidAttrException(
+                        f"Custom VNet could be used only with predefined subnet. "
+                        f"Please populate '{SUBNET_SERVICE_NAME_ATTRIBUTE}' "
+                        f"attribute on Subnet service "
+                        f"with an appropriate value."
+                    )
+                if "/" in vnet:
+                    resource_group, vnet = vnet.split("/")
+                subnet_vnet = network_actions.get_sandbox_virtual_network(
+                    resource_group_name=resource_group,
+                    sandbox_vnet_name=vnet,
+                )
+            self._logger.info(
+                f"Adding Subnet {predefined_subnet_name or subnet_action.get_cidr()} "
+                f"in vnet {subnet_vnet.name} in resource group {resource_group}"
+            )
             if predefined_subnet_name:
                 subnet = network_actions.find_sandbox_subnet_by_name(
-                    sandbox_subnets=sandbox_vnet.subnets,
+                    sandbox_subnets=subnet_vnet.subnets,
                     name_reqexp=predefined_subnet_name,
+                    resource_group_name=resource_group
                 )
             else:
                 subnet = commands.CreateSubnetCommand(
@@ -405,9 +435,9 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
                     cancellation_manager=self._cancellation_manager,
                     network_actions=network_actions,
                     cidr=subnet_action.get_cidr(),
-                    vnet=sandbox_vnet,
+                    vnet=subnet_vnet,
                     resource_group_name=resource_group_name,
-                    mgmt_resource_group_name=self._resource_config.management_group_name,  # noqa E501
+                    mgmt_resource_group_name=resource_group,  # noqa E501
                     network_security_group=network_security_group,
                 ).execute()
 
@@ -438,15 +468,12 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         ).execute()
 
     def _create_ssh_public_key(
-        self, public_key, storage_account_name, resource_group_name
+            self,
+            public_key: str,
+            resource_group_name: str,
+            tags: dict[str, str],
     ):
-        """Save SSH public key on the Azure.
-
-        :param str public_key:
-        :param str storage_account_name:
-        :param str resource_group_name:
-        :return:
-        """
+        """Save SSH public key on the Azure."""
         ssh_actions = SSHKeyPairActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -454,22 +481,21 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         commands.SaveSSHPublicKeyCommand(
             rollback_manager=self._rollback_manager,
             cancellation_manager=self._cancellation_manager,
-            storage_account_name=storage_account_name,
             resource_group_name=resource_group_name,
+            public_key_name=self._reservation_info.reservation_id,
             public_key=public_key,
             ssh_actions=ssh_actions,
+            region=self._resource_config.region,
+            tags=tags,
         ).execute()
 
     def _create_ssh_private_key(
-        self, private_key, storage_account_name, resource_group_name
+            self,
+            key_vault_name: str,
+            private_key: str,
+            tags: dict[str, str],
     ):
-        """Save SSH private key on the Azure.
-
-        :param str private_key:
-        :param str storage_account_name:
-        :param str resource_group_name:
-        :return:
-        """
+        """Save SSH private key on the Azure."""
         ssh_actions = SSHKeyPairActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -477,8 +503,9 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         commands.SaveSSHPrivateKeyCommand(
             rollback_manager=self._rollback_manager,
             cancellation_manager=self._cancellation_manager,
-            storage_account_name=storage_account_name,
-            resource_group_name=resource_group_name,
-            private_key=private_key,
             ssh_actions=ssh_actions,
+            key_vault_name=key_vault_name,
+            private_key_name=self._reservation_info.reservation_id,
+            private_key=private_key,
+            tags=tags,
         ).execute()

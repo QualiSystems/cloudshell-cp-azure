@@ -3,36 +3,31 @@ from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 class SaveSSHPrivateKeyCommand(RollbackCommand):
     def __init__(
-        self,
-        rollback_manager,
-        cancellation_manager,
-        ssh_actions,
-        resource_group_name,
-        storage_account_name,
-        private_key,
+            self,
+            rollback_manager,
+            cancellation_manager,
+            ssh_actions,
+            key_vault_name,
+            private_key_name,
+            private_key,
+            tags,
     ):
-        """Init command.
-
-        :param rollback_manager:
-        :param cancellation_manager:
-        :param ssh_actions:
-        :param resource_group_name:
-        :param storage_account_name:
-        :param private_key:
-        """
+        """Init command."""
         super().__init__(
             rollback_manager=rollback_manager, cancellation_manager=cancellation_manager
         )
         self._ssh_actions = ssh_actions
-        self._resource_group_name = resource_group_name
-        self._storage_account_name = storage_account_name
+        self._key_vault_name = key_vault_name
+        self._private_key_name = private_key_name
         self._private_key = private_key
+        self._tags = tags
 
     def _execute(self):
         self._ssh_actions.save_ssh_private_key(
-            resource_group_name=self._resource_group_name,
-            storage_account_name=self._storage_account_name,
+            key_vault_name=self._key_vault_name,
+            private_key_name=self._private_key_name,
             private_key=self._private_key,
+            tags=self._tags,
         )
 
     def rollback(self):

@@ -138,11 +138,17 @@ class NetworkActions:
             if resource_group_name in subnet.name
         ]
 
-    def find_sandbox_subnet_by_name(self, sandbox_subnets, name_reqexp):
+    def find_sandbox_subnet_by_name(
+            self,
+            sandbox_subnets,
+            name_reqexp,
+            resource_group_name
+    ):
         """Get sandbox subnet by its regexp name.
 
         :param list sandbox_subnets:
         :param str name_reqexp:
+        :param str resource_group_name:
         :return:
         """
         compiled_regexp = re.compile(name_reqexp)
@@ -154,12 +160,14 @@ class NetworkActions:
 
         if not found_subnets:
             raise ResourceNotFoundException(
-                f"Unable to find subnet by regexp name: {name_reqexp}"
+                f"Unable to find subnet by regexp name '{name_reqexp}'"
+                f" under Resource Group '{resource_group_name}'"
             )
 
         if len(found_subnets) > 1:
             raise MultipleResourceFoundException(
-                f"Several subnets match the specified regexp name: {name_reqexp}. "
+                f"Several subnets match the specified regexp name: {name_reqexp} "
+                f"under Resource Group '{resource_group_name}'."
                 f"Subnets: {[subnet.name for subnet in found_subnets]}"
             )
 
@@ -439,6 +447,7 @@ class NetworkActions:
         resource_group_name,
         region,
         tags,
+        zones,
         private_ip_allocation_method,
         private_ip_address,
         add_public_ip=False,
@@ -453,6 +462,7 @@ class NetworkActions:
         :param str resource_group_name:
         :param str region:
         :param dict[str, str] tags:
+        :param list[str] zones:
         :param str private_ip_allocation_method:
         :param str private_ip_address:
         :param bool add_public_ip:
@@ -471,6 +481,7 @@ class NetworkActions:
                 resource_group_name=resource_group_name,
                 region=region,
                 tags=tags,
+                zones=zones,
             )
         else:
             public_ip_address = None
