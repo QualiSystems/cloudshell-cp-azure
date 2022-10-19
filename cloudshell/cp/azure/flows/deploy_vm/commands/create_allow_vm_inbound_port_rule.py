@@ -11,7 +11,7 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
     PORT_DATA_MATCH = re.compile(
         r"^(?P<from_port>\d+)"
         r"(-(?P<to_port>\d+))?"
-        r"(:(?P<protocol>(udp|tcp)))?"
+        r"(:(?P<protocol>(udp|tcp|icmp)))?"
         r"(:(?P<destination>\S+))?$",
         re.IGNORECASE,
     )
@@ -23,7 +23,7 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
     DEFAULT_PROTOCOL = "tcp"
 
     NSG_RULE_PRIORITY = 1000
-    NSG_RULE_NAME_TPL = "{vm_name}_inbound_port:{port_range}:{protocol}"
+    NSG_RULE_NAME_TPL = "{vm_name}_inbound_port:{port_range}:{protocol}-{priority}"
 
     def __init__(
         self,
@@ -51,20 +51,22 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
         )
 
     def _execute(self):
+        rule_priority = self._rules_priority_generator.get_priority(
+            start_from=self.NSG_RULE_PRIORITY
+        )
         self._nsg_actions.create_nsg_allow_rule(
             rule_name=self.NSG_RULE_NAME_TPL.format(
                 vm_name=self._vm_name,
                 port_range=self._port_range,
                 protocol=self._protocol,
+                rule_priority=rule_priority,
             ),
             resource_group_name=self._resource_group_name,
             nsg_name=self._nsg_name,
             dst_port_range=self._port_range,
             dst_address=self._cidr,
             protocol=self._protocol,
-            rule_priority=self._rules_priority_generator.get_priority(
-                start_from=self.NSG_RULE_PRIORITY
-            ),
+            rule_priority=rule_priority,
         )
 
     def _parse_port_range(self, port_data):
