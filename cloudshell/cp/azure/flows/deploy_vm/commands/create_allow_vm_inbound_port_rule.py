@@ -59,7 +59,7 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
                 vm_name=self._vm_name,
                 port_range=self._port_range,
                 protocol=self._protocol,
-                rule_priority=rule_priority,
+                priority=rule_priority,
             ),
             resource_group_name=self._resource_group_name,
             nsg_name=self._nsg_name,
