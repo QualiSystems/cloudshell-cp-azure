@@ -1,3 +1,5 @@
+from azure.mgmt.network.models import SecurityRuleProtocol
+
 from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
@@ -50,20 +52,19 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         self._rules_priority_generator = rules_priority_generator
 
     def execute(self):
-        with self._cancellation_manager:
-            sandbox_vnet = self._network_actions.get_sandbox_virtual_network(
-                resource_group_name=self._mgmt_resource_group_name,
-                sandbox_vnet_name=self._sandbox_vnet_name,
-            )
-
-        sandbox_vnet_cidr = sandbox_vnet.address_space.address_prefixes[0]
+        # with self._cancellation_manager:
+        # sandbox_vnet = self._network_actions.get_sandbox_virtual_network(
+        #     resource_group_name=self._mgmt_resource_group_name,
+        #     sandbox_vnet_name=self._sandbox_vnet_name,
+        # )
+        # sandbox_vnet_cidr = sandbox_vnet.address_space.address_prefixes[0]
 
         with self._cancellation_manager:
             self._nsg_actions.create_nsg_deny_rule(
                 rule_name=self.NSG_RULE_NAME_TPL,
                 resource_group_name=self._resource_group_name,
                 nsg_name=self._nsg_name,
-                src_address=sandbox_vnet_cidr,
+                src_address=SecurityRuleProtocol.asterisk,
                 dst_address=self._sandbox_cidr,
                 rule_priority=self._rules_priority_generator.get_priority(
                     start_from=self.NSG_RULE_PRIORITY

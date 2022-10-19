@@ -23,6 +23,7 @@ from cloudshell.cp.azure.exceptions import (
 )
 from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
+from cloudshell.cp.azure.utils.availability_zones import AzureZonesManager
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.cs_reservation_output import CloudShellReservationOutput
 from cloudshell.cp.azure.utils.disks import (
@@ -34,7 +35,6 @@ from cloudshell.cp.azure.utils.nsg_rules_priority_generator import (
     NSGRulesPriorityGenerator,
 )
 from cloudshell.cp.azure.utils.rollback import RollbackCommandsManager
-from cloudshell.cp.azure.utils.availability_zones import AzureZonesManager
 from cloudshell.cp.azure.utils.tags import AzureTagsManager
 
 
@@ -265,20 +265,20 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         self, deploy_app, vm_nsg, vm_resource_group_name, rules_priority_generator
     ):
         """Create VM NSG rules for the Sandbox traffic."""
+        nsg_actions = NetworkSecurityGroupActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+
+        commands.CreateAllowAzureLoadBalancerRuleCommand(
+            rollback_manager=self._rollback_manager,
+            cancellation_manager=self._cancellation_manager,
+            nsg_actions=nsg_actions,
+            nsg_name=vm_nsg.name,
+            vm_resource_group_name=vm_resource_group_name,
+            rules_priority_generator=rules_priority_generator,
+        ).execute()
+
         if not deploy_app.allow_all_sandbox_traffic:
-            nsg_actions = NetworkSecurityGroupActions(
-                azure_client=self._azure_client, logger=self._logger
-            )
-
-            commands.CreateAllowAzureLoadBalancerRuleCommand(
-                rollback_manager=self._rollback_manager,
-                cancellation_manager=self._cancellation_manager,
-                nsg_actions=nsg_actions,
-                nsg_name=vm_nsg.name,
-                vm_resource_group_name=vm_resource_group_name,
-                rules_priority_generator=rules_priority_generator,
-            ).execute()
-
             commands.CreateDenySandoxTrafficRuleCommand(
                 rollback_manager=self._rollback_manager,
                 cancellation_manager=self._cancellation_manager,
@@ -501,7 +501,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=sandbox_vnet.subnets,
                     name_reqexp=connect_subnet.subnet_id,
-                    resource_group_name=resource_group
+                    resource_group_name=resource_group,
                 )
 
                 interface = commands.CreateVMNetworkCommand(
@@ -691,7 +691,10 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             vm_name = deploy_app.app_name
 
         if deploy_app.availability_zones:
-            zones = [zone.strip().capitalize() for zone in deploy_app.availability_zones.split(",")]
+            zones = [
+                zone.strip().capitalize()
+                for zone in deploy_app.availability_zones.split(",")
+            ]
         else:
             zones = []
 
@@ -711,8 +714,9 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         )
 
         boot_diagnostics_storage_account = ""
-        if (storage_account and
-            deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
+        if (
+            storage_account
+            and deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
             == "sandboxstorage"
         ):
             boot_diagnostics_storage_account = storage_account

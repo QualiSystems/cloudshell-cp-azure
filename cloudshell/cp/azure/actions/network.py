@@ -139,10 +139,7 @@ class NetworkActions:
         ]
 
     def find_sandbox_subnet_by_name(
-            self,
-            sandbox_subnets,
-            name_reqexp,
-            resource_group_name
+        self, sandbox_subnets, name_reqexp, resource_group_name
     ):
         """Get sandbox subnet by its regexp name.
 

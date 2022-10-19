@@ -120,9 +120,7 @@ class AzureResourceConfig(GenericResourceConfig):
         "Availability Zones", ResourceAttrRO.NAMESPACE.SHELL_NAME
     )
 
-    key_vault = ResourceAttrRO(
-        "Key Vault", ResourceAttrRO.NAMESPACE.SHELL_NAME
-    )
+    key_vault = ResourceAttrRO("Key Vault", ResourceAttrRO.NAMESPACE.SHELL_NAME)
 
     @classmethod
     def from_context(cls, shell_name, context, api=None, supported_os=None):

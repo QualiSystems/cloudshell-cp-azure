@@ -18,13 +18,13 @@ class AzureTaskWaiter:
         self._logger = logger
 
     def wait_for_task(
-            self,
-            operation_poller,
-            timeout=None,
-            wait_time=None,
-            azure_client=None,
-            vm_name=None,
-            resource_group_name=None
+        self,
+        operation_poller,
+        timeout=None,
+        wait_time=None,
+        azure_client=None,
+        vm_name=None,
+        resource_group_name=None,
     ):
         """Wait for Azure task to be processed.
 
@@ -47,17 +47,20 @@ class AzureTaskWaiter:
                 )
 
                 if azure_client and vm_name and resource_group_name:
-                    vm_statuses = azure_client._compute_client.virtual_machines.instance_view(
-                        resource_group_name=resource_group_name,
-                        vm_name=vm_name).statuses
+                    vm_statuses = (
+                        azure_client._compute_client.virtual_machines.instance_view(
+                            resource_group_name=resource_group_name, vm_name=vm_name
+                        ).statuses
+                    )
                     if len(vm_statuses) >= 2:
                         if vm_statuses[0].code == "ProvisioningState/succeeded" or (
-                                vm_statuses[0].code == "ProvisioningState/creating" and
-                                vm_statuses[1].code == "PowerState/running"):
+                            vm_statuses[0].code == "ProvisioningState/creating"
+                            and vm_statuses[1].code == "PowerState/running"
+                        ):
                             self._logger.info("VM provisioning finished successfully.")
                             return azure_client.get_vm(
-                                resource_group_name=resource_group_name,
-                                vm_name=vm_name)
+                                resource_group_name=resource_group_name, vm_name=vm_name
+                            )
 
                 time.sleep(wait_time)
 

@@ -1,35 +1,29 @@
 import logging
 import time
 
-from msrestazure.azure_active_directory import _ImdsTokenProvider, MSIAuthentication
+import requests
+from msrestazure.azure_active_directory import MSIAuthentication, _ImdsTokenProvider
+from msrestazure.azure_exceptions import MSIAuthenticationTimeoutError
+from requests import HTTPError
 
 try:
     from urlparse import urlparse, parse_qs
 except ImportError:
     from urllib.parse import urlparse, parse_qs
 
-from requests import HTTPError
-import requests
-
-from msrestazure.azure_exceptions import MSIAuthenticationTimeoutError
 
 _LOGGER = logging.getLogger(__name__)
 
-PROXIES = {
-    "http": None,
-    "https": None
-}
+PROXIES = {"http": None, "https": None}
 
 
 class QualiImdsTokenProvider(_ImdsTokenProvider):
     def _retrieve_token_from_imds_with_retry(self, resource):
         import random
         import json
-        request_uri = 'http://169.254.169.254/metadata/identity/oauth2/token'
-        payload = {
-            'resource': resource,
-            'api-version': '2018-02-01'
-        }
+
+        request_uri = "http://169.254.169.254/metadata/identity/oauth2/token"
+        payload = {"resource": resource, "api-version": "2018-02-01"}
         if self.identity_id:
             payload[self.identity_type] = self.identity_id
 
@@ -37,18 +31,24 @@ class QualiImdsTokenProvider(_ImdsTokenProvider):
         slots = [100 * ((2 << x) - 1) / 1000 for x in range(max_retry)]
         has_timed_out = self.timeout == 0
         while True:
-            result = requests.get(request_uri, params=payload,
-                                  headers={'Metadata': 'true',
-                                           'User-Agent': self._user_agent},
-                                  proxies=PROXIES)
-            _LOGGER.debug("MSI: Retrieving a token from %s, with payload %s",
-                          request_uri, payload)
+            result = requests.get(
+                request_uri,
+                params=payload,
+                headers={"Metadata": "true", "User-Agent": self._user_agent},
+                proxies=PROXIES,
+            )
+            _LOGGER.debug(
+                "MSI: Retrieving a token from %s, with payload %s", request_uri, payload
+            )
             if result.status_code in [404, 410, 429] or (
-                    499 < result.status_code < 600):
+                499 < result.status_code < 600
+            ):
                 if has_timed_out:
                     raise MSIAuthenticationTimeoutError(
-                        'MSI: Failed to acquired tokens before timeout {}'.format(
-                            self.timeout))
+                        "MSI: Failed to acquired tokens before timeout {}".format(
+                            self.timeout
+                        )
+                    )
                 elif retry <= max_retry:
                     wait = random.choice(slots[:retry])
                     _LOGGER.warning("MSI: wait: %ss and retry: %s", wait, retry)
@@ -59,7 +59,8 @@ class QualiImdsTokenProvider(_ImdsTokenProvider):
                         gap = 70 - (time.time() - start_time)
                         if gap > 0:
                             _LOGGER.warning(
-                                "MSI: wait till 70 seconds when IMDS is upgrading")
+                                "MSI: wait till 70 seconds when IMDS is upgrading"
+                            )
                             has_timed_out = self._sleep(gap, start_time)
                             continue
                     break
@@ -70,9 +71,10 @@ class QualiImdsTokenProvider(_ImdsTokenProvider):
 
         if result.status_code != 200:
             raise MSIAuthenticationTimeoutError(
-                'MSI: Failed to acquire tokens after {} times'.format(max_retry))
+                "MSI: Failed to acquire tokens after {} times".format(max_retry)
+            )
 
-        _LOGGER.debug('MSI: Token retrieved')
+        _LOGGER.debug("MSI: Token retrieved")
         token_entry = json.loads(result.content.decode())
         return token_entry
 

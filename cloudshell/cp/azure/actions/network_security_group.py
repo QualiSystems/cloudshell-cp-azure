@@ -192,7 +192,7 @@ class NetworkSecurityGroupActions:
         rule_priority,
         resource_group_name,
         nsg_name,
-        src_address=RouteNextHopType.internet,
+        src_address=SecurityRuleProtocol.asterisk,
         dst_address=SecurityRuleProtocol.asterisk,
         src_port_range=SecurityRuleProtocol.asterisk,
         dst_port_range=SecurityRuleProtocol.asterisk,
@@ -236,7 +236,7 @@ class NetworkSecurityGroupActions:
         resource_group_name,
         nsg_name,
         src_address=RouteNextHopType.internet,
-        dst_address=RouteNextHopType.internet,
+        dst_address=SecurityRuleProtocol.asterisk,
         src_port_range=SecurityRuleProtocol.asterisk,
         dst_port_range=SecurityRuleProtocol.asterisk,
     ):

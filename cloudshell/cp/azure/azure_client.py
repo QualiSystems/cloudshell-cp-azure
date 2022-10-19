@@ -1,5 +1,6 @@
 from azure.core.exceptions import ResourceNotFoundError
-from azure.keyvault.secrets import SecretClient, KeyVaultSecret
+from azure.identity import ClientSecretCredential, ManagedIdentityCredential
+from azure.keyvault.secrets import KeyVaultSecret, SecretClient
 from azure.mgmt.compute import ComputeManagementClient, models as compute_models
 from azure.mgmt.network import NetworkManagementClient, models as network_models
 from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration
@@ -8,11 +9,8 @@ from azure.mgmt.resource.resources.models import ResourceGroup
 from azure.mgmt.storage import StorageManagementClient, models as storage_models
 from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
-from azure.identity import ClientSecretCredential
-from azure.identity import ManagedIdentityCredential
 from msrestazure.azure_exceptions import CloudError
 from retrying import retry
-
 
 from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
@@ -28,10 +26,7 @@ from cloudshell.cp.azure.utils.retrying import (
     retry_on_vm_disk_detach_error,
 )
 
-PROXIES = {
-    "http": None,
-    "https": None
-}
+PROXIES = {"http": None, "https": None}
 
 
 class AzureAPIClient:
@@ -79,8 +74,9 @@ class AzureAPIClient:
         self._logger = logger
         self._cached_storage_account_keys = {}
 
-        self._logger.debug(f"TenantID: {azure_tenant_id},"
-                           f"ApplicationID: {azure_application_id}")
+        self._logger.debug(
+            f"TenantID: {azure_tenant_id}," f"ApplicationID: {azure_application_id}"
+        )
         if azure_application_id and azure_tenant_id and azure_application_key:
             self._credentials = ClientSecretCredential(
                 client_id=azure_application_id,
@@ -260,7 +256,10 @@ class AzureAPIClient:
             resource_group_name=resource_group_name,
             account_name=storage_account_name,
             parameters=storage_models.StorageAccountCreateParameters(
-                sku=sku, kind=kind_storage_value, location=region, tags=tags,
+                sku=sku,
+                kind=kind_storage_value,
+                location=region,
+                tags=tags,
                 allow_blob_public_access=False,
             ),
         )
@@ -368,10 +367,10 @@ class AzureAPIClient:
         return account_key
 
     # @deprecated(
-        # deprecated_in="1.0",
-        # removed_in="2.0",
-        # current_version=__version__,
-        # details=""
+    # deprecated_in="1.0",
+    # removed_in="2.0",
+    # current_version=__version__,
+    # details=""
     # )
     def _get_file_service(self, resource_group_name, storage_account_name):
         """Get Azure file service for given storage.
@@ -536,10 +535,10 @@ class AzureAPIClient:
         return operation.wait()
 
     # @deprecated(
-        # deprecated_in="1.0",
-        # removed_in="2.0",
-        # current_version=__version__,
-        # details=""
+    # deprecated_in="1.0",
+    # removed_in="2.0",
+    # current_version=__version__,
+    # details=""
     # )
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -579,10 +578,10 @@ class AzureAPIClient:
         )
 
     # @deprecated(
-        # deprecated_in="1.0",
-        # removed_in="2.0",
-        # current_version=__version__,
-        # details=""
+    # deprecated_in="1.0",
+    # removed_in="2.0",
+    # current_version=__version__,
+    # details=""
     # )
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -1085,16 +1084,18 @@ class AzureAPIClient:
         :param list[str] zones:
         :return:
         """
-        operation_poller = self._network_client.public_ip_addresses.begin_create_or_update(
-            resource_group_name=resource_group_name,
-            public_ip_address_name=public_ip_name,
-            parameters=network_models.PublicIPAddress(
-                location=region,
-                public_ip_allocation_method=public_ip_allocation_method,
-                idle_timeout_in_minutes=self.CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES,
-                tags=tags,
-                zones=zones,
-            ),
+        operation_poller = (
+            self._network_client.public_ip_addresses.begin_create_or_update(
+                resource_group_name=resource_group_name,
+                public_ip_address_name=public_ip_name,
+                parameters=network_models.PublicIPAddress(
+                    location=region,
+                    public_ip_allocation_method=public_ip_allocation_method,
+                    idle_timeout_in_minutes=self.CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES,
+                    tags=tags,
+                    zones=zones,
+                ),
+            )
         )
 
         return operation_poller.result()
@@ -1152,10 +1153,12 @@ class AzureAPIClient:
             tags=tags,
         )
 
-        operation_poller = self._network_client.network_interfaces.begin_create_or_update(
-            resource_group_name=resource_group_name,
-            network_interface_name=interface_name,
-            parameters=network_interface,
+        operation_poller = (
+            self._network_client.network_interfaces.begin_create_or_update(
+                resource_group_name=resource_group_name,
+                network_interface_name=interface_name,
+                parameters=network_interface,
+            )
         )
 
         return operation_poller.result()
@@ -1459,14 +1462,14 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def set_key_vault_secret(
-            self,
-            key_vault_name: str,
-            secret_name: str,
-            secret_value: str,
-            tags: dict[str, str],
-            secret_enabled: bool = True,
+        self,
+        key_vault_name: str,
+        secret_name: str,
+        secret_value: str,
+        tags: dict[str, str],
+        secret_enabled: bool = True,
     ) -> KeyVaultSecret:
-        """ Create Secret inside KeyVault. """
+        """Create Secret inside KeyVault."""
         sc = SecretClient(
             vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
             credential=self._credentials,
@@ -1485,7 +1488,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_key_vault_secret(self, key_vault_name: str, secret_name: str) -> str:
-        """ Get Secret value based on provided name from KeyVault. """
+        """Get Secret value based on provided name from KeyVault."""
         sc = SecretClient(
             vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
             credential=self._credentials,
@@ -1506,7 +1509,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_key_vault_secret(self, key_vault_name: str, secret_name: str):
-        """ Delete Secret from KeyVault. """
+        """Delete Secret from KeyVault."""
         sc = SecretClient(
             vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
             credential=self._credentials,
@@ -1526,14 +1529,14 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def set_ssh_key(
-            self,
-            key_name: str,
-            key_value: str,
-            region: str,
-            tags: dict[str, str],
-            resource_group_name: str
+        self,
+        key_name: str,
+        key_value: str,
+        region: str,
+        tags: dict[str, str],
+        resource_group_name: str,
     ) -> compute_models.SshPublicKeyResource:
-        """ Set SSH Key. """
+        """Set SSH Key."""
         ssh_key = self._compute_client.ssh_public_keys.create(
             resource_group_name=resource_group_name,
             ssh_public_key_name=key_name,
@@ -1541,7 +1544,7 @@ class AzureAPIClient:
                 location=region,
                 public_key=key_value,
                 tags=tags,
-            )
+            ),
         )
         return ssh_key
 
@@ -1551,12 +1554,12 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_ssh_key(self, key_name: str, resource_group_name: str) -> str:
-        """ Set SSH Key. """
+        """Set SSH Key."""
         try:
             key_value = self._compute_client.ssh_public_keys.get(
                 resource_group_name=resource_group_name,
                 ssh_public_key_name=key_name,
-                )
+            )
         except ResourceNotFoundError:
             raise exceptions.ResourceNotFoundException(
                 f"SSH Key {key_name} doesn't exists."
@@ -1569,11 +1572,11 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_ssh_key(self, key_name: str, resource_group_name: str):
-        """ Delete SSH Key """
+        """Delete SSH Key"""
         try:
             self._compute_client.ssh_public_keys.delete(
                 resource_group_name=resource_group_name,
                 ssh_public_key_name=key_name,
-                )
+            )
         except ResourceNotFoundError:
             self._logger.debug(f"SSH Key {key_name} doesn't exists. Deletion skipped.")

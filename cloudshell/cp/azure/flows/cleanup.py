@@ -14,8 +14,8 @@ from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
 )
 from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
-from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
+from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 
 
 class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):

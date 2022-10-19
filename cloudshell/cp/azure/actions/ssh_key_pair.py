@@ -1,5 +1,6 @@
-from cloudshell.cp.azure.exceptions import ResourceNotFoundException
 from cloudshell.cp.core.utils import generate_ssh_key_pair
+
+from cloudshell.cp.azure.exceptions import ResourceNotFoundException
 
 
 class SSHKeyPairActions:
@@ -19,14 +20,14 @@ class SSHKeyPairActions:
         return generate_ssh_key_pair()
 
     def save_ssh_public_key(
-            self,
-            resource_group_name: str,
-            public_key_name: str,
-            public_key: str,
-            region: str,
-            tags: dict[str, str],
+        self,
+        resource_group_name: str,
+        public_key_name: str,
+        public_key: str,
+        region: str,
+        tags: dict[str, str],
     ):
-        """ Save SSH Pubic Key on the Azure Storage."""
+        """Save SSH Pubic Key on the Azure Storage."""
         self._logger.info("Saving SSH public key on the Azure...")
         self._azure_client.set_ssh_key(
             key_name=public_key_name,
@@ -37,10 +38,10 @@ class SSHKeyPairActions:
         )
 
     def get_ssh_public_key(
-            self,
-            public_key_name: str,
-            resource_group_name: str,
-            storage_account_name: str,
+        self,
+        public_key_name: str,
+        resource_group_name: str,
+        storage_account_name: str,
     ) -> str:
         """Get SSH Pubic Key from Azure SSH Keys or the Azure Storage."""
         self._logger.info("Getting SSH public key from the Azure...")
@@ -74,11 +75,11 @@ class SSHKeyPairActions:
         )
 
     def save_ssh_private_key(
-            self,
-            key_vault_name: str,
-            private_key_name: str,
-            private_key: str,
-            tags: dict[str, str]
+        self,
+        key_vault_name: str,
+        private_key_name: str,
+        private_key: str,
+        tags: dict[str, str],
     ):
         """Save SSH Private Key on the Azure Key Vault."""
         self._logger.info("Saving SSH private key on the Azure...")
@@ -91,11 +92,11 @@ class SSHKeyPairActions:
         )
 
     def get_ssh_private_key(
-            self,
-            key_vault_name: str,
-            private_key_name: str,
-            resource_group_name: str,
-            storage_account_name: str
+        self,
+        key_vault_name: str,
+        private_key_name: str,
+        resource_group_name: str,
+        storage_account_name: str,
     ) -> str:
         """Get SSH Private Key from Azure Key Vault or the Azure Storage."""
         self._logger.info("Getting SSH private key from the Azure...")

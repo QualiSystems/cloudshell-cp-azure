@@ -1,10 +1,26 @@
 import re
 
+from azure.mgmt.network.models import SecurityRuleProtocol
+
 from cloudshell.cp.azure.utils.rollback import RollbackCommand
 
 
 class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
     """Open traffic to VM on inbound ports (an attribute on the App) on the VM NSG."""
+
+    PORT_DATA_MATCH = re.compile(
+        r"^(?P<from_port>\d+)"
+        r"(-(?P<to_port>\d+))?"
+        r"(:(?P<protocol>(udp|tcp)))?"
+        r"(:(?P<destination>\S+))?$",
+        re.IGNORECASE,
+    )
+    ICMP_PORT_DATA_MATCH = re.compile(
+        r"^(?P<protocol>icmp)" r"(:(?P<destination>\S+))?$",
+        re.IGNORECASE,
+    )
+    DEFAULT_DESTINATION = SecurityRuleProtocol.asterisk
+    DEFAULT_PROTOCOL = "tcp"
 
     NSG_RULE_PRIORITY = 1000
     NSG_RULE_NAME_TPL = "{vm_name}_inbound_port:{port_range}:{protocol}"
@@ -30,7 +46,9 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
         self._inbound_port = inbound_port
         self._resource_group_name = resource_group_name
         self._rules_priority_generator = rules_priority_generator
-        self._port_range, self._protocol = self._parse_port_range(self._inbound_port)
+        self._port_range, self._protocol, self._cidr = self._parse_port_range(
+            self._inbound_port
+        )
 
     def _execute(self):
         self._nsg_actions.create_nsg_allow_rule(
@@ -42,6 +60,7 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
             resource_group_name=self._resource_group_name,
             nsg_name=self._nsg_name,
             dst_port_range=self._port_range,
+            dst_address=self._cidr,
             protocol=self._protocol,
             rule_priority=self._rules_priority_generator.get_priority(
                 start_from=self.NSG_RULE_PRIORITY
@@ -49,57 +68,24 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
         )
 
     def _parse_port_range(self, port_data):
-        # todo: refactor this method !!!
-        from_port = "from_port"
-        to_port = "to_port"
-        protocol = "protocol"
-        tcp = "tcp"
+        match = self.PORT_DATA_MATCH.search(port_data)
+        if match:
+            from_port = match.group("from_port")
+            to_port = match.group("to_port")
+        else:
+            match = self.ICMP_PORT_DATA_MATCH.search(port_data)
+            if match:
+                from_port = to_port = "-1"
+            else:
+                msg = f"The value '{port_data}' is not a valid ports rule"
+                raise ValueError(msg)
 
-        from_to_protocol_match = re.match(
-            r"^((?P<from_port>\d+)-(?P<to_port>\d+):(?P<protocol>(udp|tcp)))$",
-            port_data,
-            flags=re.IGNORECASE,
-        )
-
-        # 80-50000:udp
-        if from_to_protocol_match:
-            from_port = from_to_protocol_match.group(from_port)
-            to_port = from_to_protocol_match.group(to_port)
-            protocol = from_to_protocol_match.group(protocol).lower()
-
-            return f"{from_port}-{to_port}", protocol
-
-        from_protocol_match = re.match(
-            r"^((?P<from_port>\d+):(?P<protocol>(udp|tcp)))$",
-            port_data,
-            flags=re.IGNORECASE,
-        )
-
-        # 80:udp
-        if from_protocol_match:
-            port = from_protocol_match.group(from_port)
-            protocol = from_protocol_match.group(protocol).lower()
-            return port, protocol
-
-        from_to_match = re.match(r"^((?P<from_port>\d+)-(?P<to_port>\d+))$", port_data)
-
-        # 20-80
-        if from_to_match:
-            from_port = from_to_match.group(from_port)
-            to_port = from_to_match.group(to_port)
-            protocol = tcp
-
-            return f"{from_port}-{to_port}", protocol
-
-        port_match = re.match(r"^((?P<from_port>\d+))$", port_data)
-        # 80
-        if port_match:
-            port = port_match.group(from_port)
-            protocol = tcp
-
-            return port, protocol
-
-        raise Exception(f"Value '{port_data}' is not a valid port rule")
+        destination = match.group("destination") or self.DEFAULT_DESTINATION
+        protocol = match.group("protocol") or self.DEFAULT_PROTOCOL
+        port = f"{from_port}"
+        if to_port:
+            port = f"{from_port}-{to_port}"
+        return port, protocol, destination
 
     def rollback(self):
         self._nsg_actions.delete_nsg_rule(

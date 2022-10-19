@@ -40,7 +40,7 @@ class CreateVMCommand(RollbackCommand):
                 operation_poller=operation_poller,
                 azure_client=self._vm_actions._azure_client,
                 vm_name=self._vm_name,
-                resource_group_name=self._vm_resource_group_name
+                resource_group_name=self._vm_resource_group_name,
             )
         except CloudError as e:
             if re.search(

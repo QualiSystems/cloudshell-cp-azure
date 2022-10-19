@@ -427,7 +427,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=subnet_vnet.subnets,
                     name_reqexp=predefined_subnet_name,
-                    resource_group_name=resource_group
+                    resource_group_name=resource_group,
                 )
             else:
                 subnet = commands.CreateSubnetCommand(
@@ -468,10 +468,10 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         ).execute()
 
     def _create_ssh_public_key(
-            self,
-            public_key: str,
-            resource_group_name: str,
-            tags: dict[str, str],
+        self,
+        public_key: str,
+        resource_group_name: str,
+        tags: dict[str, str],
     ):
         """Save SSH public key on the Azure."""
         ssh_actions = SSHKeyPairActions(
@@ -490,10 +490,10 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         ).execute()
 
     def _create_ssh_private_key(
-            self,
-            key_vault_name: str,
-            private_key: str,
-            tags: dict[str, str],
+        self,
+        key_vault_name: str,
+        private_key: str,
+        tags: dict[str, str],
     ):
         """Save SSH private key on the Azure."""
         ssh_actions = SSHKeyPairActions(
