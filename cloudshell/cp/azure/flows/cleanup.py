@@ -4,10 +4,11 @@ from functools import partial
 from http import HTTPStatus
 
 from azure.mgmt.network import models as network_models
+from msrestazure.azure_exceptions import CloudError
+
 from cloudshell.cp.core.flows.cleanup_sandbox_infra import (
     AbstractCleanupSandboxInfraFlow,
 )
-from msrestazure.azure_exceptions import CloudError
 
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (

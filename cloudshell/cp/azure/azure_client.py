@@ -1,12 +1,15 @@
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import ClientSecretCredential, ManagedIdentityCredential
 from azure.keyvault.secrets import KeyVaultSecret, SecretClient
-from azure.mgmt.compute import ComputeManagementClient, models as compute_models
-from azure.mgmt.network import NetworkManagementClient, models as network_models
+from azure.mgmt.compute import ComputeManagementClient
+from azure.mgmt.compute import models as compute_models
+from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.network import models as network_models
 from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.resource.resources.models import ResourceGroup
-from azure.mgmt.storage import StorageManagementClient, models as storage_models
+from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.storage import models as storage_models
 from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
 from msrestazure.azure_exceptions import CloudError
@@ -85,7 +88,6 @@ class AzureAPIClient:
             )
         else:
             self._credentials = ManagedIdentityCredential(**PROXIES)
-            # self._credentials = QualiMSIAuthentication()
 
         self._subscription_client = SubscriptionClient(credential=self._credentials)
 
@@ -286,10 +288,6 @@ class AzureAPIClient:
                 return storage
 
         return None
-        # raise exceptions.ResourceNotFoundException(
-        #     f"Unable to find Storage Account '{storage_account_name}' "
-        #     f"under the Resource Group '{resource_group_name}'"
-        # )
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -305,9 +303,6 @@ class AzureAPIClient:
                 return storage
 
         return None
-        # raise exceptions.ResourceNotFoundException(
-        #     f"Unable to find Storage Account '{storage_account_name}'."
-        # )
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -366,12 +361,6 @@ class AzureAPIClient:
 
         return account_key
 
-    # @deprecated(
-    # deprecated_in="1.0",
-    # removed_in="2.0",
-    # current_version=__version__,
-    # details=""
-    # )
     def _get_file_service(self, resource_group_name, storage_account_name):
         """Get Azure file service for given storage.
 
@@ -534,12 +523,6 @@ class AzureAPIClient:
         )
         return operation.wait()
 
-    # @deprecated(
-    # deprecated_in="1.0",
-    # removed_in="2.0",
-    # current_version=__version__,
-    # details=""
-    # )
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
         wait_fixed=RETRYING_WAIT_FIXED,
@@ -577,12 +560,6 @@ class AzureAPIClient:
             file=file_content,
         )
 
-    # @deprecated(
-    # deprecated_in="1.0",
-    # removed_in="2.0",
-    # current_version=__version__,
-    # details=""
-    # )
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
         wait_fixed=RETRYING_WAIT_FIXED,
@@ -1572,7 +1549,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def delete_ssh_key(self, key_name: str, resource_group_name: str):
-        """Delete SSH Key"""
+        """Delete SSH Key."""
         try:
             self._compute_client.ssh_public_keys.delete(
                 resource_group_name=resource_group_name,

@@ -116,19 +116,9 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         :rtype: str
         """
         resource_group_name = self._reservation_info.get_resource_group_name()
-        # storage_account_name = self._reservation_info.get_storage_account_name()
         tags = self._tags_manager.get_reservation_tags()
-        # key_vault_name = self._key_vault_manager.get_vm_key_vault_name(
-        #     vm_key_vault_name=deploy_app.key_vault,
-        # )
 
         with self._rollback_manager:
-            # self._create_storage_account(
-            #     storage_account_name=storage_account_name,
-            #     resource_group_name=resource_group_name,
-            #     tags=tags,
-            # )
-
             ssh_actions = SSHKeyPairActions(
                 azure_client=self._azure_client, logger=self._logger
             )

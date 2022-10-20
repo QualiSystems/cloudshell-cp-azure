@@ -1,6 +1,7 @@
 import typing
 
 from azure.mgmt.compute import models as compute_models
+
 from cloudshell.cp.core.flows.deploy import AbstractDeployFlow
 from cloudshell.cp.core.request_actions.models import Attribute, DeployAppResult
 

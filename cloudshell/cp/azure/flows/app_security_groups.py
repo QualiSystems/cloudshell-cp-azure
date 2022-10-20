@@ -1,7 +1,8 @@
 import typing
 
-from cloudshell.cp.core.flows.app_security_groups import AbstractAppSecurityGroupsFlow
 from requests.utils import is_valid_cidr
+
+from cloudshell.cp.core.flows.app_security_groups import AbstractAppSecurityGroupsFlow
 
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
@@ -85,10 +86,6 @@ class AzureAppSecurityGroupsFlow(AbstractAppSecurityGroupsFlow):
         :return
         """
         vm_resource_group_name = self._reservation_info.get_resource_group_name()
-        # vm_resource_group_name = (
-        #     security_group.deployed_app.resource_group_name
-        #     or sandbox_resource_group_name
-        # )
         vm_name = security_group.deployed_app.name
 
         nsg_actions = NetworkSecurityGroupActions(

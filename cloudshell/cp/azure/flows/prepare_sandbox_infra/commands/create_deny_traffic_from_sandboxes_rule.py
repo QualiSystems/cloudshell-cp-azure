@@ -52,12 +52,6 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         self._rules_priority_generator = rules_priority_generator
 
     def execute(self):
-        # with self._cancellation_manager:
-        # sandbox_vnet = self._network_actions.get_sandbox_virtual_network(
-        #     resource_group_name=self._mgmt_resource_group_name,
-        #     sandbox_vnet_name=self._sandbox_vnet_name,
-        # )
-        # sandbox_vnet_cidr = sandbox_vnet.address_space.address_prefixes[0]
 
         with self._cancellation_manager:
             self._nsg_actions.create_nsg_deny_rule(
