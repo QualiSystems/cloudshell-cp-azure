@@ -668,7 +668,7 @@ class AzureAPIClient:
                 network_security_group_name=nsg_name,
                 resource_group_name=resource_group_name,
             )
-        except CloudError:
+        except (CloudError, ResourceNotFoundError):
             self._logger.info(
                 f"Network security group '{nsg_name}' "
                 f"doesn't exist, all subnets are predefined",
