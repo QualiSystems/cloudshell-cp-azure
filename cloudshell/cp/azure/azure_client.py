@@ -1,4 +1,4 @@
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import ResourceNotFoundError, ServiceRequestError
 from azure.identity import ClientSecretCredential, ManagedIdentityCredential
 from azure.keyvault.secrets import KeyVaultSecret, SecretClient
 from azure.mgmt.compute import ComputeManagementClient
@@ -1451,13 +1451,22 @@ class AzureAPIClient:
             vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
             credential=self._credentials,
         )
-        return sc.set_secret(
-            name=secret_name,
-            value=secret_value,
-            enabled=secret_enabled,
-            content_type="Privat Key",
-            tags=tags,
-        )
+
+        try:
+            res = sc.set_secret(
+                name=secret_name,
+                value=secret_value,
+                enabled=secret_enabled,
+                content_type="Privat Key",
+                tags=tags,
+            )
+        except ServiceRequestError as err:
+            self._logger.exception(err)
+            raise exceptions.InvalidAttrException(
+                f"Failed to connect to KeyVault '{key_vault_name}'"
+            )
+
+        return res
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -1472,6 +1481,11 @@ class AzureAPIClient:
         )
         try:
             value = sc.get_secret(secret_name).value
+        except ServiceRequestError as err:
+            self._logger.exception(err)
+            raise exceptions.InvalidAttrException(
+                f"Failed to connect to KeyVault '{key_vault_name}'"
+            )
         except ResourceNotFoundError:
             raise exceptions.ResourceNotFoundException(
                 f"Error during getting Key-Secret {secret_name}"
@@ -1495,6 +1509,11 @@ class AzureAPIClient:
             poller = sc.begin_delete_secret(name=secret_name)
             poller.wait()
             sc.purge_deleted_secret(secret_name)
+        except ServiceRequestError as err:
+            self._logger.exception(err)
+            raise exceptions.InvalidAttrException(
+                f"Failed to connect to KeyVault '{key_vault_name}'"
+            )
         except ResourceNotFoundError:
             self._logger.debug(
                 f"Key-Secret {secret_name} doesn't exist in KeyVault {key_vault_name}"
