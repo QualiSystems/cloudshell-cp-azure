@@ -1,3 +1,5 @@
+from typing import Dict
+
 from cloudshell.cp.core.utils import generate_ssh_key_pair
 
 from cloudshell.cp.azure.exceptions import ResourceNotFoundException
@@ -25,7 +27,7 @@ class SSHKeyPairActions:
         public_key_name: str,
         public_key: str,
         region: str,
-        tags: dict[str, str],
+        tags: Dict[str, str],
     ):
         """Save SSH Pubic Key on the Azure Storage."""
         self._logger.info("Saving SSH public key on the Azure...")
@@ -79,7 +81,7 @@ class SSHKeyPairActions:
         key_vault_name: str,
         private_key_name: str,
         private_key: str,
-        tags: dict[str, str],
+        tags: Dict[str, str],
     ):
         """Save SSH Private Key on the Azure Key Vault."""
         self._logger.info("Saving SSH private key on the Azure...")

@@ -1,3 +1,5 @@
+from typing import Dict
+
 from cloudshell.cp.core.flows.prepare_sandbox_infra import (
     AbstractPrepareSandboxInfraFlow,
 )
@@ -461,7 +463,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         self,
         public_key: str,
         resource_group_name: str,
-        tags: dict[str, str],
+        tags: Dict[str, str],
     ):
         """Save SSH public key on the Azure."""
         ssh_actions = SSHKeyPairActions(
@@ -483,7 +485,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         self,
         key_vault_name: str,
         private_key: str,
-        tags: dict[str, str],
+        tags: Dict[str, str],
     ):
         """Save SSH private key on the Azure."""
         ssh_actions = SSHKeyPairActions(

@@ -14,6 +14,7 @@ from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
 from msrestazure.azure_exceptions import CloudError
 from retrying import retry
+from typing import Dict
 
 from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
@@ -818,7 +819,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_resource_by_id(self, resource_id):
-        """Get Subnet by its Id.
+        """Get Subnet by its id.
 
         :param str resource_id:
         :return:
@@ -1443,7 +1444,7 @@ class AzureAPIClient:
         key_vault_name: str,
         secret_name: str,
         secret_value: str,
-        tags: dict[str, str],
+        tags: Dict[str, str],
         secret_enabled: bool = True,
     ) -> KeyVaultSecret:
         """Create Secret inside KeyVault."""
@@ -1457,7 +1458,7 @@ class AzureAPIClient:
                 name=secret_name,
                 value=secret_value,
                 enabled=secret_enabled,
-                content_type="Privat Key",
+                content_type="Private Key",
                 tags=tags,
             )
         except ServiceRequestError as err:
@@ -1529,7 +1530,7 @@ class AzureAPIClient:
         key_name: str,
         key_value: str,
         region: str,
-        tags: dict[str, str],
+        tags: Dict[str, str],
         resource_group_name: str,
     ) -> compute_models.SshPublicKeyResource:
         """Set SSH Key."""
