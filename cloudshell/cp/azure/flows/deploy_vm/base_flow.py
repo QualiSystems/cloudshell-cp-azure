@@ -699,7 +699,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         else:
             zones = []
 
-        zones = self._zones_manager.get_availility_zones(zones=zones)
+        zones = self._zones_manager.get_availability_zones(zones=zones)
 
         tags = self._tags_manager.get_vm_tags(
             vm_name=vm_name, extended_custom_tags=deploy_app.extended_custom_tags

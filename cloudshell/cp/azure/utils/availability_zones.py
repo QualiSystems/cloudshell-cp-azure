@@ -11,7 +11,7 @@ class AzureZonesManager:
             zone.strip() for zone in self._resource_config.availability_zones.split(",")
         ]
 
-    def get_availility_zones(self, zones=None):
+    def get_availability_zones(self, zones=None):
         """Get Key Vault Name for the VM-related objects."""
         if zones != self.DEFAULT_APP_ZONES_VALUE:
             return zones
