@@ -7,9 +7,11 @@ class AzureZonesManager:
 
     def get_resource_zones(self):
         """Get Availability Zones from the AzureCloudProvider Resource."""
-        return [
-            zone.strip() for zone in self._resource_config.availability_zones.split(",")
-        ]
+        zones = self._resource_config.availability_zones
+        if zones:
+            return [zone.strip() for zone in zones.split(",")]
+        else:
+            return []
 
     def get_availability_zones(self, zones=None):
         """Get Key Vault Name for the VM-related objects."""

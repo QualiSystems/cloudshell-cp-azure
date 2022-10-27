@@ -18,6 +18,7 @@ class NetworkActions:
     MGMT_NETWORK_TAG_VALUE = "mgmt"
     EXISTING_SUBNET_ERROR = "NetcfgInvalidSubnet"
     PUBLIC_IP_NAME_TPL = "{interface_name}_PublicIP"
+    PUBLIC_IP_SKU_TIER_REGIONAL = models.PublicIPAddressSkuTier.REGIONAL
     CLOUDSHELL_STATIC_IP_ALLOCATION_TYPE = "static"
     CLOUDSHELL_DYNAMIC_IP_ALLOCATION_TYPE = "dynamic"
     AZURE_PRIVATE_IP_ALLOCATION_METHOD = "Azure Allocation"
@@ -468,15 +469,26 @@ class NetworkActions:
         """
         if add_public_ip:
             self._logger.info(f"Creating Public IP for Interface {interface_name}")
+            if zones:
+                sku_name = models.PublicIPAddressSkuName.STANDARD
+                sku_tier = self.PUBLIC_IP_SKU_TIER_REGIONAL
+                public_ip_type = models.IPAllocationMethod.static
+            else:
+                sku_name = models.PublicIPAddressSkuName.BASIC
+                sku_tier = self.PUBLIC_IP_SKU_TIER_REGIONAL
+                public_ip_type = self._get_azure_ip_allocation_type(public_ip_type)
+
             public_ip_address = self._azure_client.create_public_ip(
                 public_ip_name=self.PUBLIC_IP_NAME_TPL.format(
                     interface_name=interface_name
                 ),
+                resource_group_name=resource_group_name,
+                region=region,
                 public_ip_allocation_method=self._get_azure_ip_allocation_type(
                     public_ip_type
                 ),
-                resource_group_name=resource_group_name,
-                region=region,
+                sku_name=sku_name,
+                sku_tier=sku_tier,
                 tags=tags,
                 zones=zones,
             )

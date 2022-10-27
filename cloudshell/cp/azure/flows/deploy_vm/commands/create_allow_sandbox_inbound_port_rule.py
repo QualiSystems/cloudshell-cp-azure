@@ -32,11 +32,15 @@ class CreateAllowSandboxInboundPortRuleCommand(CreateAllowVMInboundPortRuleComma
         self._private_ip = private_ip
 
     def _execute(self):
+        rule_priority = self._rules_priority_generator.get_priority(
+            start_from=self.NSG_RULE_PRIORITY
+        )
         self._nsg_actions.create_nsg_allow_rule(
             rule_name=self.NSG_RULE_NAME_TPL.format(
                 vm_name=self._vm_name,
                 port_range=self._port_range,
                 protocol=self._protocol,
+                priority=rule_priority,
             ),
             resource_group_name=self._resource_group_name,
             nsg_name=self._nsg_name,

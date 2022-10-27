@@ -14,7 +14,7 @@ from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
 from msrestazure.azure_exceptions import CloudError
 from retrying import retry
-from typing import Dict
+from typing import Dict, List, Optional
 
 from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
@@ -1045,28 +1045,22 @@ class AzureAPIClient:
     )
     def create_public_ip(
         self,
-        public_ip_name,
-        resource_group_name,
-        region,
-        public_ip_allocation_method,
-        tags,
-        zones,
-    ):
-        """Create Public IP address.
-
-        :param str public_ip_name:
-        :param str resource_group_name:
-        :param str region:
-        :param str public_ip_allocation_method:
-        :param dict[str, str] tags:
-        :param list[str] zones:
-        :return:
-        """
+        public_ip_name: str,
+        resource_group_name: str,
+        region: str,
+        public_ip_allocation_method: str,
+        sku_name: str,
+        sku_tier: Optional[str],
+        tags: Dict[str, str],
+        zones: List[str],
+    ) -> network_models.PublicIPAddress:
+        """Create Public IP address."""
         operation_poller = (
             self._network_client.public_ip_addresses.begin_create_or_update(
                 resource_group_name=resource_group_name,
                 public_ip_address_name=public_ip_name,
                 parameters=network_models.PublicIPAddress(
+                    sku=network_models.PublicIPAddressSku(name=sku_name, tier=sku_tier),
                     location=region,
                     public_ip_allocation_method=public_ip_allocation_method,
                     idle_timeout_in_minutes=self.CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES,
