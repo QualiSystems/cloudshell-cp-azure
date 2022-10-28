@@ -7,7 +7,7 @@ repos:
     rev: 22.10.0
     hooks:
       - id: black
-        language_version: python3.7
+        language_version: python3.9
   - repo: https://github.com/pycqa/flake8
     rev: 5.0.4
     hooks:
@@ -18,4 +18,9 @@ repos:
           flake8-comprehensions,
           flake8-print,
           flake8-eradicate,
+          flake8-requirements-absolute-imports,
+        ]
+        args: [
+          --project-base-module=cloudshell.cp.azure,
+          "--known-modules=cloudshell-cp-core:[cloudshell.cp.core],cloudshell-shell-standards:[cloudshell.shell.standards],cloudshell-shell-connectivity-flow:[cloudshell.shell.flows.connectivity],cloudshell-shell-core:[cloudshell.shell.core],cloudshell-automation-api:[cloudshell.api],azure-identity:[azure.identity],azure-keyvault-secrets:[azure.keyvault.secrets],azure-mgmt-resource:[azure.mgmt.resource],azure-mgmt-compute:[azure.mgmt.compute],azure-mgmt-network:[azure.mgmt.network],azure-mgmt-storage:[azure.mgmt.storage],azure-storage:[azure.storage],azure-core:[azure.core]"
         ]

@@ -1,3 +1,5 @@
+from typing import Dict, List, Optional
+
 from azure.core.exceptions import ResourceNotFoundError, ServiceRequestError
 from azure.identity import ClientSecretCredential, ManagedIdentityCredential
 from azure.keyvault.secrets import KeyVaultSecret, SecretClient
@@ -14,7 +16,6 @@ from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
 from msrestazure.azure_exceptions import CloudError
 from retrying import retry
-from typing import Dict, List, Optional
 
 from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.utils.retrying import (
