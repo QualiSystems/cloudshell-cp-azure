@@ -5,6 +5,7 @@ from azure.mgmt.compute.models import OperatingSystemTypes
 from msrestazure.azure_exceptions import CloudError
 from requests.utils import is_valid_cidr
 
+from cloudshell.cp.azure import exceptions
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.utils.tags import get_default_tags_count
 
@@ -242,3 +243,21 @@ class ValidationActions(NetworkActions):
         """Validate 'VM Size' attribute."""
         self._logger.info("Validating VM size")
         return any([deploy_app_vm_size, cloud_provider_vm_size])
+
+    def validate_key_vault(self, key_vault_name: str):
+        """Validate Azure Region."""
+        self._logger.info("Validating Azure Key Vault...")
+
+        try:
+            self._azure_client.get_key_vault_secret(
+                key_vault_name=key_vault_name,
+                secret_name="KeyVaultValidation",
+            )
+        except exceptions.InvalidAttrException:
+            raise Exception(f"Key Vault '{key_vault_name}' doesn't exist.")
+        except exceptions.AzurePermissionsException:
+            raise
+        except exceptions.ResourceNotFoundException:
+            pass
+        except Exception as err:
+            self._logger.exception(err)

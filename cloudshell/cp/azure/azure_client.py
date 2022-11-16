@@ -1,6 +1,10 @@
 from typing import Dict, List, Optional
 
-from azure.core.exceptions import ResourceNotFoundError, ServiceRequestError
+from azure.core.exceptions import (
+    HttpResponseError,
+    ResourceNotFoundError,
+    ServiceRequestError,
+)
 from azure.identity import ClientSecretCredential, ManagedIdentityCredential
 from azure.keyvault.secrets import KeyVaultSecret, SecretClient
 from azure.mgmt.compute import ComputeManagementClient
@@ -41,15 +45,15 @@ class AzureAPIClient:
 
     VM_SCRIPT_WINDOWS_PUBLISHER = "Microsoft.Compute"
     VM_SCRIPT_WINDOWS_EXTENSION_TYPE = "CustomScriptExtension"
-    VM_SCRIPT_WINDOWS_HANDLER_VERSION = "1.9"
+    VM_SCRIPT_WINDOWS_HANDLER_VERSION = "1.10"
     VM_SCRIPT_WINDOWS_COMMAND_TPL = (
         "powershell.exe -ExecutionPolicy Unrestricted -File "
         "{file_name} {script_configuration}"
     )
 
-    VM_SCRIPT_LINUX_PUBLISHER = "Microsoft.OSTCExtensions"
-    VM_SCRIPT_LINUX_EXTENSION_TYPE = "CustomScriptForLinux"
-    VM_SCRIPT_LINUX_HANDLER_VERSION = "1.5"
+    VM_SCRIPT_LINUX_PUBLISHER = "Microsoft.Azure.Extensions"
+    VM_SCRIPT_LINUX_EXTENSION_TYPE = "CustomScript"
+    VM_SCRIPT_LINUX_HANDLER_VERSION = "2.1"
 
     CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES = 4
     RETRYING_STOP_MAX_ATTEMPT_NUMBER = 5
@@ -1182,10 +1186,11 @@ class AzureAPIClient:
         :param str resource_group_name:
         :return:
         """
-        return self._network_client.network_interfaces.begin_delete(
+        result = self._network_client.network_interfaces.begin_delete(
             resource_group_name=resource_group_name,
             network_interface_name=interface_name,
         )
+        result.wait()
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -1250,8 +1255,8 @@ class AzureAPIClient:
         vm_extension = compute_models.VirtualMachineExtension(
             location=region,
             publisher=self.VM_SCRIPT_LINUX_PUBLISHER,
+            type_properties_type=self.VM_SCRIPT_LINUX_EXTENSION_TYPE,
             type_handler_version=self.VM_SCRIPT_LINUX_HANDLER_VERSION,
-            virtual_machine_extension_type=self.VM_SCRIPT_LINUX_EXTENSION_TYPE,
             tags=tags,
             settings={"fileUris": file_uris, "commandToExecute": script_config},
         )
@@ -1471,6 +1476,11 @@ class AzureAPIClient:
     )
     def get_key_vault_secret(self, key_vault_name: str, secret_name: str) -> str:
         """Get Secret value based on provided name from KeyVault."""
+        if not key_vault_name:
+            raise exceptions.InvalidAttrException(
+                "Attribute 'Key Vault' cannot be empty to work with Private SSH Keys"
+            )
+
         sc = SecretClient(
             vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
             credential=self._credentials,
@@ -1487,6 +1497,11 @@ class AzureAPIClient:
                 f"Error during getting Key-Secret {secret_name}"
                 f" from KeyVault {key_vault_name}"
             )
+        except HttpResponseError as err:
+            self._logger.exception(err)
+            raise exceptions.AzurePermissionsException(
+                f"Not enough permissions to access Key Vault '{key_vault_name}'"
+            )
 
         return value
 
@@ -1497,22 +1512,35 @@ class AzureAPIClient:
     )
     def delete_key_vault_secret(self, key_vault_name: str, secret_name: str):
         """Delete Secret from KeyVault."""
-        sc = SecretClient(
-            vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
-            credential=self._credentials,
-        )
-        try:
-            poller = sc.begin_delete_secret(name=secret_name)
-            poller.wait()
-            sc.purge_deleted_secret(secret_name)
-        except ServiceRequestError as err:
-            self._logger.exception(err)
-            raise exceptions.InvalidAttrException(
-                f"Failed to connect to KeyVault '{key_vault_name}'"
+        if key_vault_name:
+            sc = SecretClient(
+                vault_url=self.KEY_VAULT_URL.format(
+                    key_vault_name=key_vault_name.lower()
+                ),
+                credential=self._credentials,
             )
-        except ResourceNotFoundError:
+            try:
+                poller = sc.begin_delete_secret(name=secret_name)
+                poller.wait()
+                sc.purge_deleted_secret(secret_name)
+            except ServiceRequestError as err:
+                self._logger.exception(err)
+                raise exceptions.InvalidAttrException(
+                    f"Failed to connect to KeyVault '{key_vault_name}'"
+                )
+            except ResourceNotFoundError:
+                self._logger.debug(
+                    f"Key-Secret '{secret_name}'"
+                    f" doesn't exist in KeyVault '{key_vault_name}'"
+                )
+            except HttpResponseError as err:
+                self._logger.exception(err)
+                raise exceptions.AzurePermissionsException(
+                    f"Not enough permissions to access Key Vault '{key_vault_name}'"
+                )
+        else:
             self._logger.debug(
-                f"Key-Secret {secret_name} doesn't exist in KeyVault {key_vault_name}"
+                "Key Vault name is not set. Skipping Private SSH Keys deletion."
             )
 
     @retry(

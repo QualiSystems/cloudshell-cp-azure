@@ -2,6 +2,10 @@ class BaseAzureException(Exception):
     pass
 
 
+class AzurePermissionsException(BaseAzureException):
+    pass
+
+
 class AzureTaskTimeoutException(BaseAzureException):
     pass
 
