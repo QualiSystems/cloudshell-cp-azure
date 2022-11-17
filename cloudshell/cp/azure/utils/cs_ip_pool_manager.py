@@ -74,7 +74,7 @@ class CSIPPoolManager:
         :param str reservation_id:
         :return:
         """
-        return "{}-private-ips".format(reservation_id)
+        return f"{reservation_id}-private-ips"
 
     def release_ips(self, reservation_id, ips, owner=None):
         """Release IPs from the pool.

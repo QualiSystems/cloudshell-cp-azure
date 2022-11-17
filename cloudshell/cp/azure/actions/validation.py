@@ -169,7 +169,7 @@ class ValidationActions(NetworkActions):
         """Validate 'Add Public IP' attribute."""
         self._logger.info("Validating Deploy App 'Add Public IP' attribute")
         all_subnets_are_private = (
-            all((not subnet.is_public() for subnet in connect_subnets))
+            all(not subnet.is_public() for subnet in connect_subnets)
             if connect_subnets
             else False
         )
