@@ -17,6 +17,15 @@ setup(
     python_requires="~=3.7",
     version=read_file("version.txt"),
     package_data={"": ["*.txt"]},
-    description="",
+    description=(
+        "This Shell enables setting up Azure as a cloud provider in CloudShell. "
+        "It supports connectivity, and adds new deployment types for apps which can be "
+        "used in CloudShell sandboxes."
+    ),
+    long_description=(
+        "This Shell enables setting up Azure as a cloud provider in CloudShell. "
+        "It supports connectivity, and adds new deployment types for apps which can be "
+        "used in CloudShell sandboxes."
+    ),
     include_package_data=True,
 )
