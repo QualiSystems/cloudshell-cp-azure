@@ -1,3 +1,6 @@
+from typing import List
+
+
 class AzureZonesManager:
     DEFAULT_APP_ZONES_VALUE = ["Inherited"]
 
@@ -13,7 +16,7 @@ class AzureZonesManager:
         else:
             return []
 
-    def get_availability_zones(self, zones=None):
+    def get_availability_zones(self, zones: List):
         """Get Key Vault Name for the VM-related objects."""
         if zones != self.DEFAULT_APP_ZONES_VALUE:
             return zones

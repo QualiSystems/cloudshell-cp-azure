@@ -93,7 +93,7 @@ class AzureAPIClient:
                 tenant_id=azure_tenant_id,
             )
         else:
-            self._credentials = ManagedIdentityCredential(**PROXIES)
+            self._credentials = ManagedIdentityCredential(proxies=PROXIES)
 
         self._subscription_client = SubscriptionClient(credential=self._credentials)
 
@@ -1304,7 +1304,7 @@ class AzureAPIClient:
             location=region,
             publisher=self.VM_SCRIPT_WINDOWS_PUBLISHER,
             type_handler_version=self.VM_SCRIPT_WINDOWS_HANDLER_VERSION,
-            virtual_machine_extension_type=self.VM_SCRIPT_WINDOWS_EXTENSION_TYPE,
+            type_properties_type=self.VM_SCRIPT_WINDOWS_EXTENSION_TYPE,
             tags=tags,
             settings={
                 "fileUris": [script_file_path],
@@ -1574,7 +1574,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_ssh_key(self, key_name: str, resource_group_name: str) -> str:
-        """Set SSH Key."""
+        """Get SSH Key."""
         try:
             key_value = self._compute_client.ssh_public_keys.get(
                 resource_group_name=resource_group_name,
