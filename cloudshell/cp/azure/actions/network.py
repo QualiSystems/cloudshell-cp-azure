@@ -18,6 +18,7 @@ class NetworkActions:
     MGMT_NETWORK_TAG_VALUE = "mgmt"
     EXISTING_SUBNET_ERROR = "NetcfgInvalidSubnet"
     PUBLIC_IP_NAME_TPL = "{interface_name}_PublicIP"
+    PUBLIC_IP_SKU_TIER_REGIONAL = models.PublicIPAddressSkuTier.REGIONAL
     CLOUDSHELL_STATIC_IP_ALLOCATION_TYPE = "static"
     CLOUDSHELL_DYNAMIC_IP_ALLOCATION_TYPE = "dynamic"
     AZURE_PRIVATE_IP_ALLOCATION_METHOD = "Azure Allocation"
@@ -138,11 +139,14 @@ class NetworkActions:
             if resource_group_name in subnet.name
         ]
 
-    def find_sandbox_subnet_by_name(self, sandbox_subnets, name_reqexp):
+    def find_sandbox_subnet_by_name(
+        self, sandbox_subnets, name_reqexp, resource_group_name
+    ):
         """Get sandbox subnet by its regexp name.
 
         :param list sandbox_subnets:
         :param str name_reqexp:
+        :param str resource_group_name:
         :return:
         """
         compiled_regexp = re.compile(name_reqexp)
@@ -154,12 +158,14 @@ class NetworkActions:
 
         if not found_subnets:
             raise ResourceNotFoundException(
-                f"Unable to find subnet by regexp name: {name_reqexp}"
+                f"Unable to find subnet by regexp name '{name_reqexp}'"
+                f" under Resource Group '{resource_group_name}'"
             )
 
         if len(found_subnets) > 1:
             raise MultipleResourceFoundException(
-                f"Several subnets match the specified regexp name: {name_reqexp}. "
+                f"Several subnets match the specified regexp name: {name_reqexp} "
+                f"under Resource Group '{resource_group_name}'."
                 f"Subnets: {[subnet.name for subnet in found_subnets]}"
             )
 
@@ -439,6 +445,7 @@ class NetworkActions:
         resource_group_name,
         region,
         tags,
+        zones,
         private_ip_allocation_method,
         private_ip_address,
         add_public_ip=False,
@@ -453,6 +460,7 @@ class NetworkActions:
         :param str resource_group_name:
         :param str region:
         :param dict[str, str] tags:
+        :param list[str] zones:
         :param str private_ip_allocation_method:
         :param str private_ip_address:
         :param bool add_public_ip:
@@ -461,16 +469,28 @@ class NetworkActions:
         """
         if add_public_ip:
             self._logger.info(f"Creating Public IP for Interface {interface_name}")
+            if zones:
+                sku_name = models.PublicIPAddressSkuName.STANDARD
+                sku_tier = self.PUBLIC_IP_SKU_TIER_REGIONAL
+                public_ip_type = models.IPAllocationMethod.static
+            else:
+                sku_name = models.PublicIPAddressSkuName.BASIC
+                sku_tier = self.PUBLIC_IP_SKU_TIER_REGIONAL
+                public_ip_type = self._get_azure_ip_allocation_type(public_ip_type)
+
             public_ip_address = self._azure_client.create_public_ip(
                 public_ip_name=self.PUBLIC_IP_NAME_TPL.format(
                     interface_name=interface_name
                 ),
+                resource_group_name=resource_group_name,
+                region=region,
                 public_ip_allocation_method=self._get_azure_ip_allocation_type(
                     public_ip_type
                 ),
-                resource_group_name=resource_group_name,
-                region=region,
+                sku_name=sku_name,
+                sku_tier=sku_tier,
                 tags=tags,
+                zones=zones,
             )
         else:
             public_ip_address = None

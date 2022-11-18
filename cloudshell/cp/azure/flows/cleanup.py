@@ -4,16 +4,18 @@ from functools import partial
 from http import HTTPStatus
 
 from azure.mgmt.network import models as network_models
+from msrestazure.azure_exceptions import CloudError
+
 from cloudshell.cp.core.flows.cleanup_sandbox_infra import (
     AbstractCleanupSandboxInfraFlow,
 )
-from msrestazure.azure_exceptions import CloudError
 
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
     NetworkSecurityGroupActions,
 )
 from cloudshell.cp.azure.actions.resource_group import ResourceGroupActions
+from cloudshell.cp.azure.actions.ssh_key_pair import SSHKeyPairActions
 from cloudshell.cp.azure.actions.storage_account import StorageAccountActions
 
 
@@ -65,6 +67,9 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
         storage_actions = StorageAccountActions(
             azure_client=self._azure_client, logger=self._logger
         )
+        ssh_key_actions = SSHKeyPairActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
 
         self._lock_manager.remove_lock(nsg_name)
 
@@ -99,6 +104,22 @@ class AzureCleanupSandboxInfraFlow(AbstractCleanupSandboxInfraFlow):
                     resource_group_name=resource_group_name,
                 )
             )
+
+        cleanup_commands.append(
+            partial(
+                ssh_key_actions.delete_ssh_public_key,
+                public_key_name=self._reservation_info.reservation_id,
+                resource_group_name=resource_group_name,
+            )
+        )
+
+        cleanup_commands.append(
+            partial(
+                ssh_key_actions.delete_ssh_private_key,
+                key_vault_name=self._resource_config.key_vault,
+                private_key_name=self._reservation_info.reservation_id,
+            )
+        )
 
         cleanup_commands.append(
             partial(

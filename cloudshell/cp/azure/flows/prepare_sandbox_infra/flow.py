@@ -1,3 +1,5 @@
+from typing import Dict
+
 from cloudshell.cp.core.flows.prepare_sandbox_infra import (
     AbstractPrepareSandboxInfraFlow,
 )
@@ -116,16 +118,9 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         :rtype: str
         """
         resource_group_name = self._reservation_info.get_resource_group_name()
-        storage_account_name = self._reservation_info.get_storage_account_name()
         tags = self._tags_manager.get_reservation_tags()
 
         with self._rollback_manager:
-            self._create_storage_account(
-                storage_account_name=storage_account_name,
-                resource_group_name=resource_group_name,
-                tags=tags,
-            )
-
             ssh_actions = SSHKeyPairActions(
                 azure_client=self._azure_client, logger=self._logger
             )
@@ -134,15 +129,16 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
 
             self._create_ssh_public_key(
                 public_key=public_key,
-                storage_account_name=storage_account_name,
                 resource_group_name=resource_group_name,
+                tags=tags,
             )
 
-            self._create_ssh_private_key(
-                private_key=private_key,
-                storage_account_name=storage_account_name,
-                resource_group_name=resource_group_name,
-            )
+            if self._resource_config.key_vault:
+                self._create_ssh_private_key(
+                    key_vault_name=self._resource_config.key_vault,
+                    private_key=private_key,
+                    tags=tags,
+                )
 
             return private_key
 
@@ -423,6 +419,7 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=subnet_vnet.subnets,
                     name_reqexp=predefined_subnet_name,
+                    resource_group_name=resource_group,
                 )
             else:
                 subnet = commands.CreateSubnetCommand(
@@ -463,15 +460,12 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         ).execute()
 
     def _create_ssh_public_key(
-        self, public_key, storage_account_name, resource_group_name
+        self,
+        public_key: str,
+        resource_group_name: str,
+        tags: Dict[str, str],
     ):
-        """Save SSH public key on the Azure.
-
-        :param str public_key:
-        :param str storage_account_name:
-        :param str resource_group_name:
-        :return:
-        """
+        """Save SSH public key on the Azure."""
         ssh_actions = SSHKeyPairActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -479,22 +473,21 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         commands.SaveSSHPublicKeyCommand(
             rollback_manager=self._rollback_manager,
             cancellation_manager=self._cancellation_manager,
-            storage_account_name=storage_account_name,
             resource_group_name=resource_group_name,
+            public_key_name=self._reservation_info.reservation_id,
             public_key=public_key,
             ssh_actions=ssh_actions,
+            region=self._resource_config.region,
+            tags=tags,
         ).execute()
 
     def _create_ssh_private_key(
-        self, private_key, storage_account_name, resource_group_name
+        self,
+        key_vault_name: str,
+        private_key: str,
+        tags: Dict[str, str],
     ):
-        """Save SSH private key on the Azure.
-
-        :param str private_key:
-        :param str storage_account_name:
-        :param str resource_group_name:
-        :return:
-        """
+        """Save SSH private key on the Azure."""
         ssh_actions = SSHKeyPairActions(
             azure_client=self._azure_client, logger=self._logger
         )
@@ -502,8 +495,9 @@ class AzurePrepareSandboxInfraFlow(AbstractPrepareSandboxInfraFlow):
         commands.SaveSSHPrivateKeyCommand(
             rollback_manager=self._rollback_manager,
             cancellation_manager=self._cancellation_manager,
-            storage_account_name=storage_account_name,
-            resource_group_name=resource_group_name,
-            private_key=private_key,
             ssh_actions=ssh_actions,
+            key_vault_name=key_vault_name,
+            private_key_name=self._reservation_info.reservation_id,
+            private_key=private_key,
+            tags=tags,
         ).execute()

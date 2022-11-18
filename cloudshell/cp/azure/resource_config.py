@@ -116,6 +116,12 @@ class AzureResourceConfig(GenericResourceConfig):
         "Private IP Allocation Method", ResourceAttrRO.NAMESPACE.SHELL_NAME
     )
 
+    availability_zones = ResourceAttrRO(
+        "Availability Zones", ResourceAttrRO.NAMESPACE.SHELL_NAME
+    )
+
+    key_vault = ResourceAttrRO("Key Vault", ResourceAttrRO.NAMESPACE.SHELL_NAME)
+
     @classmethod
     def from_context(cls, shell_name, context, api=None, supported_os=None):
         """Creates an instance of a Resource by given context.

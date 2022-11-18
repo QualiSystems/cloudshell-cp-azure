@@ -31,7 +31,7 @@ class SingletonByArgsMeta(type):
             instance = cls.__instances_by_cls.get(key)
 
             if not instance:
-                instance = super(SingletonByArgsMeta, cls).__call__(*args, **kwargs)
+                instance = super().__call__(*args, **kwargs)
                 cls.__instances_by_cls[key] = instance
 
         return instance

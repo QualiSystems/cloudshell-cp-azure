@@ -1,6 +1,7 @@
 import typing
 
 from azure.mgmt.compute import models as compute_models
+
 from cloudshell.cp.core.flows.deploy import AbstractDeployFlow
 from cloudshell.cp.core.request_actions.models import Attribute, DeployAppResult
 
@@ -23,6 +24,7 @@ from cloudshell.cp.azure.exceptions import (
 )
 from cloudshell.cp.azure.flows.deploy_vm import commands
 from cloudshell.cp.azure.utils import name_generator
+from cloudshell.cp.azure.utils.availability_zones import AzureZonesManager
 from cloudshell.cp.azure.utils.azure_task_waiter import AzureTaskWaiter
 from cloudshell.cp.azure.utils.cs_reservation_output import CloudShellReservationOutput
 from cloudshell.cp.azure.utils.disks import (
@@ -71,6 +73,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         self._tags_manager = AzureTagsManager(
             reservation_info=self._reservation_info, resource_config=resource_config
         )
+        self._zones_manager = AzureZonesManager(resource_config=resource_config)
 
         self._task_waiter_manager = AzureTaskWaiter(
             cancellation_manager=self._cancellation_manager, logger=self._logger
@@ -263,20 +266,20 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         self, deploy_app, vm_nsg, vm_resource_group_name, rules_priority_generator
     ):
         """Create VM NSG rules for the Sandbox traffic."""
+        nsg_actions = NetworkSecurityGroupActions(
+            azure_client=self._azure_client, logger=self._logger
+        )
+
+        commands.CreateAllowAzureLoadBalancerRuleCommand(
+            rollback_manager=self._rollback_manager,
+            cancellation_manager=self._cancellation_manager,
+            nsg_actions=nsg_actions,
+            nsg_name=vm_nsg.name,
+            vm_resource_group_name=vm_resource_group_name,
+            rules_priority_generator=rules_priority_generator,
+        ).execute()
+
         if not deploy_app.allow_all_sandbox_traffic:
-            nsg_actions = NetworkSecurityGroupActions(
-                azure_client=self._azure_client, logger=self._logger
-            )
-
-            commands.CreateAllowAzureLoadBalancerRuleCommand(
-                rollback_manager=self._rollback_manager,
-                cancellation_manager=self._cancellation_manager,
-                nsg_actions=nsg_actions,
-                nsg_name=vm_nsg.name,
-                vm_resource_group_name=vm_resource_group_name,
-                rules_priority_generator=rules_priority_generator,
-            ).execute()
-
             commands.CreateDenySandoxTrafficRuleCommand(
                 rollback_manager=self._rollback_manager,
                 cancellation_manager=self._cancellation_manager,
@@ -460,6 +463,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         sandbox_resource_group_name: str,
         vm_name: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Create VM interfaces."""
         network_actions = NetworkActions(
@@ -498,6 +502,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 subnet = network_actions.find_sandbox_subnet_by_name(
                     sandbox_subnets=sandbox_vnet.subnets,
                     name_reqexp=connect_subnet.subnet_id,
+                    resource_group_name=resource_group,
                 )
 
                 interface = commands.CreateVMNetworkCommand(
@@ -518,6 +523,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     enable_ip_forwarding=deploy_app.enable_ip_forwarding,
                     region=self._resource_config.region,
                     tags=tags,
+                    zones=zones,
                 ).execute()
 
                 network_interfaces.append(interface)
@@ -551,6 +557,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                     enable_ip_forwarding=deploy_app.enable_ip_forwarding,
                     region=self._resource_config.region,
                     tags=tags,
+                    zones=zones,
                 ).execute()
 
                 network_interfaces.append(interface)
@@ -684,6 +691,16 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         else:
             vm_name = deploy_app.app_name
 
+        if deploy_app.availability_zones:
+            zones = [
+                zone.strip().capitalize()
+                for zone in deploy_app.availability_zones.split(",")
+            ]
+        else:
+            zones = []
+
+        zones = self._zones_manager.get_availability_zones(zones=zones)
+
         tags = self._tags_manager.get_vm_tags(
             vm_name=vm_name, extended_custom_tags=deploy_app.extended_custom_tags
         )
@@ -696,9 +713,11 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             storage_account_name=self._reservation_info.get_storage_account_name(),
             sandbox_resource_group_name=sandbox_resource_group_name,
         )
+
         boot_diagnostics_storage_account = ""
         if (
-            deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
+            storage_account
+            and deploy_app.boot_diagnostics_storage_account.lower().replace(" ", "")
             == "sandboxstorage"
         ):
             boot_diagnostics_storage_account = storage_account
@@ -729,6 +748,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 sandbox_resource_group_name=sandbox_resource_group_name,
                 vm_name=vm_name,
                 tags=tags,
+                zones=zones,
             )
 
             data_disks = self._create_data_disks(
@@ -761,6 +781,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 vm_network_interfaces=vm_ifaces,
                 computer_name=computer_name,
                 tags=tags,
+                zones=zones,
             )
 
             deployed_vm = self._create_vm(
@@ -918,6 +939,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 username=username
             )
             ssh_public_key = vm_creds_actions.get_ssh_public_key(
+                public_key_name=self._reservation_info.reservation_id,
                 resource_group_name=sandbox_resource_group_name,
                 storage_account_name=storage_account_name,
             )
@@ -949,13 +971,18 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         vm_network_interfaces,
         computer_name: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Prepare VM for the deployment."""
+        if not storage_account:
+            storage_account_name = self._reservation_info.get_storage_account_name()
+        else:
+            storage_account_name = storage_account.name
         os_profile = self._prepare_os_profile(
             username=username,
             password=password,
             sandbox_resource_group_name=sandbox_resource_group_name,
-            storage_account_name=storage_account.name,
+            storage_account_name=storage_account_name,
             computer_name=computer_name,
         )
 
@@ -986,4 +1013,5 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             plan=purchase_plan,
             license_type=deploy_app.license_type,
             diagnostics_profile=diagnostics_profile,
+            zones=zones,
         )

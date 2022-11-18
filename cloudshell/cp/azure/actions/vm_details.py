@@ -51,6 +51,10 @@ class VMDetailsActions(NetworkActions):
         os_disk_type = convert_azure_to_cs_disk_type(
             azure_disk_type=os_disk.managed_disk.storage_account_type
         )
+        if isinstance(virtual_machine.storage_profile.os_disk.os_type, str):
+            os_name = virtual_machine.storage_profile.os_disk.os_type
+        else:
+            os_name = virtual_machine.storage_profile.os_disk.os_type.name
 
         vm_properties = [
             VmDetailsProperty(
@@ -58,7 +62,7 @@ class VMDetailsActions(NetworkActions):
             ),
             VmDetailsProperty(
                 key="Operating System",
-                value=virtual_machine.storage_profile.os_disk.os_type.name,
+                value=os_name,
             ),
             VmDetailsProperty(
                 key="OS Disk Size",

@@ -16,10 +16,7 @@ class AzureGetAccessKeyFlow:
         self._logger = logger
 
     def get_access_key(self):
-        """Get SSH Access Key.
-
-        :return:
-        """
+        """Get SSH Access Key."""
         resource_group_name = self._reservation_info.get_resource_group_name()
         storage_account_name = self._reservation_info.get_storage_account_name()
 
@@ -28,6 +25,8 @@ class AzureGetAccessKeyFlow:
         )
 
         return ssh_keypair_actions.get_ssh_private_key(
+            key_vault_name=self._resource_config.key_vault,
+            private_key_name=self._reservation_info.reservation_id,
             resource_group_name=resource_group_name,
             storage_account_name=storage_account_name,
         )

@@ -1,16 +1,20 @@
 repos:
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v4.3.21
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.1.0
+    hooks:
+      - id: pyupgrade
+        args:
+          - "--py37-plus"
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.10.1
     hooks:
       - id: isort
-        language_version: python3.7
   - repo: https://github.com/python/black
-    rev: 20.8b1
+    rev: 22.10.0
     hooks:
       - id: black
-        language_version: python3.7
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+  - repo: https://github.com/pycqa/flake8
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies: [
@@ -19,5 +23,9 @@ repos:
           flake8-comprehensions,
           flake8-print,
           flake8-eradicate,
+          flake8-requirements-absolute-imports,
         ]
-        language_version: python3.7
+        args: [
+          --project-base-module=cloudshell.cp.azure,
+          "--known-modules=cloudshell-cp-core:[cloudshell.cp.core],cloudshell-shell-standards:[cloudshell.shell.standards],cloudshell-shell-connectivity-flow:[cloudshell.shell.flows.connectivity],cloudshell-shell-core:[cloudshell.shell.core],cloudshell-automation-api:[cloudshell.api],azure-identity:[azure.identity],azure-keyvault-secrets:[azure.keyvault.secrets],azure-mgmt-resource:[azure.mgmt.resource],azure-mgmt-compute:[azure.mgmt.compute],azure-mgmt-network:[azure.mgmt.network],azure-mgmt-storage:[azure.mgmt.storage],azure-storage:[azure.storage],azure-core:[azure.core]"
+        ]

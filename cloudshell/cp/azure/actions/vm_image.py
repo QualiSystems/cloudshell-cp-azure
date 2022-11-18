@@ -31,6 +31,24 @@ class VMImageActions(metaclass=SingletonByArgsMeta):
         )
         return image.os_disk_image.operating_system
 
+    def get_marketplace_image_plan(self, region, publisher_name, offer, sku):
+        """Get marketplace image purchase plan.
+
+        :param str region:
+        :param str publisher_name:
+        :param str offer:
+        :param str sku:
+        :return:
+        """
+        self._logger.info(
+            f"Getting Marketplace Image PurchasePlan for Publisher: {publisher_name}, "
+            f"Offer: {offer}, SKU: {sku}"
+        )
+        image = self._azure_client.get_latest_virtual_machine_image(
+            region=region, publisher_name=publisher_name, offer=offer, sku=sku
+        )
+        return image.plan
+
     def get_custom_image_os(self, image_resource_group_name, image_name):
         """Get custom image OS.
 

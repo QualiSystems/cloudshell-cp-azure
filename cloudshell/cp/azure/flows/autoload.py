@@ -49,4 +49,9 @@ class AzureAutoloadFlow:
             custom_tags=self._resource_config.custom_tags
         )
 
+        if self._resource_config.key_vault:
+            validation_actions.validate_key_vault(
+                key_vault_name=self._resource_config.key_vault
+            )
+
         return AutoLoadDetails([], [])

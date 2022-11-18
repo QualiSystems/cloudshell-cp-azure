@@ -1,12 +1,23 @@
-from azure.mgmt.compute import ComputeManagementClient, models as compute_models
-from azure.mgmt.network import NetworkManagementClient, models as network_models
+from typing import Dict, List, Optional
+
+from azure.core.exceptions import (
+    HttpResponseError,
+    ResourceNotFoundError,
+    ServiceRequestError,
+)
+from azure.identity import ClientSecretCredential, ManagedIdentityCredential
+from azure.keyvault.secrets import KeyVaultSecret, SecretClient
+from azure.mgmt.compute import ComputeManagementClient
+from azure.mgmt.compute import models as compute_models
+from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.network import models as network_models
 from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.resource.resources.models import ResourceGroup
-from azure.mgmt.storage import StorageManagementClient, models as storage_models
+from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.storage import models as storage_models
 from azure.storage.blob import BlockBlobService
 from azure.storage.file import FileService
-from msrestazure.azure_active_directory import ServicePrincipalCredentials
 from msrestazure.azure_exceptions import CloudError
 from retrying import retry
 
@@ -24,21 +35,25 @@ from cloudshell.cp.azure.utils.retrying import (
     retry_on_vm_disk_detach_error,
 )
 
+PROXIES = {"http": None, "https": None}
+
 
 class AzureAPIClient:
+    KEY_VAULT_URL = "https://{key_vault_name}.vault.azure.net/"
+
     NETWORK_INTERFACE_IP_CONFIG_NAME = "default"
 
     VM_SCRIPT_WINDOWS_PUBLISHER = "Microsoft.Compute"
     VM_SCRIPT_WINDOWS_EXTENSION_TYPE = "CustomScriptExtension"
-    VM_SCRIPT_WINDOWS_HANDLER_VERSION = "1.9"
+    VM_SCRIPT_WINDOWS_HANDLER_VERSION = "1.10"
     VM_SCRIPT_WINDOWS_COMMAND_TPL = (
         "powershell.exe -ExecutionPolicy Unrestricted -File "
         "{file_name} {script_configuration}"
     )
 
-    VM_SCRIPT_LINUX_PUBLISHER = "Microsoft.OSTCExtensions"
-    VM_SCRIPT_LINUX_EXTENSION_TYPE = "CustomScriptForLinux"
-    VM_SCRIPT_LINUX_HANDLER_VERSION = "1.5"
+    VM_SCRIPT_LINUX_PUBLISHER = "Microsoft.Azure.Extensions"
+    VM_SCRIPT_LINUX_EXTENSION_TYPE = "CustomScript"
+    VM_SCRIPT_LINUX_HANDLER_VERSION = "2.1"
 
     CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES = 4
     RETRYING_STOP_MAX_ATTEMPT_NUMBER = 5
@@ -68,28 +83,34 @@ class AzureAPIClient:
         self._logger = logger
         self._cached_storage_account_keys = {}
 
-        self._credentials = ServicePrincipalCredentials(
-            client_id=azure_application_id,
-            secret=azure_application_key,
-            tenant=azure_tenant_id,
+        self._logger.debug(
+            f"TenantID: {azure_tenant_id}," f"ApplicationID: {azure_application_id}"
         )
+        if azure_application_id and azure_tenant_id and azure_application_key:
+            self._credentials = ClientSecretCredential(
+                client_id=azure_application_id,
+                client_secret=azure_application_key,
+                tenant_id=azure_tenant_id,
+            )
+        else:
+            self._credentials = ManagedIdentityCredential(proxies=PROXIES)
 
-        self._subscription_client = SubscriptionClient(credentials=self._credentials)
+        self._subscription_client = SubscriptionClient(credential=self._credentials)
 
         self._resource_client = ResourceManagementClient(
-            credentials=self._credentials, subscription_id=self._azure_subscription_id
+            credential=self._credentials, subscription_id=self._azure_subscription_id
         )
 
         self._compute_client = ComputeManagementClient(
-            credentials=self._credentials, subscription_id=self._azure_subscription_id
+            credential=self._credentials, subscription_id=self._azure_subscription_id
         )
 
         self._storage_client = StorageManagementClient(
-            credentials=self._credentials, subscription_id=self._azure_subscription_id
+            credential=self._credentials, subscription_id=self._azure_subscription_id
         )
 
         self._network_client = NetworkManagementClient(
-            credentials=self._credentials, subscription_id=self._azure_subscription_id
+            credential=self._credentials, subscription_id=self._azure_subscription_id
         )
 
     @retry(
@@ -188,10 +209,11 @@ class AzureAPIClient:
         :param dict tags:
         :return:
         """
-        return self._resource_client.resource_groups.create_or_update(
+        result = self._resource_client.resource_groups.create_or_update(
             resource_group_name=group_name,
             parameters=ResourceGroup(location=region, tags=tags),
         )
+        return result
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -205,7 +227,7 @@ class AzureAPIClient:
         :param bool wait_for_result:
         :return:
         """
-        operation_poller = self._resource_client.resource_groups.delete(
+        operation_poller = self._resource_client.resource_groups.begin_delete(
             resource_group_name=group_name
         )
 
@@ -238,13 +260,16 @@ class AzureAPIClient:
         sku_name = storage_models.SkuName.standard_lrs
         sku = storage_models.Sku(name=sku_name)
 
-        operation_poller = self._storage_client.storage_accounts.create(
+        operation_poller = self._storage_client.storage_accounts.begin_create(
             resource_group_name=resource_group_name,
             account_name=storage_account_name,
             parameters=storage_models.StorageAccountCreateParameters(
-                sku=sku, kind=kind_storage_value, location=region, tags=tags
+                sku=sku,
+                kind=kind_storage_value,
+                location=region,
+                tags=tags,
+                allow_blob_public_access=False,
             ),
-            raw=False,
         )
 
         if wait_for_result:
@@ -268,10 +293,7 @@ class AzureAPIClient:
             if storage.name == storage_account_name:
                 return storage
 
-        raise exceptions.ResourceNotFoundException(
-            f"Unable to find Storage Account '{storage_account_name}' "
-            f"under the Resource Group '{resource_group_name}'"
-        )
+        return None
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -286,9 +308,7 @@ class AzureAPIClient:
             if storage.name == storage_account_name:
                 return storage
 
-        raise exceptions.ResourceNotFoundException(
-            f"Unable to find Storage Account '{storage_account_name}'."
-        )
+        return None
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -445,7 +465,7 @@ class AzureAPIClient:
         :param dict[str, str] tags:
         :return:
         """
-        operation = self._compute_client.disks.create_or_update(
+        operation = self._compute_client.disks.begin_create_or_update(
             resource_group_name=resource_group_name,
             disk_name=disk_name,
             disk=compute_models.Disk(
@@ -479,7 +499,7 @@ class AzureAPIClient:
         if tags:
             disk.tags = tags
 
-        operation = self._compute_client.disks.create_or_update(
+        operation = self._compute_client.disks.begin_create_or_update(
             resource_group_name=resource_group_name,
             disk_name=disk.name,
             disk=disk,
@@ -504,7 +524,7 @@ class AzureAPIClient:
         :param str resource_group_name:
         :return:
         """
-        operation = self._compute_client.disks.delete(
+        operation = self._compute_client.disks.begin_delete(
             resource_group_name=resource_group_name, disk_name=disk_name
         )
         return operation.wait()
@@ -596,7 +616,7 @@ class AzureAPIClient:
         nsg_model = network_models.NetworkSecurityGroup(location=region, tags=tags)
 
         operation_poller = (
-            self._network_client.network_security_groups.create_or_update(  # noqa: E501
+            self._network_client.network_security_groups.begin_create_or_update(
                 resource_group_name=resource_group_name,
                 network_security_group_name=network_security_group_name,
                 parameters=nsg_model,
@@ -639,7 +659,7 @@ class AzureAPIClient:
         :param bool wait_for_result:
         :return:
         """
-        operation_poller = self._network_client.network_security_groups.delete(
+        operation_poller = self._network_client.network_security_groups.begin_delete(
             resource_group_name=resource_group_name,
             network_security_group_name=network_security_group_name,
         )
@@ -654,8 +674,8 @@ class AzureAPIClient:
                 network_security_group_name=nsg_name,
                 resource_group_name=resource_group_name,
             )
-        except CloudError:
-            self._logger.info(
+        except (CloudError, ResourceNotFoundError):
+            self._logger.debug(
                 f"Network security group '{nsg_name}' "
                 f"doesn't exist, all subnets are predefined",
                 exc_info=True,
@@ -701,7 +721,7 @@ class AzureAPIClient:
         :param cloudshell.cp.azure.models.rule_data.RuleData rule:
         :rtype: azure.mgmt.network.models.SecurityRule
         """
-        operation_poller = self._network_client.security_rules.create_or_update(
+        operation_poller = self._network_client.security_rules.begin_create_or_update(
             resource_group_name=resource_group_name,
             network_security_group_name=nsg_name,
             security_rule_name=rule.name,
@@ -730,7 +750,7 @@ class AzureAPIClient:
         :param str rule_name:
         :param bool wait_for_result:
         """
-        operation_poller = self._network_client.security_rules.delete(
+        operation_poller = self._network_client.security_rules.begin_delete(
             resource_group_name=resource_group_name,
             network_security_group_name=nsg_name,
             security_rule_name=rule_name,
@@ -767,7 +787,7 @@ class AzureAPIClient:
         :param network_security_group:
         :param bool wait_for_result:
         """
-        operation_poller = self._network_client.subnets.create_or_update(
+        operation_poller = self._network_client.subnets.begin_create_or_update(
             resource_group_name=resource_group_name,
             virtual_network_name=vnet_name,
             subnet_name=subnet_name,
@@ -804,7 +824,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_connection_error,
     )
     def get_resource_by_id(self, resource_id):
-        """Get Subnet by its Id.
+        """Get Subnet by its id.
 
         :param str resource_id:
         :return:
@@ -863,7 +883,7 @@ class AzureAPIClient:
         :param bool wait_for_result:
         :return:
         """
-        operation_poller = self._network_client.subnets.create_or_update(
+        operation_poller = self._network_client.subnets.begin_create_or_update(
             resource_group_name=resource_group_name,
             virtual_network_name=vnet_name,
             subnet_name=subnet_name,
@@ -891,7 +911,7 @@ class AzureAPIClient:
         :param str resource_group_name:
         :return:
         """
-        result = self._network_client.subnets.delete(
+        result = self._network_client.subnets.begin_delete(
             resource_group_name=resource_group_name,
             virtual_network_name=vnet_name,
             subnet_name=subnet_name,
@@ -976,7 +996,7 @@ class AzureAPIClient:
         """
         if subscription_id and subscription_id != self._azure_subscription_id:
             compute_client = ComputeManagementClient(
-                credentials=self._credentials, subscription_id=subscription_id
+                credential=self._credentials, subscription_id=subscription_id
             )
         else:
             compute_client = self._compute_client
@@ -1011,7 +1031,7 @@ class AzureAPIClient:
         """
         if subscription_id and subscription_id != self._azure_subscription_id:
             compute_client = ComputeManagementClient(
-                credentials=self._credentials, subscription_id=subscription_id
+                credential=self._credentials, subscription_id=subscription_id
             )
         else:
             compute_client = self._compute_client
@@ -1030,30 +1050,29 @@ class AzureAPIClient:
     )
     def create_public_ip(
         self,
-        public_ip_name,
-        resource_group_name,
-        region,
-        public_ip_allocation_method,
-        tags,
-    ):
-        """Create Public IP address.
-
-        :param str public_ip_name:
-        :param str resource_group_name:
-        :param str region:
-        :param str public_ip_allocation_method:
-        :param dict[str, str] tags:
-        :return:
-        """
-        operation_poller = self._network_client.public_ip_addresses.create_or_update(
-            resource_group_name=resource_group_name,
-            public_ip_address_name=public_ip_name,
-            parameters=network_models.PublicIPAddress(
-                location=region,
-                public_ip_allocation_method=public_ip_allocation_method,
-                idle_timeout_in_minutes=self.CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES,
-                tags=tags,
-            ),
+        public_ip_name: str,
+        resource_group_name: str,
+        region: str,
+        public_ip_allocation_method: str,
+        sku_name: str,
+        sku_tier: Optional[str],
+        tags: Dict[str, str],
+        zones: List[str],
+    ) -> network_models.PublicIPAddress:
+        """Create Public IP address."""
+        operation_poller = (
+            self._network_client.public_ip_addresses.begin_create_or_update(
+                resource_group_name=resource_group_name,
+                public_ip_address_name=public_ip_name,
+                parameters=network_models.PublicIPAddress(
+                    sku=network_models.PublicIPAddressSku(name=sku_name, tier=sku_tier),
+                    location=region,
+                    public_ip_allocation_method=public_ip_allocation_method,
+                    idle_timeout_in_minutes=self.CREATE_PUBLIC_IP_TIMEOUT_IN_MINUTES,
+                    tags=tags,
+                    zones=zones,
+                ),
+            )
         )
 
         return operation_poller.result()
@@ -1111,10 +1130,12 @@ class AzureAPIClient:
             tags=tags,
         )
 
-        operation_poller = self._network_client.network_interfaces.create_or_update(
-            resource_group_name=resource_group_name,
-            network_interface_name=interface_name,
-            parameters=network_interface,
+        operation_poller = (
+            self._network_client.network_interfaces.begin_create_or_update(
+                resource_group_name=resource_group_name,
+                network_interface_name=interface_name,
+                parameters=network_interface,
+            )
         )
 
         return operation_poller.result()
@@ -1165,10 +1186,11 @@ class AzureAPIClient:
         :param str resource_group_name:
         :return:
         """
-        return self._network_client.network_interfaces.delete(
+        result = self._network_client.network_interfaces.begin_delete(
             resource_group_name=resource_group_name,
             network_interface_name=interface_name,
         )
+        result.wait()
 
     @retry(
         stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
@@ -1191,7 +1213,7 @@ class AzureAPIClient:
         :param bool wait_for_result:
         :return:
         """
-        operation_poller = self._compute_client.virtual_machines.create_or_update(
+        operation_poller = self._compute_client.virtual_machines.begin_create_or_update(
             resource_group_name=resource_group_name,
             vm_name=vm_name,
             parameters=virtual_machine,
@@ -1233,13 +1255,13 @@ class AzureAPIClient:
         vm_extension = compute_models.VirtualMachineExtension(
             location=region,
             publisher=self.VM_SCRIPT_LINUX_PUBLISHER,
+            type_properties_type=self.VM_SCRIPT_LINUX_EXTENSION_TYPE,
             type_handler_version=self.VM_SCRIPT_LINUX_HANDLER_VERSION,
-            virtual_machine_extension_type=self.VM_SCRIPT_LINUX_EXTENSION_TYPE,
             tags=tags,
             settings={"fileUris": file_uris, "commandToExecute": script_config},
         )
 
-        operation_poller = self._compute_client.virtual_machine_extensions.create_or_update(  # noqa: E501
+        operation_poller = self._compute_client.virtual_machine_extensions.begin_create_or_update(  # noqa: E501
             resource_group_name=resource_group_name,
             vm_name=vm_name,
             vm_extension_name=vm_name,
@@ -1282,7 +1304,7 @@ class AzureAPIClient:
             location=region,
             publisher=self.VM_SCRIPT_WINDOWS_PUBLISHER,
             type_handler_version=self.VM_SCRIPT_WINDOWS_HANDLER_VERSION,
-            virtual_machine_extension_type=self.VM_SCRIPT_WINDOWS_EXTENSION_TYPE,
+            type_properties_type=self.VM_SCRIPT_WINDOWS_EXTENSION_TYPE,
             tags=tags,
             settings={
                 "fileUris": [script_file_path],
@@ -1292,7 +1314,7 @@ class AzureAPIClient:
             },
         )
 
-        operation_poller = self._compute_client.virtual_machine_extensions.create_or_update(  # noqa: E501
+        operation_poller = self._compute_client.virtual_machine_extensions.begin_create_or_update(  # noqa: E501
             resource_group_name=resource_group_name,
             vm_name=vm_name,
             vm_extension_name=vm_name,
@@ -1333,7 +1355,7 @@ class AzureAPIClient:
         :param bool wait_for_result:
         :return:
         """
-        operation_poller = self._compute_client.virtual_machines.start(
+        operation_poller = self._compute_client.virtual_machines.begin_start(
             resource_group_name=resource_group_name, vm_name=vm_name
         )
         if wait_for_result:
@@ -1352,7 +1374,7 @@ class AzureAPIClient:
         :param bool wait_for_result:
         :return:
         """
-        operation_poller = self._compute_client.virtual_machines.deallocate(
+        operation_poller = self._compute_client.virtual_machines.begin_deallocate(
             resource_group_name=resource_group_name, vm_name=vm_name
         )
         if wait_for_result:
@@ -1370,7 +1392,7 @@ class AzureAPIClient:
         :param str resource_group_name:
         :return:
         """
-        result = self._compute_client.virtual_machines.delete(
+        result = self._compute_client.virtual_machines.begin_delete(
             resource_group_name=resource_group_name, vm_name=vm_name
         )
         result.wait()
@@ -1386,7 +1408,7 @@ class AzureAPIClient:
         retry_on_exception=retry_on_public_ip_detach_error,
     )
     def delete_public_ip(self, public_ip_name: str, resource_group_name: str):
-        result = self._network_client.public_ip_addresses.delete(
+        result = self._network_client.public_ip_addresses.begin_delete(
             public_ip_address_name=public_ip_name,
             resource_group_name=resource_group_name,
         )
@@ -1405,9 +1427,176 @@ class AzureAPIClient:
         :param route_table:
         :return:
         """
-        operation_poller = self._network_client.route_tables.create_or_update(
+        operation_poller = self._network_client.route_tables.begin_create_or_update(
             resource_group_name=resource_group_name,
             route_table_name=route_table_name,
             parameters=route_table,
         )
         return operation_poller.result()
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def set_key_vault_secret(
+        self,
+        key_vault_name: str,
+        secret_name: str,
+        secret_value: str,
+        tags: Dict[str, str],
+        secret_enabled: bool = True,
+    ) -> KeyVaultSecret:
+        """Create Secret inside KeyVault."""
+        sc = SecretClient(
+            vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
+            credential=self._credentials,
+        )
+
+        try:
+            res = sc.set_secret(
+                name=secret_name,
+                value=secret_value,
+                enabled=secret_enabled,
+                content_type="Private Key",
+                tags=tags,
+            )
+        except ServiceRequestError as err:
+            self._logger.exception(err)
+            raise exceptions.InvalidAttrException(
+                f"Failed to connect to KeyVault '{key_vault_name}'"
+            )
+
+        return res
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def get_key_vault_secret(self, key_vault_name: str, secret_name: str) -> str:
+        """Get Secret value based on provided name from KeyVault."""
+        if not key_vault_name:
+            raise exceptions.InvalidAttrException(
+                "Attribute 'Key Vault' cannot be empty to work with Private SSH Keys"
+            )
+
+        sc = SecretClient(
+            vault_url=self.KEY_VAULT_URL.format(key_vault_name=key_vault_name.lower()),
+            credential=self._credentials,
+        )
+        try:
+            value = sc.get_secret(secret_name).value
+        except ServiceRequestError as err:
+            self._logger.exception(err)
+            raise exceptions.InvalidAttrException(
+                f"Failed to connect to KeyVault '{key_vault_name}'"
+            )
+        except ResourceNotFoundError:
+            raise exceptions.ResourceNotFoundException(
+                f"Error during getting Key-Secret {secret_name}"
+                f" from KeyVault {key_vault_name}"
+            )
+        except HttpResponseError as err:
+            self._logger.exception(err)
+            raise exceptions.AzurePermissionsException(
+                f"Not enough permissions to access Key Vault '{key_vault_name}'"
+            )
+
+        return value
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def delete_key_vault_secret(self, key_vault_name: str, secret_name: str):
+        """Delete Secret from KeyVault."""
+        if key_vault_name:
+            sc = SecretClient(
+                vault_url=self.KEY_VAULT_URL.format(
+                    key_vault_name=key_vault_name.lower()
+                ),
+                credential=self._credentials,
+            )
+            try:
+                poller = sc.begin_delete_secret(name=secret_name)
+                poller.wait()
+                sc.purge_deleted_secret(secret_name)
+            except ServiceRequestError as err:
+                self._logger.exception(err)
+                raise exceptions.InvalidAttrException(
+                    f"Failed to connect to KeyVault '{key_vault_name}'"
+                )
+            except ResourceNotFoundError:
+                self._logger.debug(
+                    f"Key-Secret '{secret_name}'"
+                    f" doesn't exist in KeyVault '{key_vault_name}'"
+                )
+            except HttpResponseError as err:
+                self._logger.exception(err)
+                raise exceptions.AzurePermissionsException(
+                    f"Not enough permissions to access Key Vault '{key_vault_name}'"
+                )
+        else:
+            self._logger.debug(
+                "Key Vault name is not set. Skipping Private SSH Keys deletion."
+            )
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def set_ssh_key(
+        self,
+        key_name: str,
+        key_value: str,
+        region: str,
+        tags: Dict[str, str],
+        resource_group_name: str,
+    ) -> compute_models.SshPublicKeyResource:
+        """Set SSH Key."""
+        ssh_key = self._compute_client.ssh_public_keys.create(
+            resource_group_name=resource_group_name,
+            ssh_public_key_name=key_name,
+            parameters=compute_models.SshPublicKeyResource(
+                location=region,
+                public_key=key_value,
+                tags=tags,
+            ),
+        )
+        return ssh_key
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def get_ssh_key(self, key_name: str, resource_group_name: str) -> str:
+        """Get SSH Key."""
+        try:
+            key_value = self._compute_client.ssh_public_keys.get(
+                resource_group_name=resource_group_name,
+                ssh_public_key_name=key_name,
+            )
+        except ResourceNotFoundError:
+            raise exceptions.ResourceNotFoundException(
+                f"SSH Key {key_name} doesn't exists."
+            )
+        return key_value
+
+    @retry(
+        stop_max_attempt_number=RETRYING_STOP_MAX_ATTEMPT_NUMBER,
+        wait_fixed=RETRYING_WAIT_FIXED,
+        retry_on_exception=retry_on_connection_error,
+    )
+    def delete_ssh_key(self, key_name: str, resource_group_name: str):
+        """Delete SSH Key."""
+        try:
+            self._compute_client.ssh_public_keys.delete(
+                resource_group_name=resource_group_name,
+                ssh_public_key_name=key_name,
+            )
+        except ResourceNotFoundError:
+            self._logger.debug(f"SSH Key {key_name} doesn't exists. Deletion skipped.")
