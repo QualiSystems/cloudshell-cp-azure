@@ -104,6 +104,7 @@ class StorageAccountActions:
         disk_size: str,
         disk_type: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Create Disk."""
         self._logger.info(f"Creating Disk {disk_name}")
@@ -114,6 +115,7 @@ class StorageAccountActions:
             disk_size=disk_size,
             disk_type=disk_type,
             tags=tags,
+            zones=zones,
         )
 
     def update_disk(
@@ -174,6 +176,7 @@ class StorageAccountActions:
         disk_size: str,
         disk_type: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ) -> compute_models.Disk:
         """Create VM Data disk."""
         full_disk_name = prepare_full_data_disk_name(
@@ -186,6 +189,7 @@ class StorageAccountActions:
             disk_size=disk_size,
             disk_type=disk_type,
             tags=tags,
+            zones=zones,
         )
 
     def delete_vm_data_disk(

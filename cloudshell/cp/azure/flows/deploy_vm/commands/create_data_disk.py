@@ -14,6 +14,7 @@ class CreateDataDiskCommand(RollbackCommand):
         region: str,
         vm_name: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         super().__init__(
             rollback_manager=rollback_manager, cancellation_manager=cancellation_manager
@@ -24,6 +25,7 @@ class CreateDataDiskCommand(RollbackCommand):
         self._region = region
         self._vm_name = vm_name
         self._tags = tags
+        self._zones = zones
 
     def _execute(self):
         return self._storage_actions.create_vm_data_disk(
@@ -34,6 +36,7 @@ class CreateDataDiskCommand(RollbackCommand):
             disk_size=self._disk_model.disk_size,
             disk_type=self._disk_model.disk_type or self._disk_model.DEFAULT_DISK_TYPE,
             tags=self._tags,
+            zones=self._zones,
         )
 
     def rollback(self):

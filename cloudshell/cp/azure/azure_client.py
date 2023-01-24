@@ -454,6 +454,7 @@ class AzureAPIClient:
         disk_size,
         disk_type,
         tags,
+        zones,
     ):
         """Create Disk.
 
@@ -476,6 +477,7 @@ class AzureAPIClient:
                 ),
                 sku=compute_models.DiskSku(name=disk_type),
                 tags=tags,
+                zones=zones,
             ),
         )
 
