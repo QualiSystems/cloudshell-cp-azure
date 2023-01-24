@@ -413,7 +413,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
             resource_group_name=vm_resource_group_name,
         )
 
-        self._logger.exception("Waiting update VM task to be completed...")
+        self._logger.info("Waiting update VM task to be completed...")
         self._task_waiter_manager.wait_for_task(operation_poller)
 
     def _create_data_disks(
@@ -422,6 +422,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
         vm_resource_group_name: str,
         vm_name: str,
         tags: typing.Dict[str, str],
+        zones: typing.List[str],
     ):
         """Create additional data disks."""
         storage_actions = StorageAccountActions(
@@ -439,6 +440,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 region=self._resource_config.region,
                 vm_name=vm_name,
                 tags=tags,
+                zones=zones,
             ).execute()
             data_disks.append(data_disk)
 
@@ -756,6 +758,7 @@ class BaseAzureDeployVMFlow(AbstractDeployFlow):
                 vm_resource_group_name=vm_resource_group_name,
                 vm_name=vm_name,
                 tags=tags,
+                zones=zones,
             )
 
             self._create_vm_nsg_rules(
