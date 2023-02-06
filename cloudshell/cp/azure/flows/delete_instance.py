@@ -2,6 +2,7 @@ from functools import partial
 from http import HTTPStatus
 
 from msrestazure.azure_exceptions import CloudError
+from azure.core.exceptions import ResourceNotFoundError
 
 from cloudshell.cp.azure.actions.network import NetworkActions
 from cloudshell.cp.azure.actions.network_security_group import (
@@ -125,7 +126,7 @@ class AzureDeleteInstanceFlow:
             vm = vm_actions.get_vm(
                 vm_name=deployed_app.name, resource_group_name=vm_resource_group_name
             )
-        except CloudError:
+        except (CloudError, ResourceNotFoundError):
             return
 
         network_interface_names = [
