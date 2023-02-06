@@ -9,10 +9,10 @@ from azure.mgmt.network.models import (
 class NetworkSecurityGroupActions:
     VM_NSG_NAME_TPL = "NSG_{vm_name}"
     INBOUND_RULE_DIRECTION = "Inbound"
-    CUSTOM_NSG_RULE_PREFIX = "custom_rule_"
+    CUSTOM_NSG_RULE_PREFIX = "Rule_"
     CUSTOM_NSG_RULE_NAME_TPL = (
-        f"{CUSTOM_NSG_RULE_PREFIX}{{vm_name}}_{{dst_address}}_port:"
-        f"{{dst_port_range}}:{{protocol}}"
+        f"{CUSTOM_NSG_RULE_PREFIX}{{vm_name}}_{{dst_address}}_"
+        f"{{dst_port_range}}_{{protocol}}"
     )
 
     def __init__(self, azure_client, logger):
