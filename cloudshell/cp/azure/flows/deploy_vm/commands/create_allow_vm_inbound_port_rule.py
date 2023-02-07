@@ -23,7 +23,7 @@ class CreateAllowVMInboundPortRuleCommand(RollbackCommand):
     DEFAULT_PROTOCOL = "tcp"
 
     NSG_RULE_PRIORITY = 1000
-    NSG_RULE_NAME_TPL = "{vm_name}_inbound_port:{port_range}:{protocol}-{priority}"
+    NSG_RULE_NAME_TPL = "{vm_name}_inbound_{port_range}_{protocol}_{priority}"
 
     def __init__(
         self,
