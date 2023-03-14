@@ -24,7 +24,6 @@ class SingletonByArgsMeta(type):
         cls.__lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
-
         key = (cls, str(args), str(kwargs))
 
         with cls.__lock:
