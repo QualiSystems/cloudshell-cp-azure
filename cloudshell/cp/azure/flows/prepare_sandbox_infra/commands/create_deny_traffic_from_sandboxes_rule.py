@@ -52,7 +52,6 @@ class CreateDenyTrafficFromOtherSandboxesRuleCommand(RollbackCommand):
         self._rules_priority_generator = rules_priority_generator
 
     def execute(self):
-
         with self._cancellation_manager:
             self._nsg_actions.create_nsg_deny_rule(
                 rule_name=self.NSG_RULE_NAME_TPL,

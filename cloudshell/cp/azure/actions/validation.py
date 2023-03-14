@@ -23,7 +23,6 @@ class ValidationActions(NetworkActions):
             "Microsoft.Network",
             "Microsoft.Compute",
         ):
-
             self._logger.info(
                 f"Registering subscription with a {provider} resource provider"
             )
